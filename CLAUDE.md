@@ -13,3 +13,4 @@
 - Use context7 to fetch docs about libs, if needed.
 - Avoid using index.ts to reexport things all the time. Its redundant.
 - If needed to kill a port, use `npx kill-port PORTNUMBERHERE`
+- Favor constructor injection like `constructor(private myService: MyService) {}` instead of Container.get

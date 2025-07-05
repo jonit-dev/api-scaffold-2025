@@ -27,8 +27,7 @@ beforeAll(async () => {
   Container.set("redis", mockRedis);
 
   // Register services that tests might need
-  // RedisService will be created as needed and will use the mocked RedisConfig
-  Container.set(CacheInterceptor, new CacheInterceptor());
+  // Note: Don't manually register CacheInterceptor - let TypeDI auto-resolve it
 
   // Clear and seed test database (if needed)
   await clearTestData();
@@ -52,7 +51,7 @@ afterEach(async () => {
 
   Container.set("supabase", mockSupabase);
   Container.set("redis", mockRedis);
-  Container.set(CacheInterceptor, new CacheInterceptor());
+  // Note: Don't manually register CacheInterceptor - let TypeDI auto-resolve it
 });
 
 async function clearTestData() {
