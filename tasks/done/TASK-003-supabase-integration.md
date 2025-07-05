@@ -1,20 +1,25 @@
 # TASK-003: Supabase Integration and Database Configuration
 
 ## Epic
+
 Database Setup
 
 ## Story Points
+
 5
 
 ## Priority
+
 High
 
 ## Description
+
 Set up Supabase client integration, create database configuration, and implement the base repository pattern for data access abstraction.
 
 ## Acceptance Criteria
 
 ### ✅ Supabase Client Setup
+
 - [ ] Create `src/config/supabase.ts` for client configuration
 - [ ] Set up Supabase client with environment variables
 - [ ] Configure connection options (auth, realtime, etc.)
@@ -22,6 +27,7 @@ Set up Supabase client integration, create database configuration, and implement
 - [ ] Add connection health check
 
 ### ✅ Database Configuration
+
 - [ ] Create `src/config/database.ts` for database config
 - [ ] Set up environment variable validation for database
 - [ ] Configure database connection pooling if needed
@@ -29,6 +35,7 @@ Set up Supabase client integration, create database configuration, and implement
 - [ ] Add database migration support structure
 
 ### ✅ Base Repository Pattern
+
 - [ ] Create `src/repositories/base.repository.ts`
 - [ ] Implement generic CRUD operations
 - [ ] Add error handling for database operations
@@ -37,6 +44,7 @@ Set up Supabase client integration, create database configuration, and implement
 - [ ] Add transaction support structure
 
 ### ✅ Database Models
+
 - [ ] Create `src/models/entities/` directory
 - [ ] Define base entity interface
 - [ ] Create common database field types
@@ -44,6 +52,7 @@ Set up Supabase client integration, create database configuration, and implement
 - [ ] Add timestamps and audit fields
 
 ### ✅ Database Exceptions
+
 - [ ] Create `src/exceptions/database.exception.ts`
 - [ ] Implement specific database error types
 - [ ] Add Supabase error code mapping
@@ -53,10 +62,11 @@ Set up Supabase client integration, create database configuration, and implement
 ## Technical Requirements
 
 ### Supabase Client Configuration
+
 ```typescript
-import { createClient } from '@supabase/supabase-js';
-import { config } from './app';
-import { Database } from '../types/database.types';
+import { createClient } from "@supabase/supabase-js";
+import { config } from "./app";
+import { Database } from "../types/database.types";
 
 // Create typed Supabase client for enhanced type safety
 export const supabase = createClient<Database>(
@@ -66,16 +76,16 @@ export const supabase = createClient<Database>(
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: false  // For server-side usage
+      detectSessionInUrl: false, // For server-side usage
     },
     realtime: {
-      enabled: true
+      enabled: true,
     },
     global: {
       headers: {
-        'X-Client-Info': 'api-scaffold'
-      }
-    }
+        "X-Client-Info": "api-scaffold",
+      },
+    },
   }
 );
 
@@ -92,16 +102,20 @@ export function getSupabaseClient() {
 // Health check function
 export async function checkSupabaseConnection(): Promise<boolean> {
   try {
-    const { data, error } = await supabase.from('health_check').select('count').single();
+    const { data, error } = await supabase
+      .from("health_check")
+      .select("count")
+      .single();
     return !error;
   } catch (error) {
-    console.error('Supabase connection check failed:', error);
+    console.error("Supabase connection check failed:", error);
     return false;
   }
 }
 ```
 
 ### Installation and Setup
+
 ```bash
 # Install Supabase JavaScript client
 npm install @supabase/supabase-js
@@ -111,11 +125,12 @@ npm install @supabase/ssr
 ```
 
 ### Base Repository Structure
+
 ```typescript
-import { Service } from 'typedi';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { getSupabaseClient } from '../config/supabase';
-import { DatabaseException } from '../exceptions/database.exception';
+import { Service } from "typedi";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { getSupabaseClient } from "../config/supabase";
+import { DatabaseException } from "../exceptions/database.exception";
 
 @Service()
 export abstract class BaseRepository<T> {
@@ -141,10 +156,10 @@ export abstract class BaseRepository<T> {
     const { data, error } = await this.supabase
       .from(this.tableName)
       .select()
-      .eq('id', id)
+      .eq("id", id)
       .single();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error && error.code !== "PGRST116") {
       throw new DatabaseException(error.message);
     }
     return data;
@@ -152,7 +167,7 @@ export abstract class BaseRepository<T> {
 
   async findMany(filters?: Record<string, any>): Promise<T[]> {
     let query = this.supabase.from(this.tableName).select();
-    
+
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         query = query.eq(key, value);
@@ -168,7 +183,7 @@ export abstract class BaseRepository<T> {
     const { data: result, error } = await this.supabase
       .from(this.tableName)
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -180,7 +195,7 @@ export abstract class BaseRepository<T> {
     const { error } = await this.supabase
       .from(this.tableName)
       .update({ deleted_at: new Date() })
-      .eq('id', id);
+      .eq("id", id);
 
     if (error) throw new DatabaseException(error.message);
   }
@@ -189,7 +204,7 @@ export abstract class BaseRepository<T> {
     const { error } = await this.supabase
       .from(this.tableName)
       .delete()
-      .eq('id', id);
+      .eq("id", id);
 
     if (error) throw new DatabaseException(error.message);
   }
@@ -197,11 +212,13 @@ export abstract class BaseRepository<T> {
 ```
 
 ### TypeDI Integration Notes
+
 - All repositories must be decorated with `@Service()` for TypeDI container management
 - Use the singleton Supabase client via `getSupabaseClient()` function
 - TypeDI will automatically inject repositories into services that depend on them
 
 ### Environment Variables
+
 ```env
 # Supabase Configuration
 SUPABASE_URL=https://your-project.supabase.co
@@ -215,6 +232,7 @@ DB_CONNECTION_TIMEOUT=30000
 ```
 
 ## Definition of Done
+
 - [ ] Supabase client connects successfully
 - [ ] Base repository pattern implemented and tested
 - [ ] Database operations work with proper error handling
@@ -224,6 +242,7 @@ DB_CONNECTION_TIMEOUT=30000
 - [ ] All database operations logged appropriately
 
 ## Testing Strategy
+
 - [ ] Test Supabase client connection
 - [ ] Verify base repository CRUD operations
 - [ ] Test database error handling
@@ -232,9 +251,11 @@ DB_CONNECTION_TIMEOUT=30000
 - [ ] Check database exception mapping
 
 ## Dependencies
+
 - TASK-002: Core Server Configuration and Middleware Setup
 
 ## Notes
+
 - Ensure sensitive credentials are never logged
 - Test database connection before server start
 - Keep repository methods consistent across implementations

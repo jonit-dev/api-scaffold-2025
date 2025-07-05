@@ -1,20 +1,25 @@
 # TASK-001: Project Setup and Initial Configuration
 
 ## Epic
+
 Foundation Setup
 
 ## Story Points
+
 5
 
 ## Priority
+
 High
 
 ## Description
+
 Set up the basic project structure with TypeScript, routing-controllers, and essential dependencies to create a solid foundation for the API scaffold.
 
 ## Acceptance Criteria
 
 ### ✅ Package.json Configuration
+
 - [x] Create `package.json` with all required dependencies
 - [x] Include core packages: `express`, `routing-controllers`, `typedi`, `reflect-metadata`
 - [x] Add validation packages: `class-validator`, `class-transformer`
@@ -22,12 +27,14 @@ Set up the basic project structure with TypeScript, routing-controllers, and ess
 - [x] Configure npm scripts for `dev`, `build`, `start`, `test`
 
 ### ✅ TypeScript Configuration
+
 - [x] Create `tsconfig.json` with proper compiler options
 - [x] Enable `experimentalDecorators` and `emitDecoratorMetadata`
 - [x] Configure path mapping for clean imports (`@controllers/*`, `@services/*`, etc.)
 - [x] Set up `outDir` and `rootDir` for compilation
 
 ### ✅ Project Structure
+
 - [x] Create `src/` directory structure:
   - `controllers/`
   - `services/`
@@ -43,6 +50,7 @@ Set up the basic project structure with TypeScript, routing-controllers, and ess
 - [x] Create `scripts/` directory for build scripts
 
 ### ✅ Environment Configuration
+
 - [x] Create `.env.example` with all required variables
 - [x] Set up environment variable structure:
   - Server configuration (PORT, NODE_ENV)
@@ -52,6 +60,7 @@ Set up the basic project structure with TypeScript, routing-controllers, and ess
 - [x] Install and configure `dotenv` package
 
 ### ✅ Basic Files
+
 - [x] Create `src/server.ts` entry point
 - [x] Create `.gitignore` file
 - [x] Create basic `README.md`
@@ -61,6 +70,7 @@ Set up the basic project structure with TypeScript, routing-controllers, and ess
 ## Technical Requirements
 
 ### Dependencies to Install
+
 ```bash
 # Core dependencies (order is important - install reflect-metadata first)
 npm install reflect-metadata
@@ -81,12 +91,14 @@ npm install -D jest ts-jest @types/jest supertest @types/supertest
 ```
 
 ### Critical Setup Notes
+
 - **reflect-metadata must be imported first** in your application entry point (`src/server.ts`)
 - **TypeDI Container integration** must be configured before any controllers are loaded
 - **Class-validator and class-transformer** are peer dependencies required by routing-controllers
 - **Supabase client configuration** requires environment variables for URL and keys
 
 ### tsconfig.json Configuration
+
 ```json
 {
   "compilerOptions": {
@@ -121,11 +133,13 @@ npm install -D jest ts-jest @types/jest supertest @types/supertest
 ```
 
 ### Critical TypeScript Settings
+
 - `experimentalDecorators: true` - Required for routing-controllers decorators
 - `emitDecoratorMetadata: true` - Required for TypeDI dependency injection
 - Path mapping for clean imports and better code organization
 
 ## Definition of Done
+
 - [x] All dependencies installed and working
 - [x] TypeScript compilation successful
 - [x] Basic server starts without errors
@@ -135,12 +149,14 @@ npm install -D jest ts-jest @types/jest supertest @types/supertest
 - [x] Documentation updated with setup instructions
 
 ## Testing Strategy
+
 - [x] Verify `yarn dev` starts development server
 - [x] Verify `yarn build` compiles TypeScript successfully
 - [x] Verify `yarn start` runs production build
 - [x] Test import paths work correctly with path mapping
 
 ## Notes
+
 - This task establishes the foundation for all subsequent development
 - Ensure all decorators work properly before proceeding
 - Test TypeDI container integration early

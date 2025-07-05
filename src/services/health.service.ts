@@ -11,8 +11,6 @@ interface IHealthResponse {
   timestamp: Date;
   services: {
     database: IServiceStatus;
-    memory: IServiceStatus;
-    cpu: IServiceStatus;
   };
 }
 
@@ -27,26 +25,16 @@ export class HealthService {
   constructor(@Inject("supabase") private supabase?: SupabaseClient) {}
 
   async getHealth(): Promise<IHealthResponse> {
-    const [databaseHealth, memoryHealth, cpuHealth] = await Promise.all([
-      this.checkDatabaseHealth(),
-      this.checkMemoryHealth(),
-      this.checkCpuHealth(),
-    ]);
+    const databaseHealth = await this.checkDatabaseHealth();
 
-    // Determine overall health status
-    const services = [databaseHealth, memoryHealth, cpuHealth];
-    const hasError = services.some((s) => s.status === "error");
-    const hasWarning = services.some((s) => s.status === "warning");
-
-    const overallStatus = hasError ? "error" : hasWarning ? "warning" : "ok";
+    // Determine overall health status based on database only
+    const overallStatus = databaseHealth.status;
 
     return {
       status: overallStatus,
       timestamp: new Date(),
       services: {
         database: databaseHealth,
-        memory: memoryHealth,
-        cpu: cpuHealth,
       },
     };
   }
@@ -109,7 +97,11 @@ export class HealthService {
 
     try {
       if (!this.supabase) {
-        throw new Error("Supabase client not available");
+        return {
+          status: "error",
+          response_time: 1,
+          details: "Database error: Supabase not configured",
+        };
       }
 
       const { error } = await this.supabase
@@ -147,59 +139,6 @@ export class HealthService {
         response_time: responseTime,
         details:
           error instanceof Error ? error.message : "Database connection failed",
-      };
-    }
-  }
-
-  private async checkMemoryHealth(): Promise<IServiceStatus> {
-    const startTime = Date.now();
-
-    try {
-      const memoryUsage = process.memoryUsage();
-      const memoryMB = memoryUsage.rss / 1024 / 1024;
-      const responseTime = Date.now() - startTime;
-
-      if (memoryMB > 150) {
-        return {
-          status: "warning",
-          response_time: responseTime,
-          details: `High memory usage: ${memoryMB.toFixed(2)} MB`,
-        };
-      }
-
-      return {
-        status: "ok",
-        response_time: responseTime,
-        details: `Memory usage: ${memoryMB.toFixed(2)} MB`,
-      };
-    } catch {
-      const responseTime = Date.now() - startTime;
-      return {
-        status: "error",
-        response_time: responseTime,
-        details: "Memory check failed",
-      };
-    }
-  }
-
-  private async checkCpuHealth(): Promise<IServiceStatus> {
-    const startTime = Date.now();
-
-    try {
-      const cpuUsage = process.cpuUsage();
-      const responseTime = Date.now() - startTime;
-
-      return {
-        status: "ok",
-        response_time: responseTime,
-        details: `CPU usage: ${((cpuUsage.user + cpuUsage.system) / 1000000).toFixed(2)}s`,
-      };
-    } catch {
-      const responseTime = Date.now() - startTime;
-      return {
-        status: "error",
-        response_time: responseTime,
-        details: "CPU check failed",
       };
     }
   }

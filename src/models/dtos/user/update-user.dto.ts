@@ -1,0 +1,45 @@
+import {
+  IsString,
+  MinLength,
+  MaxLength,
+  IsEnum,
+  IsOptional,
+  IsPhoneNumber,
+  IsUrl,
+  IsBoolean,
+} from "class-validator";
+import { UserRole, UserStatus } from "../../enums";
+
+export class UpdateUserDto {
+  @IsString()
+  @MinLength(2)
+  @MaxLength(50)
+  @IsOptional()
+  first_name?: string;
+
+  @IsString()
+  @MinLength(2)
+  @MaxLength(50)
+  @IsOptional()
+  last_name?: string;
+
+  @IsEnum(UserRole)
+  @IsOptional()
+  role?: UserRole;
+
+  @IsEnum(UserStatus)
+  @IsOptional()
+  status?: UserStatus;
+
+  @IsPhoneNumber()
+  @IsOptional()
+  phone?: string;
+
+  @IsUrl()
+  @IsOptional()
+  avatar_url?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  email_verified?: boolean;
+}

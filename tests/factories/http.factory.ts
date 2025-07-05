@@ -1,16 +1,16 @@
-import { Request, Response } from 'express';
-import { vi } from 'vitest';
-import { HttpStatus } from '@/types/http-status';
-import { 
-  HttpException, 
-  BadRequestException, 
-  UnauthorizedException, 
-  ForbiddenException, 
-  NotFoundException, 
-  ConflictException, 
-  ValidationException, 
-  InternalServerErrorException 
-} from '@/exceptions/http-exceptions';
+import { Request, Response } from "express";
+import { vi } from "vitest";
+import { HttpStatus } from "@/types/http-status";
+import {
+  HttpException,
+  BadRequestException,
+  UnauthorizedException,
+  ForbiddenException,
+  NotFoundException,
+  ConflictException,
+  ValidationException,
+  InternalServerErrorException,
+} from "@/exceptions/http-exceptions";
 
 export class HttpFactory {
   static createMockRequest(overrides: Partial<Request> = {}): Partial<Request> {
@@ -19,8 +19,8 @@ export class HttpFactory {
       query: {},
       body: {},
       headers: {},
-      method: 'GET',
-      url: '/',
+      method: "GET",
+      url: "/",
       ...overrides,
     };
   }
@@ -40,7 +40,10 @@ export class HttpFactory {
     return res;
   }
 
-  static createAuthenticatedRequest(token: string, overrides: Partial<Request> = {}): Partial<Request> {
+  static createAuthenticatedRequest(
+    token: string,
+    overrides: Partial<Request> = {}
+  ): Partial<Request> {
     return this.createMockRequest({
       headers: {
         authorization: `Bearer ${token}`,
@@ -49,56 +52,71 @@ export class HttpFactory {
     });
   }
 
-  static createBadRequestException(message = 'Bad request'): BadRequestException {
+  static createBadRequestException(
+    message = "Bad request"
+  ): BadRequestException {
     return new BadRequestException(message);
   }
 
-  static createUnauthorizedException(message = 'Unauthorized'): UnauthorizedException {
+  static createUnauthorizedException(
+    message = "Unauthorized"
+  ): UnauthorizedException {
     return new UnauthorizedException(message);
   }
 
-  static createForbiddenException(message = 'Forbidden'): ForbiddenException {
+  static createForbiddenException(message = "Forbidden"): ForbiddenException {
     return new ForbiddenException(message);
   }
 
-  static createNotFoundException(message = 'Not found'): NotFoundException {
+  static createNotFoundException(message = "Not found"): NotFoundException {
     return new NotFoundException(message);
   }
 
-  static createConflictException(message = 'Conflict'): ConflictException {
+  static createConflictException(message = "Conflict"): ConflictException {
     return new ConflictException(message);
   }
 
-  static createValidationException(message = 'Validation failed'): ValidationException {
+  static createValidationException(
+    message = "Validation failed"
+  ): ValidationException {
     return new ValidationException(message);
   }
 
-  static createInternalServerErrorException(message = 'Internal server error'): InternalServerErrorException {
+  static createInternalServerErrorException(
+    message = "Internal server error"
+  ): InternalServerErrorException {
     return new InternalServerErrorException(message);
   }
 
-  static createHttpException(status: HttpStatus, message: string): BadRequestException {
+  static createHttpException(
+    status: HttpStatus,
+    message: string
+  ): BadRequestException {
     return new BadRequestException(message);
   }
 
-  static createErrorResponse(status: HttpStatus, message: string, details?: any) {
+  static createErrorResponse(
+    status: HttpStatus,
+    message: string,
+    details?: any
+  ) {
     return {
       success: false,
       error: {
         status,
         message,
         details,
-        timestamp: new Date('2023-01-01T00:00:00.000Z'),
+        timestamp: new Date("2023-01-01T00:00:00.000Z"),
       },
     };
   }
 
-  static createSuccessResponse(data: any, message = 'Success') {
+  static createSuccessResponse(data: any, message = "Success") {
     return {
       success: true,
       data,
       message,
-      timestamp: new Date('2023-01-01T00:00:00.000Z'),
+      timestamp: new Date("2023-01-01T00:00:00.000Z"),
     };
   }
 }

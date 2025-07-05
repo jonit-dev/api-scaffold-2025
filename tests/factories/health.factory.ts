@@ -1,17 +1,20 @@
-import { IHealthResponseDto, IServiceStatusDto } from '@/models/dtos/common/health-response.dto';
+import {
+  IHealthResponseDto,
+  IServiceStatusDto,
+} from "@/models/dtos/common/health-response.dto";
 
 export class HealthFactory {
   static createHealthResponse(
     overrides: Partial<IHealthResponseDto> = {}
   ): IHealthResponseDto {
     return {
-      status: 'healthy',
-      timestamp: new Date('2023-01-01T00:00:00.000Z'),
+      status: "healthy",
+      timestamp: new Date("2023-01-01T00:00:00.000Z"),
       uptime: 12345,
-      version: '1.0.0',
-      environment: 'test',
+      version: "1.0.0",
+      environment: "test",
       services: {
-        database: this.createServiceStatus({ status: 'healthy' }),
+        database: this.createServiceStatus({ status: "healthy" }),
       },
       system: {
         memory: {
@@ -28,9 +31,9 @@ export class HealthFactory {
     overrides: Partial<IServiceStatusDto> = {}
   ): IServiceStatusDto {
     return {
-      status: 'healthy',
+      status: "healthy",
       responseTime: 15,
-      message: 'Service is running normally',
+      message: "Service is running normally",
       ...overrides,
     };
   }
@@ -39,12 +42,12 @@ export class HealthFactory {
     overrides: Partial<IHealthResponseDto> = {}
   ): IHealthResponseDto {
     return this.createHealthResponse({
-      status: 'unhealthy',
+      status: "unhealthy",
       services: {
         database: this.createServiceStatus({
-          status: 'unhealthy',
+          status: "unhealthy",
           responseTime: 5000,
-          message: 'Database connection failed',
+          message: "Database connection failed",
         }),
       },
       ...overrides,
@@ -55,9 +58,9 @@ export class HealthFactory {
     overrides: Partial<IHealthResponseDto> = {}
   ): IHealthResponseDto {
     return this.createHealthResponse({
-      status: 'degraded',
+      status: "degraded",
       services: {
-        database: this.createServiceStatus({ status: 'healthy' }),
+        database: this.createServiceStatus({ status: "healthy" }),
       },
       system: {
         memory: {

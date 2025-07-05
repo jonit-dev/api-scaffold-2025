@@ -7,14 +7,25 @@ import { config } from "./config/app";
 import "./config/supabase";
 import { HealthController } from "./controllers/health.controller";
 import { TestController } from "./controllers/test.controller";
+import { AuthController } from "./controllers/auth.controller";
+import { TestAuthController } from "./controllers/test-auth.controller";
+import { CacheDemoController } from "./controllers/cache-demo.controller";
 import { GlobalErrorHandler } from "./middlewares/error.middleware";
+// Remove unused imports - middleware is applied via decorators in controllers
+import { decoratorCacheMiddleware } from "./middlewares/cache.middleware";
 
 // Configure TypeDI container integration BEFORE importing any controllers
 useContainer(Container);
 
 export const app = createExpressServer({
   // Import controllers explicitly to avoid glob pattern issues
-  controllers: [HealthController, TestController],
+  controllers: [
+    HealthController,
+    TestController,
+    AuthController,
+    TestAuthController,
+    CacheDemoController,
+  ],
   middlewares: [GlobalErrorHandler],
 
   // Set global route prefix
@@ -46,7 +57,8 @@ export const app = createExpressServer({
 });
 
 // Apply additional middleware after routing-controllers setup
-// Note: setupMiddlewares can be imported and used here if needed
+// Apply cache middleware for decorator-based caching
+app.use(decoratorCacheMiddleware());
 
 // Apply global error handler as the last middleware
 app.use(GlobalErrorHandler.handle);

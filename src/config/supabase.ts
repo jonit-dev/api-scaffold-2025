@@ -2,6 +2,7 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { Container } from "typedi";
 import { IDatabase } from "../types/database.types";
 import { databaseConfig } from "./database";
+import { env } from "./env";
 
 // Singleton pattern for consistent client usage
 let supabaseInstance: SupabaseClient<IDatabase> | null = null;
@@ -18,7 +19,7 @@ function createSupabaseClient(): SupabaseClient<IDatabase> {
     key.includes("your_supabase")
   ) {
     console.warn(
-      "⚠️  Supabase configuration not found or using placeholder values. Creating mock client for development.",
+      "⚠️  Supabase configuration not found or using placeholder values. Creating mock client for development."
     );
 
     // Create a mock client for development when Supabase is not configured
@@ -63,6 +64,31 @@ export function getSupabaseClient(): SupabaseClient<IDatabase> {
 // Export the singleton instance
 export const supabase = getSupabaseClient();
 
+// Authentication-specific client with proper config
+export const supabaseAuth = createClient(
+  env.SUPABASE_URL,
+  env.SUPABASE_ANON_KEY,
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+    },
+  }
+);
+
+// Service client for admin operations
+export const supabaseAdmin = createClient(
+  env.SUPABASE_URL,
+  env.SUPABASE_SERVICE_KEY,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
+);
+
 // Health check function
 export async function checkSupabaseConnection(): Promise<boolean> {
   try {
@@ -86,5 +112,7 @@ export async function checkSupabaseConnection(): Promise<boolean> {
 
 // Set up TypeDI container
 Container.set("supabase", supabase);
+Container.set("supabaseAuth", supabaseAuth);
+Container.set("supabaseAdmin", supabaseAdmin);
 
 export default supabase;

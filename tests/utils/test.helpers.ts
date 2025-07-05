@@ -1,7 +1,7 @@
-import { SupabaseClient } from '@supabase/supabase-js';
-import { Container } from 'typedi';
-import { expect, vi } from 'vitest';
-import { DatabaseFactory } from '../factories/database.factory';
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Container } from "typedi";
+import { expect, vi } from "vitest";
+import { DatabaseFactory } from "../factories/database.factory";
 
 export class TestHelpers {
   static createMockSupabaseClient() {
@@ -21,6 +21,7 @@ export class TestHelpers {
       in: vi.fn().mockReturnThis(),
       is: vi.fn().mockReturnThis(),
       not: vi.fn().mockReturnThis(),
+      or: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
       range: vi.fn().mockReturnThis(),
       limit: vi.fn().mockReturnThis(),
@@ -43,7 +44,7 @@ export class TestHelpers {
 
   static setupMockSupabaseClient(mockClient: any = null) {
     const client = mockClient || this.createMockSupabaseClient();
-    Container.set('supabase', client);
+    Container.set("supabase", client);
     return client;
   }
 
@@ -59,14 +60,14 @@ export class TestHelpers {
 
   static createTimeoutQuery() {
     return new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Query timeout')), 1000);
+      setTimeout(() => reject(new Error("Query timeout")), 1000);
     });
   }
 
   static async waitForAsync(fn: () => Promise<any>, timeout = 5000) {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
-        reject(new Error('Test timeout'));
+        reject(new Error("Test timeout"));
       }, timeout);
 
       fn()
@@ -78,7 +79,7 @@ export class TestHelpers {
 
   static createMockService<T>(methods: Array<keyof T>): T {
     const mockService = {} as T;
-    methods.forEach((method) => {
+    methods.forEach(method => {
       (mockService as any)[method] = vi.fn();
     });
     return mockService;
@@ -86,19 +87,19 @@ export class TestHelpers {
 
   static createMockRepository<T>(methods: Array<keyof T>): T {
     const mockRepository = {} as T;
-    methods.forEach((method) => {
+    methods.forEach(method => {
       (mockRepository as any)[method] = vi.fn();
     });
     return mockRepository;
   }
 
   static async cleanupTestData(tableName: string) {
-    const supabase = Container.get<SupabaseClient>('supabase');
-    await supabase.from(tableName).delete().neq('id', '');
+    const supabase = Container.get<SupabaseClient>("supabase");
+    await supabase.from(tableName).delete().neq("id", "");
   }
 
   static async seedTestData<T>(tableName: string, data: T[]) {
-    const supabase = Container.get<SupabaseClient>('supabase');
+    const supabase = Container.get<SupabaseClient>("supabase");
     await supabase.from(tableName).insert(data);
   }
 
@@ -118,7 +119,7 @@ export class TestHelpers {
     };
   }
 
-  static createExpectedSuccessResponse(data: any, message = 'Success') {
+  static createExpectedSuccessResponse(data: any, message = "Success") {
     return {
       success: true,
       data,
@@ -139,15 +140,15 @@ export class TestHelpers {
   }
 
   static createDelay(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   static mockConsole() {
     return {
-      log: vi.spyOn(console, 'log').mockImplementation(() => {}),
-      error: vi.spyOn(console, 'error').mockImplementation(() => {}),
-      warn: vi.spyOn(console, 'warn').mockImplementation(() => {}),
-      info: vi.spyOn(console, 'info').mockImplementation(() => {}),
+      log: vi.spyOn(console, "log").mockImplementation(() => {}),
+      error: vi.spyOn(console, "error").mockImplementation(() => {}),
+      warn: vi.spyOn(console, "warn").mockImplementation(() => {}),
+      info: vi.spyOn(console, "info").mockImplementation(() => {}),
     };
   }
 

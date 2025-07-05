@@ -18,11 +18,13 @@ A TypeScript Express API scaffold with routing-controllers, TypeDI, and Supabase
 ## Quick Start
 
 1. **Install dependencies**
+
    ```bash
    yarn install
    ```
 
 2. **Set up environment variables**
+
    ```bash
    cp .env.example .env
    # Edit .env with your configuration

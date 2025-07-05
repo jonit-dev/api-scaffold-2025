@@ -21,6 +21,56 @@ export interface IDatabase {
           created_at?: string;
         };
       };
+      users: {
+        Row: {
+          id: string;
+          email: string;
+          first_name: string;
+          last_name: string;
+          password_hash: string;
+          role: string;
+          status: string;
+          email_verified: boolean;
+          phone?: string;
+          avatar_url?: string;
+          last_login?: string;
+          created_at: string;
+          updated_at: string;
+          deleted_at?: string;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          first_name: string;
+          last_name: string;
+          password_hash: string;
+          role?: string;
+          status?: string;
+          email_verified?: boolean;
+          phone?: string;
+          avatar_url?: string;
+          last_login?: string;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          first_name?: string;
+          last_name?: string;
+          password_hash?: string;
+          role?: string;
+          status?: string;
+          email_verified?: boolean;
+          phone?: string;
+          avatar_url?: string;
+          last_login?: string;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -29,7 +79,8 @@ export interface IDatabase {
       [_ in never]: never;
     };
     Enums: {
-      [_ in never]: never;
+      user_role: "admin" | "user" | "moderator";
+      user_status: "active" | "inactive" | "suspended" | "pending_verification";
     };
   };
 }

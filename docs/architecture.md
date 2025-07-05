@@ -3,6 +3,7 @@
 ## Technology Stack
 
 ### Core Dependencies
+
 ```bash
 # Essential framework packages
 npm install express routing-controllers typedi reflect-metadata
@@ -15,6 +16,7 @@ npm install @supabase/supabase-js
 ```
 
 ### Development Dependencies
+
 ```bash
 # TypeScript support
 npm install -D typescript ts-node @types/express
@@ -24,6 +26,7 @@ npm install helmet cors express-rate-limit compression morgan dotenv
 ```
 
 ### Essential tsconfig.json
+
 ```json
 {
   "compilerOptions": {
@@ -47,6 +50,7 @@ npm install helmet cors express-rate-limit compression morgan dotenv
 ```
 
 ### Server Bootstrap
+
 ```typescript
 import "reflect-metadata";
 import { createExpressServer, useContainer } from "routing-controllers";
@@ -67,6 +71,7 @@ app.listen(3000);
 ## Folder Structure
 
 ### Complete Directory Layout
+
 ```
 api-scaffold/
 ├── src/                           # Source code
@@ -151,6 +156,7 @@ api-scaffold/
 ## Architectural Patterns
 
 ### Clean Architecture
+
 The scaffold follows clean architecture principles with clear separation of concerns:
 
 ```
@@ -166,20 +172,20 @@ The scaffold follows clean architecture principles with clear separation of conc
 ```
 
 ### Dependency Injection
+
 Uses **typedi** for dependency injection throughout the application:
 
 ```typescript
 @Service()
 export class UserService {
-  constructor(
-    @Inject() private userRepository: UserRepository
-  ) {}
+  constructor(@Inject() private userRepository: UserRepository) {}
 }
 ```
 
 ## Layer Responsibilities
 
 ### 1. Controllers Layer
+
 - **Purpose**: Handle HTTP requests and responses
 - **Framework**: routing-controllers with decorators
 - **Responsibilities**:
@@ -189,11 +195,11 @@ export class UserService {
   - Error handling
 
 ```typescript
-@JsonController('/api/users')
+@JsonController("/api/users")
 export class UserController {
   constructor(private userService: UserService) {}
 
-  @Get('/')
+  @Get("/")
   async getUsers(): Promise<User[]> {
     return this.userService.findAll();
   }
@@ -201,6 +207,7 @@ export class UserController {
 ```
 
 ### 2. Services Layer
+
 - **Purpose**: Business logic and orchestration
 - **Responsibilities**:
   - Data validation
@@ -221,6 +228,7 @@ export class UserService {
 ```
 
 ### 3. Repository Layer
+
 - **Purpose**: Data access abstraction
 - **Pattern**: Repository/Adapter pattern
 - **Responsibilities**:
@@ -236,11 +244,11 @@ export class UserRepository {
 
   async create(user: CreateUserDto): Promise<User> {
     const { data, error } = await this.supabase
-      .from('users')
+      .from("users")
       .insert(user)
       .select()
       .single();
-    
+
     if (error) throw new DatabaseError(error.message);
     return data;
   }
@@ -250,6 +258,7 @@ export class UserRepository {
 ## Data Flow
 
 ### Request Flow
+
 1. **HTTP Request** → Controller
 2. **Controller** → Service (business logic)
 3. **Service** → Repository (data access)
@@ -257,6 +266,7 @@ export class UserRepository {
 5. **Response** ← Controller ← Service ← Repository
 
 ### Error Handling Flow
+
 1. **Error occurs** at any layer
 2. **Custom exceptions** thrown
 3. **Global error middleware** catches
@@ -265,12 +275,14 @@ export class UserRepository {
 ## Database Architecture
 
 ### Supabase Integration
+
 - **PostgreSQL** as primary database
 - **Row Level Security** for authorization
 - **Real-time subscriptions** available
 - **Built-in auth** integration
 
 ### Repository Pattern Benefits
+
 - **Database agnostic** - easy to switch providers
 - **Testable** - mock repositories for unit tests
 - **Consistent** - uniform data access patterns
@@ -279,20 +291,22 @@ export class UserRepository {
 ## Configuration Management
 
 ### Environment-based Config
+
 ```typescript
 export const config = {
   server: {
     port: process.env.PORT || 3000,
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || "development",
   },
   database: {
     url: process.env.SUPABASE_URL,
-    anonKey: process.env.SUPABASE_ANON_KEY
-  }
+    anonKey: process.env.SUPABASE_ANON_KEY,
+  },
 };
 ```
 
 ### Validation Schema
+
 - **class-validator** for DTO validation
 - **class-transformer** for data transformation
 - **Runtime validation** ensures data integrity
@@ -300,11 +314,13 @@ export const config = {
 ## Security Architecture
 
 ### Authentication & Authorization
+
 - **JWT tokens** via Supabase Auth
 - **Role-based access control**
 - **Middleware protection** for routes
 
 ### Data Protection
+
 - **Input sanitization**
 - **SQL injection prevention**
 - **XSS protection**
@@ -313,6 +329,7 @@ export const config = {
 ## Middleware Stack
 
 ### Core Middleware (in order)
+
 1. **Security headers** (helmet)
 2. **CORS** configuration
 3. **Rate limiting**
@@ -324,11 +341,13 @@ export const config = {
 ## Testing Strategy
 
 ### Unit Tests
+
 - **Service layer** testing
 - **Repository mocking**
 - **Business logic validation**
 
 ### Integration Tests
+
 - **Controller endpoints**
 - **Database operations**
 - **Full request/response cycle**
@@ -336,11 +355,13 @@ export const config = {
 ## Performance Considerations
 
 ### Caching Strategy
+
 - **Redis** for session storage
 - **Query result caching**
 - **Static asset caching**
 
 ### Database Optimization
+
 - **Connection pooling**
 - **Query optimization**
 - **Index strategy**
@@ -348,11 +369,13 @@ export const config = {
 ## Deployment Architecture
 
 ### Container Strategy
+
 - **Docker** containerization
 - **Multi-stage builds**
 - **Environment-specific configs**
 
 ### Scaling Considerations
+
 - **Horizontal scaling** ready
 - **Database connection limits**
 - **Load balancing** support
@@ -360,6 +383,7 @@ export const config = {
 ## Extension Points
 
 ### Adding New Features
+
 1. Create **model types**
 2. Implement **repository**
 3. Build **service layer**
@@ -368,6 +392,7 @@ export const config = {
 6. Write **tests**
 
 ### Custom Middleware
+
 - Authentication providers
 - Logging enhancements
 - Performance monitoring

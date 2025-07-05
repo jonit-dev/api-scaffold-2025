@@ -11,7 +11,7 @@ export abstract class HttpException extends Error {
   constructor(
     statusCode: HttpStatus,
     message: string,
-    details?: ExceptionDetails,
+    details?: ExceptionDetails
   ) {
     super(message);
     this.statusCode = statusCode;
@@ -50,7 +50,7 @@ export class NotFoundException extends HttpException {
 export class MethodNotAllowedException extends HttpException {
   constructor(
     message: string = "Method Not Allowed",
-    details?: ExceptionDetails,
+    details?: ExceptionDetails
   ) {
     super(HttpStatus.MethodNotAllowed, message, details);
   }
@@ -83,7 +83,7 @@ export class GoneException extends HttpException {
 export class PayloadTooLargeException extends HttpException {
   constructor(
     message: string = "Payload Too Large",
-    details?: ExceptionDetails,
+    details?: ExceptionDetails
   ) {
     super(HttpStatus.PayloadTooLarge, message, details);
   }
@@ -92,7 +92,7 @@ export class PayloadTooLargeException extends HttpException {
 export class UnsupportedMediaTypeException extends HttpException {
   constructor(
     message: string = "Unsupported Media Type",
-    details?: ExceptionDetails,
+    details?: ExceptionDetails
   ) {
     super(HttpStatus.UnsupportedMediaType, message, details);
   }
@@ -101,7 +101,7 @@ export class UnsupportedMediaTypeException extends HttpException {
 export class UnprocessableEntityException extends HttpException {
   constructor(
     message: string = "Unprocessable Entity",
-    details?: ExceptionDetails,
+    details?: ExceptionDetails
   ) {
     super(HttpStatus.UnprocessableEntity, message, details);
   }
@@ -110,7 +110,7 @@ export class UnprocessableEntityException extends HttpException {
 export class ValidationException extends HttpException {
   constructor(
     message: string = "Validation Error",
-    details?: ExceptionDetails,
+    details?: ExceptionDetails
   ) {
     super(HttpStatus.UnprocessableEntity, message, details);
   }
@@ -119,7 +119,7 @@ export class ValidationException extends HttpException {
 export class TooManyRequestsException extends HttpException {
   constructor(
     message: string = "Too Many Requests",
-    details?: ExceptionDetails,
+    details?: ExceptionDetails
   ) {
     super(HttpStatus.TooManyRequests, message, details);
   }
@@ -129,7 +129,7 @@ export class TooManyRequestsException extends HttpException {
 export class InternalServerErrorException extends HttpException {
   constructor(
     message: string = "Internal Server Error",
-    details?: ExceptionDetails,
+    details?: ExceptionDetails
   ) {
     super(HttpStatus.InternalServerError, message, details);
   }
@@ -150,7 +150,7 @@ export class BadGatewayException extends HttpException {
 export class ServiceUnavailableException extends HttpException {
   constructor(
     message: string = "Service Unavailable",
-    details?: ExceptionDetails,
+    details?: ExceptionDetails
   ) {
     super(HttpStatus.ServiceUnavailable, message, details);
   }

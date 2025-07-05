@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BaseRepository } from '@/repositories/base.repository';
-import { IBaseEntity } from '@/models/entities/base.entity';
-import { BaseFactory } from '../../factories/base.factory';
-import { DatabaseFactory } from '../../factories/database.factory';
-import { TestHelpers } from '../../utils/test.helpers';
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { BaseRepository } from "@/repositories/base.repository";
+import { IBaseEntity } from "@/models/entities/base.entity";
+import { BaseFactory } from "../../factories/base.factory";
+import { DatabaseFactory } from "../../factories/database.factory";
+import { TestHelpers } from "../../utils/test.helpers";
 
 interface ITestEntity extends IBaseEntity {
   name: string;
@@ -11,10 +11,10 @@ interface ITestEntity extends IBaseEntity {
 }
 
 class TestRepository extends BaseRepository<ITestEntity> {
-  protected tableName = 'test_table';
+  protected tableName = "test_table";
 }
 
-describe('BaseRepository', () => {
+describe("BaseRepository", () => {
   let repository: TestRepository;
   let mockSupabaseClient: any;
   let mockQueryBuilder: any;
@@ -44,14 +44,14 @@ describe('BaseRepository', () => {
         maybeSingle: vi.fn().mockReturnThis(),
         throwOnError: vi.fn().mockReturnThis(),
       };
-      
+
       // Make all methods return the same builder object to support chaining
       Object.keys(builder).forEach(key => {
-        if (typeof (builder as any)[key] === 'function') {
+        if (typeof (builder as any)[key] === "function") {
           (builder as any)[key].mockReturnValue(builder);
         }
       });
-      
+
       return builder;
     };
 
@@ -67,11 +67,19 @@ describe('BaseRepository', () => {
     (repository as any).supabase = mockSupabaseClient;
   });
 
-  describe('findMany', () => {
-    it('should return all entities when no pagination is provided', async () => {
+  describe("findMany", () => {
+    it("should return all entities when no pagination is provided", async () => {
       const testEntities = [
-        { ...BaseFactory.createBaseEntity(), name: 'Test 1', email: 'test1@example.com' },
-        { ...BaseFactory.createBaseEntity(), name: 'Test 2', email: 'test2@example.com' },
+        {
+          ...BaseFactory.createBaseEntity(),
+          name: "Test 1",
+          email: "test1@example.com",
+        },
+        {
+          ...BaseFactory.createBaseEntity(),
+          name: "Test 2",
+          email: "test2@example.com",
+        },
       ];
 
       mockQueryBuilder.eq.mockResolvedValue({
@@ -82,13 +90,17 @@ describe('BaseRepository', () => {
       const result = await repository.findMany();
 
       expect(result).toEqual(testEntities);
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('test_table');
+      expect(mockSupabaseClient.from).toHaveBeenCalledWith("test_table");
       expect(mockQueryBuilder.select).toHaveBeenCalledWith();
     });
 
-    it('should exclude soft-deleted entities by default', async () => {
+    it("should exclude soft-deleted entities by default", async () => {
       const testEntities = [
-        { ...BaseFactory.createBaseEntity(), name: 'Test 1', email: 'test1@example.com' },
+        {
+          ...BaseFactory.createBaseEntity(),
+          name: "Test 1",
+          email: "test1@example.com",
+        },
       ];
 
       mockQueryBuilder.eq.mockResolvedValue({
@@ -98,23 +110,28 @@ describe('BaseRepository', () => {
 
       await repository.findMany();
 
-      expect(mockQueryBuilder.eq).toHaveBeenCalledWith('deleted_at', null);
+      expect(mockQueryBuilder.eq).toHaveBeenCalledWith("deleted_at", null);
     });
 
-
-    it('should handle database errors', async () => {
+    it("should handle database errors", async () => {
       mockQueryBuilder.eq.mockResolvedValue({
         data: null,
-        error: { message: 'Database connection failed' },
+        error: { message: "Database connection failed" },
       });
 
-      await expect(repository.findMany()).rejects.toThrow('Database connection failed');
+      await expect(repository.findMany()).rejects.toThrow(
+        "Database connection failed"
+      );
     });
   });
 
-  describe('findById', () => {
-    it('should return entity when found', async () => {
-      const testEntity = { ...BaseFactory.createBaseEntity(), name: 'Test', email: 'test@example.com' };
+  describe("findById", () => {
+    it("should return entity when found", async () => {
+      const testEntity = {
+        ...BaseFactory.createBaseEntity(),
+        name: "Test",
+        email: "test@example.com",
+      };
 
       mockQueryBuilder.single.mockResolvedValue({
         data: testEntity,
@@ -124,35 +141,37 @@ describe('BaseRepository', () => {
       const result = await repository.findById(testEntity.id);
 
       expect(result).toEqual(testEntity);
-      expect(mockQueryBuilder.eq).toHaveBeenCalledWith('id', testEntity.id);
-      expect(mockQueryBuilder.eq).toHaveBeenCalledWith('deleted_at', null);
+      expect(mockQueryBuilder.eq).toHaveBeenCalledWith("id", testEntity.id);
+      expect(mockQueryBuilder.eq).toHaveBeenCalledWith("deleted_at", null);
       expect(mockQueryBuilder.single).toHaveBeenCalled();
     });
 
-    it('should return null when entity not found', async () => {
+    it("should return null when entity not found", async () => {
       mockQueryBuilder.single.mockResolvedValue({
         data: null,
-        error: { code: 'PGRST116' }, // Not found error
+        error: { code: "PGRST116" }, // Not found error
       });
 
-      const result = await repository.findById('non-existent-id');
+      const result = await repository.findById("non-existent-id");
 
       expect(result).toBeNull();
     });
 
-    it('should throw error for other database errors', async () => {
+    it("should throw error for other database errors", async () => {
       mockQueryBuilder.single.mockResolvedValue({
         data: null,
-        error: { message: 'Database connection failed', code: 'PGRST000' },
+        error: { message: "Database connection failed", code: "PGRST000" },
       });
 
-      await expect(repository.findById('test-id')).rejects.toThrow('Database connection failed');
+      await expect(repository.findById("test-id")).rejects.toThrow(
+        "Database connection failed"
+      );
     });
   });
 
-  describe('create', () => {
-    it('should create new entity successfully', async () => {
-      const newEntity = { name: 'New Test', email: 'newtest@example.com' };
+  describe("create", () => {
+    it("should create new entity successfully", async () => {
+      const newEntity = { name: "New Test", email: "newtest@example.com" };
       const createdEntity = { ...BaseFactory.createBaseEntity(), ...newEntity };
 
       mockQueryBuilder.single.mockResolvedValue({
@@ -174,23 +193,28 @@ describe('BaseRepository', () => {
       expect(mockQueryBuilder.single).toHaveBeenCalled();
     });
 
-    it('should handle creation errors', async () => {
-      const newEntity = { name: 'New Test', email: 'newtest@example.com' };
+    it("should handle creation errors", async () => {
+      const newEntity = { name: "New Test", email: "newtest@example.com" };
 
       mockQueryBuilder.single.mockResolvedValue({
         data: null,
-        error: { message: 'Duplicate key violation' },
+        error: { message: "Duplicate key violation" },
       });
 
-      await expect(repository.create(newEntity)).rejects.toThrow('Duplicate key violation');
+      await expect(repository.create(newEntity)).rejects.toThrow(
+        "Duplicate key violation"
+      );
     });
   });
 
-  describe('update', () => {
-    it('should update entity successfully', async () => {
-      const entityId = 'test-id';
-      const updateData = { name: 'Updated Test' };
-      const updatedEntity = { ...BaseFactory.createBaseEntity(), ...updateData };
+  describe("update", () => {
+    it("should update entity successfully", async () => {
+      const entityId = "test-id";
+      const updateData = { name: "Updated Test" };
+      const updatedEntity = {
+        ...BaseFactory.createBaseEntity(),
+        ...updateData,
+      };
 
       mockQueryBuilder.single.mockResolvedValue({
         data: updatedEntity,
@@ -206,23 +230,25 @@ describe('BaseRepository', () => {
           updated_at: expect.any(String),
         })
       );
-      expect(mockQueryBuilder.eq).toHaveBeenCalledWith('id', entityId);
-      expect(mockQueryBuilder.eq).toHaveBeenCalledWith('deleted_at', null);
+      expect(mockQueryBuilder.eq).toHaveBeenCalledWith("id", entityId);
+      expect(mockQueryBuilder.eq).toHaveBeenCalledWith("deleted_at", null);
     });
 
-    it('should handle update errors', async () => {
+    it("should handle update errors", async () => {
       mockQueryBuilder.single.mockResolvedValue({
         data: null,
-        error: { message: 'Update failed' },
+        error: { message: "Update failed" },
       });
 
-      await expect(repository.update('test-id', { name: 'Updated' })).rejects.toThrow('Update failed');
+      await expect(
+        repository.update("test-id", { name: "Updated" })
+      ).rejects.toThrow("Update failed");
     });
   });
 
-  describe('hardDelete', () => {
-    it('should hard delete entity successfully', async () => {
-      const entityId = 'test-id';
+  describe("hardDelete", () => {
+    it("should hard delete entity successfully", async () => {
+      const entityId = "test-id";
 
       mockQueryBuilder.eq.mockResolvedValue({
         data: null,
@@ -232,22 +258,23 @@ describe('BaseRepository', () => {
       await repository.hardDelete(entityId);
 
       expect(mockQueryBuilder.delete).toHaveBeenCalled();
-      expect(mockQueryBuilder.eq).toHaveBeenCalledWith('id', entityId);
+      expect(mockQueryBuilder.eq).toHaveBeenCalledWith("id", entityId);
     });
 
-    it('should handle deletion errors', async () => {
+    it("should handle deletion errors", async () => {
       mockQueryBuilder.eq.mockResolvedValue({
         data: null,
-        error: { message: 'Foreign key constraint violation' },
+        error: { message: "Foreign key constraint violation" },
       });
 
-      await expect(repository.hardDelete('test-id')).rejects.toThrow('Foreign key constraint violation');
+      await expect(repository.hardDelete("test-id")).rejects.toThrow(
+        "Foreign key constraint violation"
+      );
     });
   });
 
-
-  describe('findWithPagination', () => {
-    it('should return paginated results', async () => {
+  describe("findWithPagination", () => {
+    it("should return paginated results", async () => {
       const testEntities = BaseFactory.createMultipleEntities(5);
       const paginationOptions = { page: 1, limit: 3 };
 
@@ -268,7 +295,7 @@ describe('BaseRepository', () => {
       expect(mockQueryBuilder.range).toHaveBeenCalledWith(0, 2);
     });
 
-    it('should handle empty results', async () => {
+    it("should handle empty results", async () => {
       const paginationOptions = { page: 1, limit: 10 };
 
       mockQueryBuilder.range.mockResolvedValue({
@@ -286,8 +313,8 @@ describe('BaseRepository', () => {
     });
   });
 
-  describe('count', () => {
-    it('should return total count', async () => {
+  describe("count", () => {
+    it("should return total count", async () => {
       mockQueryBuilder.eq.mockResolvedValue({
         data: null,
         error: null,
@@ -297,42 +324,44 @@ describe('BaseRepository', () => {
       const result = await repository.count();
 
       expect(result).toBe(15);
-      expect(mockQueryBuilder.select).toHaveBeenCalledWith('*', { count: 'exact', head: true });
+      expect(mockQueryBuilder.select).toHaveBeenCalledWith("*", {
+        count: "exact",
+        head: true,
+      });
     });
 
-    it('should handle count errors', async () => {
+    it("should handle count errors", async () => {
       mockQueryBuilder.eq.mockResolvedValue({
         data: null,
-        error: { message: 'Count failed' },
+        error: { message: "Count failed" },
         count: null,
       });
 
-      await expect(repository.count()).rejects.toThrow('Count failed');
+      await expect(repository.count()).rejects.toThrow("Count failed");
     });
   });
 
-  describe('exists', () => {
-    it('should return true when entity exists', async () => {
+  describe("exists", () => {
+    it("should return true when entity exists", async () => {
       mockQueryBuilder.single.mockResolvedValue({
-        data: { id: 'test-id' },
+        data: { id: "test-id" },
         error: null,
       });
 
-      const result = await repository.exists('test-id');
+      const result = await repository.exists("test-id");
 
       expect(result).toBe(true);
     });
 
-    it('should return false when entity does not exist', async () => {
+    it("should return false when entity does not exist", async () => {
       mockQueryBuilder.single.mockResolvedValue({
         data: null,
-        error: { code: 'PGRST116' },
+        error: { code: "PGRST116" },
       });
 
-      const result = await repository.exists('non-existent-id');
+      const result = await repository.exists("non-existent-id");
 
       expect(result).toBe(false);
     });
   });
-
 });

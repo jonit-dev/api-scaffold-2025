@@ -65,7 +65,7 @@ export class TestController {
 
       case "unauthorized":
         throw new Unauthorized(
-          "You are not authorized to access this resource",
+          "You are not authorized to access this resource"
         );
 
       case "forbidden":

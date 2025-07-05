@@ -1,20 +1,25 @@
 # TASK-009: User Service and Controller Implementation
 
 ## Epic
+
 User Management
 
 ## Story Points
+
 6
 
 ## Priority
+
 High
 
 ## Description
+
 Create user service with business logic and user controller with CRUD operations, implementing proper authorization and data validation.
 
 ## Acceptance Criteria
 
 ### ✅ User Service
+
 - [ ] Create `src/services/user.service.ts`
 - [ ] Implement user creation with validation
 - [ ] Add user update functionality
@@ -25,6 +30,7 @@ Create user service with business logic and user controller with CRUD operations
 - [ ] Add user status management
 
 ### ✅ User Controller
+
 - [ ] Create `src/controllers/user.controller.ts`
 - [ ] Implement get all users endpoint (`GET /api/users`)
 - [ ] Create get user by ID endpoint (`GET /api/users/:id`)
@@ -35,6 +41,7 @@ Create user service with business logic and user controller with CRUD operations
 - [ ] Implement user profile endpoints
 
 ### ✅ Authorization & Permissions
+
 - [ ] Implement role-based access control
 - [ ] Add user self-management permissions
 - [ ] Create admin-only operations
@@ -42,6 +49,7 @@ Create user service with business logic and user controller with CRUD operations
 - [ ] Add permission validation for sensitive operations
 
 ### ✅ Data Validation & Transformation
+
 - [ ] Validate all user input data
 - [ ] Implement data transformation for responses
 - [ ] Add pagination for user lists
@@ -51,6 +59,7 @@ Create user service with business logic and user controller with CRUD operations
 ## Technical Requirements
 
 ### User Service Structure
+
 ```typescript
 @Service()
 export class UserService {
@@ -58,9 +67,11 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     // Validate email uniqueness
-    const existingUser = await this.userRepository.findByEmail(createUserDto.email);
+    const existingUser = await this.userRepository.findByEmail(
+      createUserDto.email
+    );
     if (existingUser) {
-      throw new ValidationException('Email already exists');
+      throw new ValidationException("Email already exists");
     }
 
     // Hash password if provided
@@ -73,7 +84,7 @@ export class UserService {
     const user = await this.userRepository.create({
       ...createUserDto,
       password_hash: passwordHash,
-      status: UserStatus.ACTIVE
+      status: UserStatus.ACTIVE,
     });
 
     return this.mapToResponseDto(user);
@@ -84,7 +95,11 @@ export class UserService {
     limit: number = 10,
     filters?: UserFilters
   ): Promise<PaginatedResponse<UserResponseDto>> {
-    const { users, total } = await this.userRepository.findWithPagination(page, limit, filters);
+    const { users, total } = await this.userRepository.findWithPagination(
+      page,
+      limit,
+      filters
+    );
 
     return {
       data: users.map(user => this.mapToResponseDto(user)),
@@ -92,31 +107,36 @@ export class UserService {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 
   async findById(id: string): Promise<UserResponseDto> {
     const user = await this.userRepository.findById(id);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     return this.mapToResponseDto(user);
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserResponseDto> {
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto
+  ): Promise<UserResponseDto> {
     const user = await this.userRepository.findById(id);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     // Check email uniqueness if email is being updated
     if (updateUserDto.email && updateUserDto.email !== user.email) {
-      const existingUser = await this.userRepository.findByEmail(updateUserDto.email);
+      const existingUser = await this.userRepository.findByEmail(
+        updateUserDto.email
+      );
       if (existingUser) {
-        throw new ValidationException('Email already exists');
+        throw new ValidationException("Email already exists");
       }
     }
 
@@ -127,7 +147,7 @@ export class UserService {
   async delete(id: string): Promise<void> {
     const user = await this.userRepository.findById(id);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     await this.userRepository.softDelete(id);
@@ -136,14 +156,18 @@ export class UserService {
   async updateStatus(id: string, status: UserStatus): Promise<UserResponseDto> {
     const user = await this.userRepository.findById(id);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     const updatedUser = await this.userRepository.update(id, { status });
     return this.mapToResponseDto(updatedUser);
   }
 
-  async search(query: string, page: number = 1, limit: number = 10): Promise<PaginatedResponse<UserResponseDto>> {
+  async search(
+    query: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PaginatedResponse<UserResponseDto>> {
     const filters: UserFilters = { search: query };
     return this.findAll(page, limit, filters);
   }
@@ -161,7 +185,7 @@ export class UserService {
       avatar_url: user.avatar_url,
       last_login: user.last_login,
       created_at: user.created_at,
-      updated_at: user.updated_at
+      updated_at: user.updated_at,
     };
   }
 
@@ -173,73 +197,76 @@ export class UserService {
 ```
 
 ### User Controller Structure
+
 ```typescript
-@JsonController('/api/users')
+@JsonController("/api/users")
 @Service()
 export class UserController {
   constructor(private userService: UserService) {}
 
-  @Get('/')
+  @Get("/")
   @RequireRole(UserRole.ADMIN, UserRole.MODERATOR)
   async getUsers(
-    @QueryParam('page') page: number = 1,
-    @QueryParam('limit') limit: number = 10,
-    @QueryParam('role') role?: UserRole,
-    @QueryParam('status') status?: UserStatus,
-    @QueryParam('search') search?: string
+    @QueryParam("page") page: number = 1,
+    @QueryParam("limit") limit: number = 10,
+    @QueryParam("role") role?: UserRole,
+    @QueryParam("status") status?: UserStatus,
+    @QueryParam("search") search?: string
   ): Promise<ApiResponse<PaginatedResponse<UserResponseDto>>> {
     const filters: UserFilters = { role, status, search };
     const result = await this.userService.findAll(page, limit, filters);
 
     return {
       success: true,
-      message: 'Users retrieved successfully',
-      data: result
+      message: "Users retrieved successfully",
+      data: result,
     };
   }
 
-  @Get('/:id')
+  @Get("/:id")
   @Authenticated()
   async getUser(
-    @Param('id') id: string,
+    @Param("id") id: string,
     @CurrentUser() currentUser: JwtPayload
   ): Promise<ApiResponse<UserResponseDto>> {
     // Users can only access their own profile or admins can access any
     if (currentUser.userId !== id && currentUser.role !== UserRole.ADMIN) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException("Access denied");
     }
 
     const result = await this.userService.findById(id);
 
     return {
       success: true,
-      message: 'User retrieved successfully',
-      data: result
+      message: "User retrieved successfully",
+      data: result,
     };
   }
 
-  @Post('/')
+  @Post("/")
   @RequireRole(UserRole.ADMIN)
-  async createUser(@Body() createUserDto: CreateUserDto): Promise<ApiResponse<UserResponseDto>> {
+  async createUser(
+    @Body() createUserDto: CreateUserDto
+  ): Promise<ApiResponse<UserResponseDto>> {
     const result = await this.userService.create(createUserDto);
 
     return {
       success: true,
-      message: 'User created successfully',
-      data: result
+      message: "User created successfully",
+      data: result,
     };
   }
 
-  @Put('/:id')
+  @Put("/:id")
   @Authenticated()
   async updateUser(
-    @Param('id') id: string,
+    @Param("id") id: string,
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser() currentUser: JwtPayload
   ): Promise<ApiResponse<UserResponseDto>> {
     // Users can only update their own profile or admins can update any
     if (currentUser.userId !== id && currentUser.role !== UserRole.ADMIN) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException("Access denied");
     }
 
     // Non-admins cannot update role or status
@@ -252,83 +279,92 @@ export class UserController {
 
     return {
       success: true,
-      message: 'User updated successfully',
-      data: result
+      message: "User updated successfully",
+      data: result,
     };
   }
 
-  @Delete('/:id')
+  @Delete("/:id")
   @RequireRole(UserRole.ADMIN)
-  async deleteUser(@Param('id') id: string): Promise<ApiResponse<void>> {
+  async deleteUser(@Param("id") id: string): Promise<ApiResponse<void>> {
     await this.userService.delete(id);
 
     return {
       success: true,
-      message: 'User deleted successfully'
+      message: "User deleted successfully",
     };
   }
 
-  @Get('/search')
+  @Get("/search")
   @RequireRole(UserRole.ADMIN, UserRole.MODERATOR)
   async searchUsers(
-    @QueryParam('q') query: string,
-    @QueryParam('page') page: number = 1,
-    @QueryParam('limit') limit: number = 10
+    @QueryParam("q") query: string,
+    @QueryParam("page") page: number = 1,
+    @QueryParam("limit") limit: number = 10
   ): Promise<ApiResponse<PaginatedResponse<UserResponseDto>>> {
     const result = await this.userService.search(query, page, limit);
 
     return {
       success: true,
-      message: 'User search completed successfully',
-      data: result
+      message: "User search completed successfully",
+      data: result,
     };
   }
 
-  @Put('/:id/status')
+  @Put("/:id/status")
   @RequireRole(UserRole.ADMIN)
   async updateUserStatus(
-    @Param('id') id: string,
+    @Param("id") id: string,
     @Body() updateStatusDto: UpdateUserStatusDto
   ): Promise<ApiResponse<UserResponseDto>> {
-    const result = await this.userService.updateStatus(id, updateStatusDto.status);
+    const result = await this.userService.updateStatus(
+      id,
+      updateStatusDto.status
+    );
 
     return {
       success: true,
-      message: 'User status updated successfully',
-      data: result
+      message: "User status updated successfully",
+      data: result,
     };
   }
 
-  @Get('/profile')
+  @Get("/profile")
   @Authenticated()
-  async getProfile(@CurrentUser() currentUser: JwtPayload): Promise<ApiResponse<UserResponseDto>> {
+  async getProfile(
+    @CurrentUser() currentUser: JwtPayload
+  ): Promise<ApiResponse<UserResponseDto>> {
     const result = await this.userService.findById(currentUser.userId);
 
     return {
       success: true,
-      message: 'Profile retrieved successfully',
-      data: result
+      message: "Profile retrieved successfully",
+      data: result,
     };
   }
 
-  @Put('/profile')
+  @Put("/profile")
   @Authenticated()
   async updateProfile(
     @CurrentUser() currentUser: JwtPayload,
     @Body() updateProfileDto: UpdateProfileDto
   ): Promise<ApiResponse<UserResponseDto>> {
-    const result = await this.userService.update(currentUser.userId, updateProfileDto);
+    const result = await this.userService.update(
+      currentUser.userId,
+      updateProfileDto
+    );
 
     return {
       success: true,
-      message: 'Profile updated successfully',
-      data: result
+      message: "Profile updated successfully",
+      data: result,
     };
   }
 }
 ```
 
 ### Additional DTOs
+
 ```typescript
 export class UpdateUserStatusDto {
   @IsEnum(UserStatus)
@@ -376,6 +412,7 @@ export interface PaginatedResponse<T> {
 ```
 
 ## Definition of Done
+
 - [ ] User service implements all CRUD operations
 - [ ] User controller has all required endpoints
 - [ ] Authorization rules properly implemented
@@ -387,6 +424,7 @@ export interface PaginatedResponse<T> {
 - [ ] Permission checks enforced
 
 ## Testing Strategy
+
 - [ ] Test all CRUD operations
 - [ ] Verify authorization rules
 - [ ] Test pagination and filtering
@@ -397,10 +435,12 @@ export interface PaginatedResponse<T> {
 - [ ] Check response format consistency
 
 ## Dependencies
+
 - TASK-007: Authentication Middleware and Route Protection
 - TASK-005: User Model and Repository Implementation
 
 ## Notes
+
 - Implement proper logging for user operations
 - Ensure sensitive data is never exposed
 - Test permission rules thoroughly

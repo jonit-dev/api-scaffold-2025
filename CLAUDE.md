@@ -7,3 +7,6 @@
 - Follow existing project structure and naming conventions
 - Run tests / lint / type checks proactively, after changes.
 - To validate endpoints, use `curl`
+- When throwing errors, favor usage of src/exceptions/http-exceptions.ts
+- Docker containers debugging, please use docker mcp
+- Use context7 to fetch docs about libs, if needed.

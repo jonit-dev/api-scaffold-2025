@@ -1,20 +1,25 @@
 # TASK-005: User Model and Repository Implementation
 
 ## Epic
+
 User Management
 
 ## Story Points
+
 5
 
 ## Priority
+
 High
 
 ## Description
+
 Create the user entity, DTOs, and repository implementation to establish the core user management functionality with proper data access patterns.
 
 ## Acceptance Criteria
 
 ### ✅ User Entity
+
 - [ ] Create `src/models/entities/user.entity.ts`
 - [ ] Define user entity with all required fields
 - [ ] Include timestamps (created_at, updated_at)
@@ -23,6 +28,7 @@ Create the user entity, DTOs, and repository implementation to establish the cor
 - [ ] Add field validation rules
 
 ### ✅ User DTOs
+
 - [ ] Create `src/models/dtos/user/create-user.dto.ts`
 - [ ] Create `src/models/dtos/user/update-user.dto.ts`
 - [ ] Create `src/models/dtos/user/user-response.dto.ts`
@@ -31,6 +37,7 @@ Create the user entity, DTOs, and repository implementation to establish the cor
 - [ ] Add password field handling (exclude from responses)
 
 ### ✅ User Repository
+
 - [ ] Create `src/repositories/user.repository.ts`
 - [ ] Extend base repository functionality
 - [ ] Implement user-specific query methods
@@ -39,6 +46,7 @@ Create the user entity, DTOs, and repository implementation to establish the cor
 - [ ] Add user search and filtering methods
 
 ### ✅ User Enums
+
 - [ ] Create `src/models/enums/user-roles.enum.ts`
 - [ ] Create `src/models/enums/user-status.enum.ts`
 - [ ] Define all possible user roles
@@ -48,6 +56,7 @@ Create the user entity, DTOs, and repository implementation to establish the cor
 ## Technical Requirements
 
 ### User Entity Structure
+
 ```typescript
 export interface UserEntity {
   id: string;
@@ -68,6 +77,7 @@ export interface UserEntity {
 ```
 
 ### User DTOs
+
 ```typescript
 export class CreateUserDto {
   @IsEmail()
@@ -111,28 +121,29 @@ export class UserResponseDto {
   last_login?: Date;
   created_at: Date;
   updated_at: Date;
-  
+
   // Password and sensitive fields excluded
 }
 ```
 
 ### User Repository Implementation
+
 ```typescript
 @Service()
 export class UserRepository extends BaseRepository<UserEntity> {
-  constructor(@Inject('supabase') supabase: SupabaseClient) {
-    super(supabase, 'users');
+  constructor(@Inject("supabase") supabase: SupabaseClient) {
+    super(supabase, "users");
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
     const { data, error } = await this.supabase
       .from(this.tableName)
-      .select('*')
-      .eq('email', email)
-      .eq('deleted_at', null)
+      .select("*")
+      .eq("email", email)
+      .eq("deleted_at", null)
       .single();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error && error.code !== "PGRST116") {
       throw new DatabaseException(error.message);
     }
     return data;
@@ -146,28 +157,30 @@ export class UserRepository extends BaseRepository<UserEntity> {
     const offset = (page - 1) * limit;
     let query = this.supabase
       .from(this.tableName)
-      .select('*', { count: 'exact' })
-      .eq('deleted_at', null);
+      .select("*", { count: "exact" })
+      .eq("deleted_at", null);
 
     if (filters?.role) {
-      query = query.eq('role', filters.role);
+      query = query.eq("role", filters.role);
     }
     if (filters?.status) {
-      query = query.eq('status', filters.status);
+      query = query.eq("status", filters.status);
     }
     if (filters?.search) {
-      query = query.or(`first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
+      query = query.or(
+        `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`
+      );
     }
 
     const { data, error, count } = await query
       .range(offset, offset + limit - 1)
-      .order('created_at', { ascending: false });
+      .order("created_at", { ascending: false });
 
     if (error) throw new DatabaseException(error.message);
 
     return {
       users: data || [],
-      total: count || 0
+      total: count || 0,
     };
   }
 
@@ -175,7 +188,7 @@ export class UserRepository extends BaseRepository<UserEntity> {
     const { error } = await this.supabase
       .from(this.tableName)
       .update({ deleted_at: new Date().toISOString() })
-      .eq('id', id);
+      .eq("id", id);
 
     if (error) throw new DatabaseException(error.message);
     return true;
@@ -185,7 +198,7 @@ export class UserRepository extends BaseRepository<UserEntity> {
     const { error } = await this.supabase
       .from(this.tableName)
       .update({ last_login: new Date().toISOString() })
-      .eq('id', id);
+      .eq("id", id);
 
     if (error) throw new DatabaseException(error.message);
   }
@@ -193,22 +206,24 @@ export class UserRepository extends BaseRepository<UserEntity> {
 ```
 
 ### User Enums
+
 ```typescript
 export enum UserRole {
-  ADMIN = 'admin',
-  USER = 'user',
-  MODERATOR = 'moderator'
+  ADMIN = "admin",
+  USER = "user",
+  MODERATOR = "moderator",
 }
 
 export enum UserStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  SUSPENDED = 'suspended',
-  PENDING_VERIFICATION = 'pending_verification'
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  SUSPENDED = "suspended",
+  PENDING_VERIFICATION = "pending_verification",
 }
 ```
 
 ## Definition of Done
+
 - [ ] User entity properly defined with all fields
 - [ ] All DTOs created with proper validation
 - [ ] User repository extends base repository correctly
@@ -220,6 +235,7 @@ export enum UserStatus {
 - [ ] TypeScript types are accurate throughout
 
 ## Testing Strategy
+
 - [ ] Test user entity field validation
 - [ ] Verify DTO validation rules
 - [ ] Test repository CRUD operations
@@ -230,9 +246,11 @@ export enum UserStatus {
 - [ ] Verify enum validation works correctly
 
 ## Dependencies
+
 - TASK-003: Supabase Integration and Database Configuration
 
 ## Notes
+
 - Never store plain text passwords
 - Ensure sensitive data is excluded from response DTOs
 - Consider adding indexes for frequently queried fields
