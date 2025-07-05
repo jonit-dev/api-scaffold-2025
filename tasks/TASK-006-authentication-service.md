@@ -54,58 +54,114 @@ Integrate Supabase authentication service for secure user authentication, levera
 
 ## Technical Requirements
 
+### Environment Configuration
+```typescript
+// src/config/env.ts
+interface Environment {
+  SUPABASE_URL: string;
+  SUPABASE_ANON_KEY: string;
+  SUPABASE_SERVICE_KEY: string;
+  FRONTEND_URL: string;
+  NODE_ENV: 'development' | 'production' | 'test';
+}
+
+function getEnvVar(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Environment variable ${name} is not set`);
+  }
+  return value;
+}
+
+export const env: Environment = {
+  SUPABASE_URL: getEnvVar('SUPABASE_URL'),
+  SUPABASE_ANON_KEY: getEnvVar('SUPABASE_ANON_KEY'),
+  SUPABASE_SERVICE_KEY: getEnvVar('SUPABASE_SERVICE_KEY'),
+  FRONTEND_URL: getEnvVar('FRONTEND_URL'),
+  NODE_ENV: (process.env.NODE_ENV as Environment['NODE_ENV']) || 'development'
+};
+```
+
+### Supabase Configuration
+```typescript
+// src/config/supabase.ts
+import { createClient } from '@supabase/supabase-js';
+import { env } from './env';
+
+export const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false
+  }
+});
+
+// Service client for admin operations
+export const supabaseAdmin = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
+```
+
 ### Authentication Service Structure
 ```typescript
 @Service()
 export class AuthService {
   constructor(
     private userRepository: UserRepository,
-    private emailService: EmailService
+    private supabaseClient = supabase
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    // Check if user exists
-    const existingUser = await this.userRepository.findByEmail(registerDto.email);
-    if (existingUser) {
-      throw new AuthException('User already exists');
+    // Register user with Supabase Auth
+    const { data: authData, error: authError } = await this.supabaseClient.auth.signUp({
+      email: registerDto.email,
+      password: registerDto.password,
+      options: {
+        data: {
+          first_name: registerDto.first_name,
+          last_name: registerDto.last_name
+        }
+      }
+    });
+
+    if (authError) {
+      throw new AuthException(authError.message);
     }
 
-    // Hash password
-    const hashedPassword = await this.hashPassword(registerDto.password);
-
-    // Create user
+    // Create user profile in our database
     const user = await this.userRepository.create({
-      ...registerDto,
-      password_hash: hashedPassword,
+      id: authData.user!.id,
+      email: registerDto.email,
+      first_name: registerDto.first_name,
+      last_name: registerDto.last_name,
+      role: UserRole.USER,
       status: UserStatus.PENDING_VERIFICATION
     });
 
-    // Generate verification token
-    const verificationToken = this.generateVerificationToken(user.id);
-    
-    // Send verification email
-    await this.emailService.sendVerificationEmail(user.email, verificationToken);
-
-    // Generate JWT tokens
-    const tokens = this.generateTokens(user);
-
     return {
       user: this.mapToUserResponse(user),
-      tokens
+      session: authData.session
     };
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
-    // Find user by email
-    const user = await this.userRepository.findByEmail(loginDto.email);
-    if (!user) {
+    // Login with Supabase Auth
+    const { data: authData, error: authError } = await this.supabaseClient.auth.signInWithPassword({
+      email: loginDto.email,
+      password: loginDto.password
+    });
+
+    if (authError) {
       throw new AuthException('Invalid credentials');
     }
 
-    // Verify password
-    const isPasswordValid = await this.verifyPassword(loginDto.password, user.password_hash);
-    if (!isPasswordValid) {
-      throw new AuthException('Invalid credentials');
+    // Get user profile from our database
+    const user = await this.userRepository.findById(authData.user!.id);
+    if (!user) {
+      throw new AuthException('User profile not found');
     }
 
     // Check user status
@@ -116,61 +172,79 @@ export class AuthService {
     // Update last login
     await this.userRepository.updateLastLogin(user.id);
 
-    // Generate tokens
-    const tokens = this.generateTokens(user);
-
     return {
       user: this.mapToUserResponse(user),
-      tokens
+      session: authData.session
     };
   }
 
-  async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<TokenResponseDto> {
-    const { refreshToken } = refreshTokenDto;
-    
-    // Verify refresh token
-    const payload = this.verifyToken(refreshToken, 'refresh');
-    
-    // Find user
-    const user = await this.userRepository.findById(payload.userId);
-    if (!user) {
-      throw new AuthException('Invalid refresh token');
+  async logout(accessToken: string): Promise<void> {
+    const { error } = await this.supabaseClient.auth.signOut();
+    if (error) {
+      throw new AuthException('Logout failed');
+    }
+  }
+
+  async refreshToken(refreshToken: string): Promise<SessionResponseDto> {
+    const { data: authData, error } = await this.supabaseClient.auth.refreshSession({
+      refresh_token: refreshToken
+    });
+
+    if (error) {
+      throw new AuthException('Token refresh failed');
     }
 
-    // Generate new tokens
-    return this.generateTokens(user);
-  }
-
-  private generateTokens(user: UserEntity): TokenResponseDto {
-    const payload = {
-      userId: user.id,
-      email: user.email,
-      role: user.role
-    };
-
-    const accessToken = jwt.sign(payload, config.jwt.secret, {
-      expiresIn: config.jwt.expiresIn
-    });
-
-    const refreshToken = jwt.sign(payload, config.jwt.refreshSecret, {
-      expiresIn: config.jwt.refreshExpiresIn
-    });
-
     return {
-      accessToken,
-      refreshToken,
-      tokenType: 'Bearer',
-      expiresIn: config.jwt.expiresIn
+      session: authData.session
     };
   }
 
-  private async hashPassword(password: string): Promise<string> {
-    const saltRounds = 12;
-    return bcrypt.hash(password, saltRounds);
+  async resetPassword(email: string): Promise<void> {
+    const { error } = await this.supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: `${env.FRONTEND_URL}/reset-password`
+    });
+
+    if (error) {
+      throw new AuthException('Password reset failed');
+    }
   }
 
-  private async verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-    return bcrypt.compare(password, hashedPassword);
+  async updatePassword(accessToken: string, newPassword: string): Promise<void> {
+    const { error } = await this.supabaseClient.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) {
+      throw new AuthException('Password update failed');
+    }
+  }
+
+  async verifyUser(accessToken: string): Promise<UserEntity> {
+    const { data: { user }, error } = await this.supabaseClient.auth.getUser(accessToken);
+    
+    if (error || !user) {
+      throw new AuthException('Invalid token');
+    }
+
+    const userProfile = await this.userRepository.findById(user.id);
+    if (!userProfile) {
+      throw new AuthException('User profile not found');
+    }
+
+    return userProfile;
+  }
+
+  private mapToUserResponse(user: UserEntity): UserResponseDto {
+    return {
+      id: user.id,
+      email: user.email,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      role: user.role,
+      status: user.status,
+      created_at: user.created_at,
+      updated_at: user.updated_at
+    };
   }
 }
 ```
@@ -215,54 +289,63 @@ export class RegisterDto {
 
 export class AuthResponseDto {
   user: UserResponseDto;
-  tokens: TokenResponseDto;
+  session: Session | null;
 }
 
-export class TokenResponseDto {
-  accessToken: string;
-  refreshToken: string;
-  tokenType: string;
-  expiresIn: string;
+export class SessionResponseDto {
+  session: Session | null;
+}
+
+export class RefreshTokenDto {
+  @IsString()
+  @IsNotEmpty()
+  refresh_token: string;
 }
 ```
 
-### JWT Configuration
+### Supabase Types
 ```typescript
-export const jwtConfig = {
-  secret: process.env.JWT_SECRET || 'your-secret-key',
-  expiresIn: process.env.JWT_EXPIRES_IN || '15m',
-  refreshSecret: process.env.JWT_REFRESH_SECRET || 'your-refresh-secret',
-  refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d'
-};
+import { Session, User } from '@supabase/supabase-js';
+
+export interface SupabaseUser extends User {
+  // Extended user properties from Supabase
+}
+
+export interface SupabaseSession extends Session {
+  // Extended session properties from Supabase
+}
 ```
 
 ## Definition of Done
-- [ ] User registration works with password hashing
-- [ ] Login validates credentials and returns JWT tokens
-- [ ] Refresh token mechanism functional
-- [ ] Password reset functionality implemented
-- [ ] Email verification system working
+- [ ] Supabase client properly configured with typed environment variables
+- [ ] User registration works via Supabase Auth
+- [ ] Login validates credentials through Supabase Auth
+- [ ] Session management handled by Supabase
+- [ ] Password reset functionality via Supabase Auth
+- [ ] Email verification system working through Supabase
 - [ ] All auth DTOs properly validated
-- [ ] JWT tokens properly signed and verified
+- [ ] User profile sync between Supabase Auth and local database
 - [ ] Authentication exceptions properly handled
 - [ ] Sensitive data properly excluded from responses
 
 ## Testing Strategy
 - [ ] Test user registration with valid/invalid data
 - [ ] Verify login with correct/incorrect credentials
-- [ ] Test JWT token generation and validation
+- [ ] Test Supabase session management
 - [ ] Check refresh token functionality
-- [ ] Test password hashing and comparison
+- [ ] Test password reset flow
 - [ ] Verify email verification process
 - [ ] Test authentication error handling
-- [ ] Check token expiration behavior
+- [ ] Check user profile sync between Supabase and local DB
+- [ ] Test environment variable loading
 
 ## Dependencies
 - TASK-005: User Model and Repository Implementation
 
 ## Notes
-- Use strong password hashing (bcrypt with high salt rounds)
-- Implement proper JWT token expiration
-- Consider implementing token blacklist for logout
-- Ensure sensitive operations are properly logged
-- Keep JWT payloads minimal but sufficient
+- Password hashing is handled by Supabase Auth
+- JWT tokens are managed by Supabase (no custom implementation needed)
+- Session management is handled by Supabase client
+- Ensure proper error handling for Supabase API calls
+- Keep user profile data in sync between Supabase Auth and local database
+- Use typed environment variables instead of direct process.env access

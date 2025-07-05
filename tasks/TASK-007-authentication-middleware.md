@@ -1,24 +1,24 @@
-# TASK-007: Authentication Middleware and Route Protection
+# TASK-007: Supabase Authentication Middleware and Route Protection
 
 ## Epic
 Authentication & Authorization
 
 ## Story Points
-5
+4
 
 ## Priority
 High
 
 ## Description
-Create authentication middleware to protect routes, validate JWT tokens, and implement role-based access control throughout the application.
+Create authentication middleware to protect routes using Supabase Auth, validate JWT tokens through Supabase, and implement role-based access control throughout the application.
 
 ## Acceptance Criteria
 
 ### ✅ Authentication Middleware
 - [ ] Create `src/middlewares/auth.middleware.ts`
-- [ ] Implement JWT token validation
+- [ ] Implement Supabase JWT token validation
 - [ ] Add token extraction from headers
-- [ ] Implement user context injection
+- [ ] Implement user context injection via Supabase
 - [ ] Add route protection functionality
 - [ ] Handle authentication errors gracefully
 
@@ -51,9 +51,12 @@ Create authentication middleware to protect routes, validate JWT tokens, and imp
 ```typescript
 @Middleware({ type: 'before' })
 export class AuthMiddleware implements ExpressMiddlewareInterface {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private supabaseClient = supabase
+  ) {}
 
-  use(request: Request, response: Response, next: NextFunction): void {
+  async use(request: Request, response: Response, next: NextFunction): Promise<void> {
     const token = this.extractTokenFromHeader(request);
     
     if (!token) {
@@ -61,11 +64,29 @@ export class AuthMiddleware implements ExpressMiddlewareInterface {
     }
 
     try {
-      const payload = this.verifyToken(token);
-      request.user = payload;
+      // Verify token with Supabase
+      const { data: { user }, error } = await this.supabaseClient.auth.getUser(token);
+      
+      if (error || !user) {
+        throw new AuthException('Invalid or expired token', 401);
+      }
+
+      // Get user profile from our database
+      const userProfile = await this.authService.getUserProfile(user.id);
+      
+      request.user = {
+        id: user.id,
+        email: user.email!,
+        role: userProfile.role,
+        supabaseUser: user
+      };
+      
       next();
     } catch (error) {
-      throw new AuthException('Invalid or expired token', 401);
+      if (error instanceof AuthException) {
+        throw error;
+      }
+      throw new AuthException('Authentication failed', 401);
     }
   }
 
@@ -83,14 +104,6 @@ export class AuthMiddleware implements ExpressMiddlewareInterface {
     }
 
     return token;
-  }
-
-  private verifyToken(token: string): JwtPayload {
-    try {
-      return jwt.verify(token, config.jwt.secret) as JwtPayload;
-    } catch (error) {
-      throw new AuthException('Invalid token', 401);
-    }
   }
 }
 ```
@@ -165,7 +178,16 @@ export function OptionalAuth() {
         const token = extractTokenFromHeader(request);
         if (token) {
           try {
-            request.user = jwt.verify(token, config.jwt.secret);
+            const { data: { user }, error } = await supabase.auth.getUser(token);
+            if (!error && user) {
+              const userProfile = await Container.get(AuthService).getUserProfile(user.id);
+              request.user = {
+                id: user.id,
+                email: user.email!,
+                role: userProfile.role,
+                supabaseUser: user
+              };
+            }
           } catch (error) {
             // Ignore invalid token for optional auth
           }
@@ -180,24 +202,25 @@ export function OptionalAuth() {
 
 ### Express Type Extensions
 ```typescript
+import { User } from '@supabase/supabase-js';
+
 declare global {
   namespace Express {
     interface Request {
-      user?: JwtPayload;
+      user?: AuthenticatedUser;
     }
   }
 }
 
-export interface JwtPayload {
-  userId: string;
+export interface AuthenticatedUser {
+  id: string;
   email: string;
   role: UserRole;
-  iat: number;
-  exp: number;
+  supabaseUser: User;
 }
 
 export interface AuthenticatedRequest extends Request {
-  user: JwtPayload;
+  user: AuthenticatedUser;
 }
 ```
 
@@ -210,7 +233,7 @@ export class UserController {
 
   @Get('/')
   @Authenticated()
-  async getUsers(@CurrentUser() user: JwtPayload): Promise<UserResponseDto[]> {
+  async getUsers(@CurrentUser() user: AuthenticatedUser): Promise<UserResponseDto[]> {
     return this.userService.findAll();
   }
 
@@ -222,8 +245,8 @@ export class UserController {
 
   @Get('/profile')
   @Authenticated()
-  async getProfile(@CurrentUser() user: JwtPayload): Promise<UserResponseDto> {
-    return this.userService.findById(user.userId);
+  async getProfile(@CurrentUser() user: AuthenticatedUser): Promise<UserResponseDto> {
+    return this.userService.findById(user.id);
   }
 
   @Delete('/:id')
@@ -235,32 +258,36 @@ export class UserController {
 ```
 
 ## Definition of Done
-- [ ] Authentication middleware properly validates JWT tokens
+- [ ] Authentication middleware properly validates Supabase JWT tokens
 - [ ] Role-based access control works correctly
 - [ ] Authentication decorators function as expected
-- [ ] Express Request interface properly extended
+- [ ] Express Request interface properly extended with Supabase user
 - [ ] Token extraction from headers working
 - [ ] User context properly injected into controllers
 - [ ] Error handling for authentication failures
 - [ ] Role hierarchy system implemented
-- [ ] Optional authentication decorator functional
+- [ ] Optional authentication decorator functional with Supabase
+- [ ] User profile sync between Supabase and local database
 
 ## Testing Strategy
-- [ ] Test middleware with valid/invalid tokens
+- [ ] Test middleware with valid/invalid Supabase tokens
 - [ ] Verify role-based access control
 - [ ] Test authentication decorators on controllers
-- [ ] Check user context injection
+- [ ] Check user context injection from Supabase
 - [ ] Test error handling for auth failures
 - [ ] Verify optional authentication behavior
-- [ ] Test token expiration handling
+- [ ] Test Supabase token expiration handling
 - [ ] Check role hierarchy logic
+- [ ] Test user profile retrieval from local database
 
 ## Dependencies
 - TASK-006: Authentication Service and JWT Implementation
 
 ## Notes
 - Ensure middleware order is correct (auth before rbac)
-- Keep JWT payload minimal but sufficient
+- Supabase handles JWT payload structure
 - Implement proper error responses for auth failures
-- Consider implementing token refresh in middleware
+- Token refresh is handled by Supabase client
 - Log authentication attempts for security monitoring
+- Maintain user profile data sync between Supabase and local DB
+- Handle Supabase API errors gracefully

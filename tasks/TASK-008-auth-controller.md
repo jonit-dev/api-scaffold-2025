@@ -1,28 +1,28 @@
-# TASK-008: Authentication Controller and API Endpoints
+# TASK-008: Supabase Authentication Controller and API Endpoints
 
 ## Epic
 Authentication & Authorization
 
 ## Story Points
-5
+4
 
 ## Priority
 High
 
 ## Description
-Create authentication controller with all necessary endpoints for user registration, login, token refresh, password reset, and email verification.
+Create authentication controller that wraps Supabase authentication with endpoints for user registration, login, logout, session refresh, password reset, and email verification.
 
 ## Acceptance Criteria
 
 ### ✅ Authentication Controller
 - [ ] Create `src/controllers/auth.controller.ts`
-- [ ] Implement registration endpoint (`POST /api/auth/register`)
-- [ ] Create login endpoint (`POST /api/auth/login`)
-- [ ] Add logout endpoint (`POST /api/auth/logout`)
-- [ ] Implement refresh token endpoint (`POST /api/auth/refresh`)
-- [ ] Add password reset request endpoint (`POST /api/auth/forgot-password`)
-- [ ] Create password reset endpoint (`POST /api/auth/reset-password`)
-- [ ] Implement email verification endpoint (`POST /api/auth/verify-email`)
+- [ ] Implement registration endpoint (`POST /api/auth/register`) via Supabase
+- [ ] Create login endpoint (`POST /api/auth/login`) via Supabase
+- [ ] Add logout endpoint (`POST /api/auth/logout`) via Supabase
+- [ ] Implement session refresh endpoint (`POST /api/auth/refresh`) via Supabase
+- [ ] Add password reset request endpoint (`POST /api/auth/forgot-password`) via Supabase
+- [ ] Create password update endpoint (`PUT /api/auth/update-password`) via Supabase
+- [ ] Add user profile endpoint (`GET /api/auth/me`) with local database sync
 
 ### ✅ Request Validation
 - [ ] Add proper validation to all endpoints

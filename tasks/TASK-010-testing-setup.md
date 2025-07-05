@@ -113,8 +113,9 @@ module.exports = {
 ### Test Setup
 ```typescript
 // tests/setup.ts
+import 'reflect-metadata'; // CRITICAL: Must be imported first for TypeDI
 import { Container } from 'typedi';
-import { createConnection } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
 // Load test environment variables
@@ -122,30 +123,60 @@ dotenv.config({ path: '.env.test' });
 
 // Global test setup
 beforeAll(async () => {
-  // Set up test database
-  const testDb = createConnection({
-    host: process.env.TEST_DB_HOST,
-    port: parseInt(process.env.TEST_DB_PORT || '5432'),
-    database: process.env.TEST_DB_NAME,
-    username: process.env.TEST_DB_USER,
-    password: process.env.TEST_DB_PASSWORD,
-  });
+  // Set up test Supabase client
+  const supabaseUrl = process.env.TEST_SUPABASE_URL || process.env.SUPABASE_URL;
+  const supabaseKey = process.env.TEST_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Supabase credentials not found in test environment');
+  }
 
-  // Clear and seed test database
-  await testDb.query('TRUNCATE TABLE users CASCADE');
+  const testSupabase = createClient(supabaseUrl, supabaseKey);
+
+  // Register test Supabase client in TypeDI container
+  Container.set('supabase', testSupabase);
+
+  // Clear and seed test database (if needed)
+  await clearTestData();
   await seedTestData();
 });
 
 afterAll(async () => {
   // Cleanup after all tests
-  await Container.reset();
+  await clearTestData();
+  Container.reset();
 });
 
 afterEach(async () => {
   // Cleanup after each test
   jest.clearAllMocks();
+  // Reset container instances for fresh test state
+  Container.reset();
 });
+
+async function clearTestData() {
+  // Clear test data from Supabase tables
+  const supabase = Container.get('supabase');
+  
+  // Clear tables in dependency order
+  await supabase.from('user_sessions').delete().neq('id', '');
+  await supabase.from('users').delete().neq('id', '');
+}
+
+async function seedTestData() {
+  // Seed any required test data
+  const supabase = Container.get('supabase');
+  
+  // Add any default test data here
+  // Example: Create test users, etc.
+}
 ```
+
+### TypeDI Testing Notes
+- Always import `reflect-metadata` first in test setup
+- Use `Container.reset()` to clear container state between tests
+- Register test-specific services (like test database) in the container
+- Use TypeDI's dependency injection in tests for consistency with application code
 
 ### Test Data Factory
 ```typescript
