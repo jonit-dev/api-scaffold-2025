@@ -1,3 +1,5 @@
+# Critical rules
+
 - use yarn
 - when debugging try: adding logging on the related flow, running `git diff`.
 - To explore folder structure: `tree -I 'node_modules|.git|dist|build' -L 3 --dirsfirst`
