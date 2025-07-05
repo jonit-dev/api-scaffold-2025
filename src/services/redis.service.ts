@@ -19,12 +19,12 @@ export class RedisService {
   /**
    * Set a key-value pair in Redis
    */
-  async set(key: string, value: object, ttl?: number): Promise<void> {
+  async set(key: string, value: object, ttl?: number): Promise<string> {
     const serializedValue = JSON.stringify(value);
     if (ttl) {
-      await this.client.setex(key, ttl, serializedValue);
+      return await this.client.setex(key, ttl, serializedValue);
     } else {
-      await this.client.set(key, serializedValue);
+      return await this.client.set(key, serializedValue);
     }
   }
 

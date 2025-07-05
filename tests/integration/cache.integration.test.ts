@@ -69,7 +69,7 @@ describe("Cache Integration Tests", () => {
 
       // First request - cache miss
       vi.mocked(redisService.get).mockResolvedValue(null);
-      vi.mocked(redisService.set).mockResolvedValue();
+      vi.mocked(redisService.set).mockResolvedValue("OK");
 
       const response1 = await request(app).get("/test").expect(200);
 
@@ -108,7 +108,7 @@ describe("Cache Integration Tests", () => {
       app.get(
         "/test-condition",
         cacheMiddleware({
-          condition: req => req.query.cache === "true",
+          condition: (req) => req.query.cache === "true",
         }),
         (req, res) => {
           res.json({ message: "Conditional cache" });

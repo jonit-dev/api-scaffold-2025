@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import request from "supertest";
 import { app } from "@/app";
 import { SupertestHelpers } from "../utils/supertest.helpers";
@@ -8,10 +8,11 @@ describe("Health Controller", () => {
   beforeEach(() => {
     // Setup test environment
     TestHelpers.setupMockSupabaseClient({
-      from: () => ({
-        select: () => ({
-          single: () =>
-            Promise.resolve({ data: null, error: { message: "Test" } }),
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi
+            .fn()
+            .mockResolvedValue({ data: null, error: { message: "Test" } }),
         }),
       }),
     });

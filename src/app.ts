@@ -11,8 +11,7 @@ import { AuthController } from "./controllers/auth.controller";
 import { TestAuthController } from "./controllers/test-auth.controller";
 import { CacheDemoController } from "./controllers/cache-demo.controller";
 import { GlobalErrorHandler } from "./middlewares/error.middleware";
-// Remove unused imports - middleware is applied via decorators in controllers
-import { decoratorCacheMiddleware } from "./middlewares/cache.middleware";
+import { CacheInterceptor } from "./interceptors/cache.interceptor";
 
 // Configure TypeDI container integration BEFORE importing any controllers
 useContainer(Container);
@@ -27,6 +26,7 @@ export const app = createExpressServer({
     CacheDemoController,
   ],
   middlewares: [GlobalErrorHandler],
+  interceptors: [CacheInterceptor],
 
   // Set global route prefix
   routePrefix: "",
@@ -55,10 +55,6 @@ export const app = createExpressServer({
     },
   },
 });
-
-// Apply additional middleware after routing-controllers setup
-// Apply cache middleware for decorator-based caching
-app.use(decoratorCacheMiddleware());
 
 // Apply global error handler as the last middleware
 app.use(GlobalErrorHandler.handle);

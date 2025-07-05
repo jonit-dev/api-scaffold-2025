@@ -3,25 +3,32 @@ import { Container } from "typedi";
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 import { beforeAll, afterAll, afterEach } from "vitest";
+import "./setup/redis.mock"; // Import centralized Redis mock
+import { resetRedisMock, getRedisMockInstance } from "./setup/redis.mock";
+import "./setup/supabase.mock"; // Import centralized Supabase mock
+import {
+  resetSupabaseMocks,
+  getSupabaseMockInstance,
+} from "./setup/supabase.mock";
+import { CacheInterceptor } from "@/interceptors/cache.interceptor";
+import { RedisService } from "@/services/redis.service";
 
 // Load test environment variables
 dotenv.config({ path: ".env.test" });
 
 // Global test setup
 beforeAll(async () => {
-  // Set up test Supabase client
-  const supabaseUrl = process.env.TEST_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supabaseKey =
-    process.env.TEST_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+  // Use centralized Supabase mock instead of real client
+  const mockSupabase = getSupabaseMockInstance();
+  const mockRedis = getRedisMockInstance();
 
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error("Supabase credentials not found in test environment");
-  }
+  // Register mock clients in TypeDI container
+  Container.set("supabase", mockSupabase);
+  Container.set("redis", mockRedis);
 
-  const testSupabase = createClient(supabaseUrl, supabaseKey);
-
-  // Register test Supabase client in TypeDI container
-  Container.set("supabase", testSupabase);
+  // Register services that tests might need
+  // RedisService will be created as needed and will use the mocked RedisConfig
+  Container.set(CacheInterceptor, new CacheInterceptor());
 
   // Clear and seed test database (if needed)
   await clearTestData();
@@ -35,29 +42,32 @@ afterAll(async () => {
 });
 
 afterEach(async () => {
-  // Cleanup after each test
-  // Reset container instances for fresh test state
-  Container.reset();
+  // Reset mock data between tests
+  resetRedisMock();
+  resetSupabaseMocks();
+
+  // Re-register essential services after Container.reset()
+  const mockSupabase = getSupabaseMockInstance();
+  const mockRedis = getRedisMockInstance();
+
+  Container.set("supabase", mockSupabase);
+  Container.set("redis", mockRedis);
+  Container.set(CacheInterceptor, new CacheInterceptor());
 });
 
 async function clearTestData() {
   try {
-    // Clear test data from Supabase tables
+    // Clear test data from Supabase mock
     const supabase = Container.get("supabase") as any;
 
-    // Only clear if we have a real supabase client
+    // Mock the cleanup calls - they don't need to do anything in tests
     if (supabase && typeof supabase.from === "function") {
-      // Clear tables in dependency order
-      const { error: userSessionsError } = await supabase
-        .from("user_sessions")
-        .delete()
-        .neq("id", "");
-      const { error: usersError } = await supabase
-        .from("users")
-        .delete()
-        .neq("id", "");
-      if (userSessionsError) throw userSessionsError;
-      if (usersError) throw usersError;
+      // Mock successful cleanup responses
+      supabase.from.mockReturnValue({
+        delete: () => ({
+          neq: () => Promise.resolve({ data: [], error: null }),
+        }),
+      });
     }
   } catch (error) {
     // In test environment, ignore cleanup errors
@@ -70,14 +80,12 @@ async function seedTestData() {
     // Seed any required test data
     const supabase = Container.get("supabase") as any;
 
-    // Only seed if we have a real supabase client
+    // Mock the seed calls - they don't need to do anything in tests
     if (supabase && typeof supabase.from === "function") {
-      // Add any default test data here
-      // Example: Create test users, etc.
-      const { error: seedError } = await supabase
-        .from("health_check")
-        .insert({ status: "healthy" });
-      if (seedError) throw seedError;
+      // Mock successful seed responses
+      supabase.from.mockReturnValue({
+        insert: () => Promise.resolve({ data: [], error: null }),
+      });
     }
   } catch (error) {
     // In test environment, ignore seeding errors

@@ -2,48 +2,28 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { Container } from "typedi";
 import { expect, vi } from "vitest";
 import { DatabaseFactory } from "../factories/database.factory";
+import {
+  getSupabaseMockInstance,
+  createSupabaseMock,
+  IMockSupabaseClient,
+} from "../setup/supabase.mock";
+import {
+  getRedisMockInstance,
+  createRedisMock,
+  IMockRedisClient,
+} from "../setup/redis.mock";
 
 export class TestHelpers {
-  static createMockSupabaseClient() {
-    const mockQueryBuilder = {
-      select: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      delete: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      neq: vi.fn().mockReturnThis(),
-      gt: vi.fn().mockReturnThis(),
-      gte: vi.fn().mockReturnThis(),
-      lt: vi.fn().mockReturnThis(),
-      lte: vi.fn().mockReturnThis(),
-      like: vi.fn().mockReturnThis(),
-      ilike: vi.fn().mockReturnThis(),
-      in: vi.fn().mockReturnThis(),
-      is: vi.fn().mockReturnThis(),
-      not: vi.fn().mockReturnThis(),
-      or: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnThis(),
-      range: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockReturnThis(),
-      single: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockReturnThis(),
-      throwOnError: vi.fn().mockReturnThis(),
-    };
-
-    return {
-      from: vi.fn().mockReturnValue(mockQueryBuilder),
-      auth: {
-        signInWithPassword: vi.fn(),
-        signUp: vi.fn(),
-        signOut: vi.fn(),
-        getUser: vi.fn(),
-        getSession: vi.fn(),
-      },
-    };
+  static createMockSupabaseClient(): IMockSupabaseClient {
+    // Use centralized Supabase mock instead of creating inline
+    return createSupabaseMock();
   }
 
-  static setupMockSupabaseClient(mockClient: any = null) {
-    const client = mockClient || this.createMockSupabaseClient();
+  static setupMockSupabaseClient(mockClient: any = null): IMockSupabaseClient {
+    // Use centralized mock instance or get existing one
+    const client = mockClient
+      ? { ...getSupabaseMockInstance(), ...mockClient }
+      : getSupabaseMockInstance();
     Container.set("supabase", client);
     return client;
   }
@@ -79,7 +59,7 @@ export class TestHelpers {
 
   static createMockService<T>(methods: Array<keyof T>): T {
     const mockService = {} as T;
-    methods.forEach(method => {
+    methods.forEach((method) => {
       (mockService as any)[method] = vi.fn();
     });
     return mockService;
@@ -87,7 +67,7 @@ export class TestHelpers {
 
   static createMockRepository<T>(methods: Array<keyof T>): T {
     const mockRepository = {} as T;
-    methods.forEach(method => {
+    methods.forEach((method) => {
       (mockRepository as any)[method] = vi.fn();
     });
     return mockRepository;
@@ -101,6 +81,20 @@ export class TestHelpers {
   static async seedTestData<T>(tableName: string, data: T[]) {
     const supabase = Container.get<SupabaseClient>("supabase");
     await supabase.from(tableName).insert(data);
+  }
+
+  static createMockRedisClient(): IMockRedisClient {
+    // Use centralized Redis mock
+    return createRedisMock();
+  }
+
+  static setupMockRedisClient(mockClient: any = null): IMockRedisClient {
+    // Use centralized mock instance or get existing one
+    const client = mockClient
+      ? { ...getRedisMockInstance(), ...mockClient }
+      : getRedisMockInstance();
+    Container.set("redis", client);
+    return client;
   }
 
   static resetAllMocks() {
@@ -140,7 +134,7 @@ export class TestHelpers {
   }
 
   static createDelay(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   static mockConsole() {
