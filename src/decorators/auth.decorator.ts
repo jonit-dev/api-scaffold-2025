@@ -6,6 +6,7 @@ import { UserRole } from "../models/enums/user-roles.enum";
 import { IAuthenticatedUser } from "../types/express";
 import { AuthService } from "../services/auth.service";
 import { User } from "@supabase/supabase-js";
+import { extractBearerToken } from "../utils/auth.utils";
 
 // Authentication decorator - requires valid JWT token
 export function Authenticated(): MethodDecorator {
@@ -19,10 +20,10 @@ export function Authenticated(): MethodDecorator {
     descriptor.value = async function (...args: unknown[]): Promise<unknown> {
       // Extract request, response, and next from arguments
       const req = args.find(
-        arg => arg && typeof arg === "object" && "headers" in arg,
+        (arg) => arg && typeof arg === "object" && "headers" in arg,
       );
       const res = args.find(
-        arg => arg && typeof arg === "object" && "json" in arg,
+        (arg) => arg && typeof arg === "object" && "json" in arg,
       );
 
       if (req && res) {
@@ -61,10 +62,10 @@ export function RequireRole(...roles: UserRole[]): MethodDecorator {
     descriptor.value = async function (...args: unknown[]): Promise<unknown> {
       // Extract request, response, and next from arguments
       const req = args.find(
-        arg => arg && typeof arg === "object" && "headers" in arg,
+        (arg) => arg && typeof arg === "object" && "headers" in arg,
       );
       const res = args.find(
-        arg => arg && typeof arg === "object" && "json" in arg,
+        (arg) => arg && typeof arg === "object" && "json" in arg,
       );
 
       if (req && res) {
@@ -107,12 +108,12 @@ export function OptionalAuth(): MethodDecorator {
 
     descriptor.value = async function (...args: unknown[]): Promise<unknown> {
       const request = args.find(
-        arg => arg && typeof arg === "object" && "headers" in arg,
+        (arg) => arg && typeof arg === "object" && "headers" in arg,
       ) as Request;
 
       if (request) {
         try {
-          const token = extractTokenFromHeader(request);
+          const token = extractBearerToken(request);
 
           if (token) {
             const supabaseAuth = Container.get("supabaseAuth") as {
@@ -183,7 +184,7 @@ export function CurrentUser(): ParameterDecorator {
     ): unknown {
       // Find the request object
       const request = args.find(
-        arg => arg && typeof arg === "object" && "user" in arg,
+        (arg) => arg && typeof arg === "object" && "user" in arg,
       ) as { user: IAuthenticatedUser };
 
       if (request && request.user) {
@@ -197,23 +198,4 @@ export function CurrentUser(): ParameterDecorator {
       );
     };
   };
-}
-
-// Helper function to extract token from request header
-function extractTokenFromHeader(request: {
-  headers?: { authorization?: string };
-}): string | null {
-  const authorization = request.headers?.authorization;
-
-  if (!authorization) {
-    return null;
-  }
-
-  const [type, token] = authorization.split(" ");
-
-  if (type !== "Bearer" || !token) {
-    return null;
-  }
-
-  return token;
 }

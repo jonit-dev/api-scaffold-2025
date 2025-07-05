@@ -5,13 +5,7 @@ import {
   IHealthResponseDto,
   IDatabaseHealthDto,
 } from "../models/dtos/common/health-response.dto";
-
-interface ISuccessResponse<T> {
-  success: true;
-  data: T;
-  message: string;
-  timestamp: string;
-}
+import { createSuccessResponse, IApiResponse } from "../utils/response.utils";
 
 @JsonController("/health")
 @Service()
@@ -23,35 +17,23 @@ export class HealthController {
   }
 
   @Get("/")
-  async getHealth(): Promise<ISuccessResponse<unknown>> {
+  async getHealth(): Promise<IApiResponse<unknown>> {
     const healthData = await this.healthService.getHealth();
-    return {
-      success: true,
-      data: healthData,
-      message: "Health check completed",
-      timestamp: new Date().toISOString(),
-    };
+    return createSuccessResponse(healthData, "Health check completed");
   }
 
   @Get("/database")
-  async getDatabaseHealth(): Promise<ISuccessResponse<IDatabaseHealthDto>> {
+  async getDatabaseHealth(): Promise<IApiResponse<IDatabaseHealthDto>> {
     const databaseHealth = await this.healthService.getDatabaseHealth();
-    return {
-      success: true,
-      data: databaseHealth,
-      message: "Database health check completed",
-      timestamp: new Date().toISOString(),
-    };
+    return createSuccessResponse(
+      databaseHealth,
+      "Database health check completed",
+    );
   }
 
   @Get("/detailed")
-  async getDetailedHealth(): Promise<ISuccessResponse<IHealthResponseDto>> {
+  async getDetailedHealth(): Promise<IApiResponse<IHealthResponseDto>> {
     const healthData = await this.healthService.getSystemHealth();
-    return {
-      success: true,
-      data: healthData,
-      message: "Detailed health check completed",
-      timestamp: new Date().toISOString(),
-    };
+    return createSuccessResponse(healthData, "Detailed health check completed");
   }
 }

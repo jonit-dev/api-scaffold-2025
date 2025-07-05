@@ -12,7 +12,7 @@ export class CacheDemoController {
   @Cache({ ttl: 60, key: "basic-demo" })
   async basicCache(): Promise<object> {
     // Simulate expensive operation
-    await new Promise(resolve => globalThis.setTimeout(resolve, 100));
+    await new Promise((resolve) => globalThis.setTimeout(resolve, 100));
 
     return {
       message: "This response is cached for 60 seconds",
@@ -24,8 +24,8 @@ export class CacheDemoController {
   @Get("/dynamic")
   @Cache({
     ttl: 300,
-    keyGenerator: req => `dynamic-${req.query?.id || "no-id"}`,
-    condition: req => !!req.query?.id,
+    keyGenerator: (req) => `dynamic-${req.query?.id || "no-id"}`,
+    condition: (req) => !!req.query?.id,
   })
   async dynamicCache(
     @QueryParam("id", { required: false }) id?: string,
@@ -38,7 +38,7 @@ export class CacheDemoController {
     }
 
     // Simulate data fetching
-    await new Promise(resolve => globalThis.setTimeout(resolve, 200));
+    await new Promise((resolve) => globalThis.setTimeout(resolve, 200));
 
     return {
       id,
@@ -91,7 +91,7 @@ export class CacheDemoController {
       async () => {
         // Simulate expensive computation
         console.log(`Computing expensive operation for category: ${category}`);
-        await new Promise(resolve => globalThis.setTimeout(resolve, 500));
+        await new Promise((resolve) => globalThis.setTimeout(resolve, 500));
 
         return {
           category,
@@ -121,7 +121,7 @@ export class CacheDemoController {
         count: keys.length,
         keys: keys,
         ttls: await Promise.all(
-          keys.map(async key => ({
+          keys.map(async (key) => ({
             key,
             ttl: await this.redisService.ttl(key),
           })),

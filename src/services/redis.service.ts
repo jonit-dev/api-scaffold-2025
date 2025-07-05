@@ -107,7 +107,7 @@ export class RedisService {
    */
   async mget<T = object>(keys: string[]): Promise<(T | null)[]> {
     const values = await this.client.mget(...keys);
-    return values.map(value => {
+    return values.map((value) => {
       if (value === null) {
         return null;
       }
@@ -173,12 +173,12 @@ export class RedisService {
    * List operations
    */
   async lpush(key: string, ...values: object[]): Promise<number> {
-    const serializedValues = values.map(value => JSON.stringify(value));
+    const serializedValues = values.map((value) => JSON.stringify(value));
     return await this.client.lpush(key, ...serializedValues);
   }
 
   async rpush(key: string, ...values: object[]): Promise<number> {
-    const serializedValues = values.map(value => JSON.stringify(value));
+    const serializedValues = values.map((value) => JSON.stringify(value));
     return await this.client.rpush(key, ...serializedValues);
   }
 

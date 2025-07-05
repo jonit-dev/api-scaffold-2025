@@ -35,7 +35,7 @@ export const config = {
 
 // Environment validation
 const requiredEnvVars = ["NODE_ENV"];
-const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
   console.warn(

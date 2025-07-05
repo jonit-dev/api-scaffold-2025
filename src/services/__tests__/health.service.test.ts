@@ -70,7 +70,7 @@ describe("HealthService", () => {
 
     it("should return warning status when database is slow", async () => {
       mockQueryBuilder.single.mockImplementation(() => {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
           setTimeout(() => {
             resolve({
               data: { result: 1 },
@@ -112,7 +112,7 @@ describe("HealthService", () => {
 
     it("should measure response times accurately", async () => {
       mockQueryBuilder.single.mockImplementation(() => {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
           setTimeout(() => {
             resolve({
               data: { result: 1 },

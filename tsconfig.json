@@ -21,7 +21,8 @@
       "@config/*": ["src/config/*"],
       "@utils/*": ["src/utils/*"],
       "@exceptions/*": ["src/exceptions/*"],
-      "@types/*": ["src/types/*"]
+      "@types/*": ["src/types/*"],
+      "@tests/*": ["tests/*"]
     }
   },
   "include": ["src/**/*", "tests/**/*"],

@@ -32,7 +32,7 @@ export class RedisConfig {
       console.log("Redis connected successfully");
     });
 
-    client.on("error", error => {
+    client.on("error", (error) => {
       console.error("Redis connection error:", error);
     });
 

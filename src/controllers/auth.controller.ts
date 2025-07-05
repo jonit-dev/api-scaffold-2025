@@ -19,9 +19,12 @@ import {
   ResendVerificationDto,
 } from "../models/dtos/auth";
 import { ForgotPasswordDto } from "../models/dtos/auth/forgot-password.dto";
-import { UserResponseDto } from "../models/dtos/auth/user-response.dto";
+import { UserResponseDto } from "../models/dtos/user/user-response.dto";
 import { Authenticated } from "../decorators/auth.decorator";
+import { RateLimit } from "../decorators/rate-limit.decorator";
+import { authRateLimits } from "../middlewares/rate-limit.middleware";
 import { IAuthenticatedUser } from "../types/express";
+import { extractBearerTokenOrThrow } from "../utils/auth.utils";
 
 @JsonController("/api/auth")
 @Service()
@@ -30,12 +33,14 @@ export class AuthController {
 
   @Post("/register")
   @HttpCode(201)
+  @RateLimit(authRateLimits.register)
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
     return await this.authService.register(registerDto);
   }
 
   @Post("/login")
   @HttpCode(200)
+  @RateLimit(authRateLimits.login)
   async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
     return await this.authService.login(loginDto);
   }
@@ -46,12 +51,13 @@ export class AuthController {
   async logout(
     @Req() req: Request & { user: IAuthenticatedUser },
   ): Promise<void> {
-    const token = this.extractTokenFromRequest(req);
+    const token = extractBearerTokenOrThrow(req);
     await this.authService.logout(token);
   }
 
   @Post("/refresh")
   @HttpCode(200)
+  @RateLimit(authRateLimits.refresh)
   async refreshToken(
     @Body() refreshTokenDto: RefreshTokenDto,
   ): Promise<object> {
@@ -60,6 +66,7 @@ export class AuthController {
 
   @Post("/forgot-password")
   @HttpCode(200)
+  @RateLimit(authRateLimits.forgotPassword)
   async forgotPassword(
     @Body() forgotPasswordDto: ForgotPasswordDto,
   ): Promise<{ message: string }> {
@@ -80,6 +87,7 @@ export class AuthController {
 
   @Post("/verify-email")
   @HttpCode(200)
+  @RateLimit(authRateLimits.emailVerification)
   async verifyEmail(
     @Body() verifyEmailDto: VerifyEmailDto,
   ): Promise<{ message: string }> {
@@ -89,6 +97,7 @@ export class AuthController {
 
   @Post("/resend-verification")
   @HttpCode(200)
+  @RateLimit(authRateLimits.resendVerification)
   async resendVerification(
     @Body() resendVerificationDto: ResendVerificationDto,
   ): Promise<{ message: string }> {
@@ -111,11 +120,7 @@ export class AuthController {
     @Req() req: Request,
   ): Promise<{ valid: boolean; user?: UserResponseDto }> {
     try {
-      const token = this.extractTokenFromRequest(req);
-      if (!token) {
-        return { valid: false };
-      }
-
+      const token = extractBearerTokenOrThrow(req);
       const user = await this.authService.verifyUser(token);
       const userResponse = await this.authService.getCurrentUser(user.id);
       return {
@@ -134,19 +139,5 @@ export class AuthController {
       status: "healthy",
       timestamp: new Date().toISOString(),
     };
-  }
-
-  private extractTokenFromRequest(req: Request): string {
-    const authorization = req.headers.authorization;
-    if (!authorization) {
-      throw new Error("No authorization header found");
-    }
-
-    const [type, token] = authorization.split(" ");
-    if (type !== "Bearer" || !token) {
-      throw new Error("Invalid authorization format");
-    }
-
-    return token;
   }
 }

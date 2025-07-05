@@ -108,7 +108,7 @@ describe("Cache Integration Tests", () => {
       app.get(
         "/test-condition",
         cacheMiddleware({
-          condition: req => req.query.cache === "true",
+          condition: (req) => req.query.cache === "true",
         }),
         (req, res) => {
           res.json({ message: "Conditional cache" });

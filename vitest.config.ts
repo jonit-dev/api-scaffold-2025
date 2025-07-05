@@ -40,6 +40,7 @@ export default defineConfig({
       "@utils": resolve(__dirname, "src/utils"),
       "@exceptions": resolve(__dirname, "src/exceptions"),
       "@types": resolve(__dirname, "src/types"),
+      "@tests": resolve(__dirname, "tests"),
     },
   },
 });

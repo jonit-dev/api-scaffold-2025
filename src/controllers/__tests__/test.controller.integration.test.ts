@@ -156,7 +156,7 @@ describe("Test Controller", () => {
 
       const responses = await Promise.all(requests);
 
-      responses.forEach(response => {
+      responses.forEach((response) => {
         expect(response.status).toBeGreaterThanOrEqual(400);
         expect(response.body.success).toBe(false);
         expect(response.body.error).toBeDefined();

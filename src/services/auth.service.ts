@@ -16,8 +16,8 @@ import {
   RefreshTokenDto,
   RegisterDto,
   SessionResponseDto,
-  UserResponseDto,
 } from "../models/dtos/auth";
+import { UserResponseDto } from "../models/dtos/user";
 import { IUserEntity } from "../models/entities/user.entity";
 import { UserRole } from "../models/enums/user-roles.enum";
 import { UserStatus } from "../models/enums/user-status.enum";

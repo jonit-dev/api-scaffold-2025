@@ -4,6 +4,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { AuthService } from "../services/auth.service";
 import { IAuthenticatedUser } from "../types/express";
 import { UnauthorizedException } from "../exceptions/http-exceptions";
+import { extractBearerToken } from "../utils/auth.utils";
 
 @Service()
 export class AuthMiddleware {
@@ -18,7 +19,7 @@ export class AuthMiddleware {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const token = this.extractTokenFromHeader(request);
+      const token = extractBearerToken(request);
 
       if (!token) {
         throw new UnauthorizedException("Access token required");
@@ -53,21 +54,5 @@ export class AuthMiddleware {
       }
       next(new UnauthorizedException("Authentication failed"));
     }
-  }
-
-  private extractTokenFromHeader(request: Request): string | null {
-    const authorization = request.headers.authorization;
-
-    if (!authorization) {
-      return null;
-    }
-
-    const [type, token] = authorization.split(" ");
-
-    if (type !== "Bearer" || !token) {
-      return null;
-    }
-
-    return token;
   }
 }

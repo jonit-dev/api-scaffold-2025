@@ -46,7 +46,7 @@ describe("BaseRepository", () => {
       };
 
       // Make all methods return the same builder object to support chaining
-      Object.keys(builder).forEach(key => {
+      Object.keys(builder).forEach((key) => {
         if (typeof (builder as any)[key] === "function") {
           (builder as any)[key].mockReturnValue(builder);
         }

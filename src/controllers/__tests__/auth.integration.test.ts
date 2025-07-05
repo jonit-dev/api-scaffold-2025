@@ -7,7 +7,7 @@ import { AuthMiddleware } from "@middlewares/auth.middleware";
 import { UserRepository } from "@repositories/user.repository";
 import { AuthService } from "@services/auth.service";
 
-import { TestHelpers } from "@/../tests/utils/test.helpers";
+import { TestHelpers } from "@tests/utils/test.helpers";
 
 // Test controller for integration testing without decorators
 import { Body, Get, JsonController, Post } from "routing-controllers";

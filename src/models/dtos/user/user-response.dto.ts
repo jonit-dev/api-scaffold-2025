@@ -48,7 +48,7 @@ export class UserResponseDto {
 
   // Exclude sensitive fields
   @Exclude()
-  password_hash!: string;
+  password_hash?: string;
 
   @Exclude()
   deleted_at?: string;

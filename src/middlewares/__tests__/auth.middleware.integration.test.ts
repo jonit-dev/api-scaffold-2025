@@ -1,15 +1,15 @@
-import express from "express";
-import request from "supertest";
-import { Container } from "typedi";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { TestHelpers } from "@/../tests/utils/test.helpers";
+import { TestHelpers } from "@tests/utils/test.helpers";
 import { AuthMiddleware } from "@middlewares/auth.middleware";
 import { createRoleMiddleware } from "@middlewares/rbac.middleware";
 import { UserRole } from "@models/enums/user-roles.enum";
 import { UserRepository } from "@repositories/user.repository";
 import { AuthService } from "@services/auth.service";
+import express from "express";
+import request from "supertest";
+import { Container } from "typedi";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AuthFactory } from "@/../tests/factories/auth.factory";
+import { AuthFactory } from "@tests/factories/auth.factory";
 
 describe("Auth Middleware Integration Tests", () => {
   let app: express.Application;
@@ -65,7 +65,7 @@ describe("Auth Middleware Integration Tests", () => {
     app.get(
       "/protected",
       (_req, res, next) => {
-        authMiddleware.use(_req, res, error => {
+        authMiddleware.use(_req, res, (error) => {
           if (error) {
             return res.status(error.httpCode || 401).json({
               name: error.name || "UnauthorizedException",
@@ -83,7 +83,7 @@ describe("Auth Middleware Integration Tests", () => {
     app.get(
       "/admin-only",
       (_req, res, next) => {
-        authMiddleware.use(_req, res, error => {
+        authMiddleware.use(_req, res, (error) => {
           if (error) {
             return res.status(error.httpCode || 401).json({
               name: error.name || "UnauthorizedException",
@@ -92,7 +92,7 @@ describe("Auth Middleware Integration Tests", () => {
           }
 
           const roleMiddleware = createRoleMiddleware(UserRole.ADMIN);
-          roleMiddleware.use(_req, res, roleError => {
+          roleMiddleware.use(_req, res, (roleError) => {
             if (roleError) {
               return res.status(roleError.httpCode || 403).json({
                 name: roleError.name || "ForbiddenException",
@@ -111,7 +111,7 @@ describe("Auth Middleware Integration Tests", () => {
     app.get(
       "/moderator-or-admin",
       (_req, res, next) => {
-        authMiddleware.use(_req, res, error => {
+        authMiddleware.use(_req, res, (error) => {
           if (error) {
             return res.status(error.httpCode || 401).json({
               name: error.name || "UnauthorizedException",
@@ -123,7 +123,7 @@ describe("Auth Middleware Integration Tests", () => {
             UserRole.MODERATOR,
             UserRole.ADMIN,
           );
-          roleMiddleware.use(_req, res, roleError => {
+          roleMiddleware.use(_req, res, (roleError) => {
             if (roleError) {
               return res.status(roleError.httpCode || 403).json({
                 name: roleError.name || "ForbiddenException",

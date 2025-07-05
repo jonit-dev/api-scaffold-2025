@@ -71,7 +71,7 @@ export function cacheMiddleware(
       const originalJson = res.json.bind(res);
       res.json = function (data: object): Response<object> {
         // Cache the response asynchronously
-        redisService.set(cacheKey, data, defaultOptions.ttl).catch(error => {
+        redisService.set(cacheKey, data, defaultOptions.ttl).catch((error) => {
           console.error("Failed to cache response:", error);
         });
 
@@ -170,7 +170,7 @@ export function decoratorCacheMiddleware(): (
         // Cache the response asynchronously
         redisService
           .set(cacheKey, data, cacheConfig!.ttl || 300)
-          .catch(error => {
+          .catch((error) => {
             console.error("Failed to cache response:", error);
           });
 
@@ -198,7 +198,7 @@ export function cacheInvalidationMiddleware(
     res.json = function (data: object): Response<object> {
       // Invalidate cache asynchronously
       if (pattern) {
-        redisService.invalidateCachePattern(pattern).catch(error => {
+        redisService.invalidateCachePattern(pattern).catch((error) => {
           console.error("Failed to invalidate cache:", error);
         });
       } else {
@@ -207,7 +207,7 @@ export function cacheInvalidationMiddleware(
         const invalidationPattern = `route:*${url.split("/")[1]}*`;
         redisService
           .invalidateCachePattern(invalidationPattern)
-          .catch(error => {
+          .catch((error) => {
             console.error("Failed to invalidate cache:", error);
           });
       }

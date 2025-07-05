@@ -113,7 +113,7 @@ describe("AuthController Simple Integration Tests", () => {
 
       await expect(
         authController.logout(requestWithoutAuth as any),
-      ).rejects.toThrow("No authorization header found");
+      ).rejects.toThrow("Missing or invalid authorization token");
     });
   });
 

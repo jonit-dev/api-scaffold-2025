@@ -145,7 +145,7 @@ describe("AuthController", () => {
 
       await expect(
         authController.logout(requestWithoutAuth as any),
-      ).rejects.toThrow("No authorization header found");
+      ).rejects.toThrow("Missing or invalid authorization token");
     });
 
     it("should throw error when invalid authorization format", async () => {
@@ -156,7 +156,7 @@ describe("AuthController", () => {
 
       await expect(
         authController.logout(requestWithInvalidAuth as any),
-      ).rejects.toThrow("Invalid authorization format");
+      ).rejects.toThrow("Missing or invalid authorization token");
     });
   });
 
@@ -413,43 +413,4 @@ describe("AuthController", () => {
     });
   });
 
-  describe("extractTokenFromRequest", () => {
-    it("should extract token from valid Bearer authorization header", () => {
-      const request = {
-        headers: { authorization: "Bearer valid-token-123" },
-      };
-
-      const token = (authController as any).extractTokenFromRequest(request);
-
-      expect(token).toBe("valid-token-123");
-    });
-
-    it("should throw error when no authorization header", () => {
-      const request = { headers: {} };
-
-      expect(() => {
-        (authController as any).extractTokenFromRequest(request);
-      }).toThrow("No authorization header found");
-    });
-
-    it("should throw error when invalid authorization format", () => {
-      const request = {
-        headers: { authorization: "InvalidFormat" },
-      };
-
-      expect(() => {
-        (authController as any).extractTokenFromRequest(request);
-      }).toThrow("Invalid authorization format");
-    });
-
-    it("should throw error when missing token", () => {
-      const request = {
-        headers: { authorization: "Bearer " },
-      };
-
-      expect(() => {
-        (authController as any).extractTokenFromRequest(request);
-      }).toThrow("Invalid authorization format");
-    });
-  });
 });
