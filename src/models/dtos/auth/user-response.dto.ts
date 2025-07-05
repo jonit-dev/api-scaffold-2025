@@ -4,25 +4,25 @@ import { UserRole, UserStatus } from "../../enums";
 @Exclude()
 export class UserResponseDto {
   @Expose()
-  id: string;
+  id!: string;
 
   @Expose()
-  email: string;
+  email!: string;
 
   @Expose()
-  first_name: string;
+  first_name!: string;
 
   @Expose()
-  last_name: string;
+  last_name!: string;
 
   @Expose()
-  role: UserRole;
+  role!: UserRole;
 
   @Expose()
-  status: UserStatus;
+  status!: UserStatus;
 
   @Expose()
-  email_verified: boolean;
+  email_verified!: boolean;
 
   @Expose()
   phone?: string;
@@ -34,12 +34,19 @@ export class UserResponseDto {
   last_login?: string;
 
   @Expose()
-  created_at: string;
+  created_at!: string;
 
   @Expose()
-  updated_at: string;
+  updated_at!: string;
 
   @Expose()
   @Transform(({ obj }) => `${obj.first_name} ${obj.last_name}`)
-  full_name: string;
+  full_name!: string;
+
+  // Exclude sensitive fields
+  @Exclude()
+  password_hash!: string;
+
+  @Exclude()
+  deleted_at?: string;
 }

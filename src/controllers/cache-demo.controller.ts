@@ -10,9 +10,9 @@ export class CacheDemoController {
 
   @Get("/basic")
   @Cache({ ttl: 60, key: "basic-demo" })
-  async basicCache() {
+  async basicCache(): Promise<object> {
     // Simulate expensive operation
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => globalThis.setTimeout(resolve, 100));
 
     return {
       message: "This response is cached for 60 seconds",
@@ -24,10 +24,12 @@ export class CacheDemoController {
   @Get("/dynamic")
   @Cache({
     ttl: 300,
-    keyGenerator: req => `dynamic-${req.query.id}`,
-    condition: req => !!req.query.id,
+    keyGenerator: req => `dynamic-${req.query?.id || "no-id"}`,
+    condition: req => !!req.query?.id,
   })
-  async dynamicCache(@QueryParam("id") id?: string) {
+  async dynamicCache(
+    @QueryParam("id", { required: false }) id?: string
+  ): Promise<object> {
     if (!id) {
       return {
         message: "No caching without ID parameter",
@@ -36,7 +38,7 @@ export class CacheDemoController {
     }
 
     // Simulate data fetching
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => globalThis.setTimeout(resolve, 200));
 
     return {
       id,
@@ -50,7 +52,9 @@ export class CacheDemoController {
   }
 
   @Get("/manual")
-  async manualCache(@QueryParam("refresh") refresh?: boolean) {
+  async manualCache(
+    @QueryParam("refresh", { required: false }) refresh?: boolean
+  ): Promise<object> {
     const cacheKey = "manual-cache-demo";
 
     if (!refresh) {
@@ -80,14 +84,14 @@ export class CacheDemoController {
 
   @Get("/expensive")
   async expensiveOperation(
-    @QueryParam("category") category: string = "default"
-  ) {
+    @QueryParam("category", { required: false }) category: string = "default"
+  ): Promise<object> {
     return await this.redisService.cache(
       `expensive-op-${category}`,
       async () => {
         // Simulate expensive computation
         console.log(`Computing expensive operation for category: ${category}`);
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => globalThis.setTimeout(resolve, 500));
 
         return {
           category,
@@ -101,7 +105,7 @@ export class CacheDemoController {
   }
 
   @Get("/stats")
-  async getCacheStats() {
+  async getCacheStats(): Promise<object> {
     const patterns = [
       "cache:*",
       "expensive:*",
@@ -109,7 +113,7 @@ export class CacheDemoController {
       "manual-cache-demo",
     ];
 
-    const stats: Record<string, any> = {};
+    const stats: Record<string, object> = {};
 
     for (const pattern of patterns) {
       const keys = await this.redisService.keys(pattern);
@@ -133,7 +137,9 @@ export class CacheDemoController {
   }
 
   @Get("/clear")
-  async clearCache(@QueryParam("pattern") pattern?: string) {
+  async clearCache(
+    @QueryParam("pattern", { required: false }) pattern?: string
+  ): Promise<object> {
     let deletedCount = 0;
 
     if (pattern) {

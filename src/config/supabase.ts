@@ -65,29 +65,117 @@ export function getSupabaseClient(): SupabaseClient<IDatabase> {
 export const supabase = getSupabaseClient();
 
 // Authentication-specific client with proper config
-export const supabaseAuth = createClient(
-  env.SUPABASE_URL,
-  env.SUPABASE_ANON_KEY,
-  {
+export const supabaseAuth = ((): SupabaseClient => {
+  if (
+    !env.SUPABASE_URL ||
+    !env.SUPABASE_ANON_KEY ||
+    env.SUPABASE_URL.includes("your_supabase_url_here") ||
+    env.SUPABASE_ANON_KEY.includes("your_supabase")
+  ) {
+    return {
+      auth: {
+        signUp: () =>
+          Promise.resolve({
+            data: null,
+            error: { message: "Supabase not configured" },
+          }),
+        signInWithPassword: () =>
+          Promise.resolve({
+            data: null,
+            error: { message: "Supabase not configured" },
+          }),
+        signOut: () => Promise.resolve({ error: null }),
+        getUser: () =>
+          Promise.resolve({
+            data: { user: null },
+            error: { message: "Supabase not configured" },
+          }),
+        refreshSession: () =>
+          Promise.resolve({
+            data: { session: null },
+            error: { message: "Supabase not configured" },
+          }),
+        setSession: () =>
+          Promise.resolve({
+            data: { session: null },
+            error: { message: "Supabase not configured" },
+          }),
+        resetPasswordForEmail: () =>
+          Promise.resolve({
+            data: {},
+            error: { message: "Supabase not configured" },
+          }),
+        updateUser: () =>
+          Promise.resolve({
+            data: { user: null },
+            error: { message: "Supabase not configured" },
+          }),
+        verifyOtp: () =>
+          Promise.resolve({
+            data: { user: null },
+            error: { message: "Supabase not configured" },
+          }),
+        resend: () =>
+          Promise.resolve({
+            data: {},
+            error: { message: "Supabase not configured" },
+          }),
+        onAuthStateChange: (): {
+          data: { subscription: { unsubscribe: () => void } };
+        } => ({
+          data: { subscription: { unsubscribe: (): void => {} } },
+        }),
+      },
+    } as unknown as SupabaseClient;
+  }
+
+  return createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: false,
     },
-  }
-);
+  });
+})();
 
 // Service client for admin operations
-export const supabaseAdmin = createClient(
-  env.SUPABASE_URL,
-  env.SUPABASE_SERVICE_KEY,
-  {
+export const supabaseAdmin = ((): SupabaseClient => {
+  if (
+    !env.SUPABASE_URL ||
+    !env.SUPABASE_SERVICE_KEY ||
+    env.SUPABASE_URL.includes("your_supabase_url_here") ||
+    env.SUPABASE_SERVICE_KEY.includes("your_supabase")
+  ) {
+    return {
+      auth: {
+        admin: {
+          listUsers: () =>
+            Promise.resolve({
+              data: null,
+              error: { message: "Supabase not configured" },
+            }),
+          createUser: () =>
+            Promise.resolve({
+              data: null,
+              error: { message: "Supabase not configured" },
+            }),
+          deleteUser: () =>
+            Promise.resolve({
+              data: null,
+              error: { message: "Supabase not configured" },
+            }),
+        },
+      },
+    } as unknown as SupabaseClient;
+  }
+
+  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
-  }
-);
+  });
+})();
 
 // Health check function
 export async function checkSupabaseConnection(): Promise<boolean> {

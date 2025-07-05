@@ -10,10 +10,12 @@ import { AuthFactory } from "../../factories/auth.factory";
 describe("UserRepository", () => {
   let userRepository: UserRepository;
   let mockSupabase: any;
+  let mockQueryBuilder: any;
 
   beforeEach(() => {
     TestHelpers.resetAllMocks();
     mockSupabase = TestHelpers.createMockSupabaseClient();
+    mockQueryBuilder = mockSupabase.from();
     Container.set("supabase", mockSupabase);
 
     // Create the repository with the mock client directly
@@ -180,14 +182,18 @@ describe("UserRepository", () => {
 
   describe("isEmailUnique", () => {
     it("should return true when email is unique", async () => {
-      // Setup the final promise resolution for the query chain
-      const finalPromise = Promise.resolve({
-        data: [],
-        error: null,
-      });
-
-      // Mock the full chain to return the final promise
-      mockSupabase.from().select().eq().eq.mockReturnValue(finalPromise);
+      // Create a thenable object that resolves to the right value
+      const mockThenable = {
+        then: (onResolve: (value: any) => any) => {
+          return Promise.resolve(onResolve({ data: [], error: null }));
+        },
+        catch: (onReject: (error: any) => any) => {
+          return Promise.resolve();
+        },
+      };
+      
+      // Override the entire query chain for this test
+      Object.assign(mockQueryBuilder, mockThenable);
 
       const result = await userRepository.isEmailUnique("unique@example.com");
 
@@ -195,12 +201,16 @@ describe("UserRepository", () => {
     });
 
     it("should return false when email exists", async () => {
-      const finalPromise = Promise.resolve({
-        data: [{ id: "existing-id" }],
-        error: null,
-      });
-
-      mockSupabase.from().select().eq().eq.mockReturnValue(finalPromise);
+      const mockThenable = {
+        then: (onResolve: (value: any) => any) => {
+          return Promise.resolve(onResolve({ data: [{ id: "existing-id" }], error: null }));
+        },
+        catch: (onReject: (error: any) => any) => {
+          return Promise.resolve();
+        },
+      };
+      
+      Object.assign(mockQueryBuilder, mockThenable);
 
       const result = await userRepository.isEmailUnique("existing@example.com");
 
@@ -208,12 +218,17 @@ describe("UserRepository", () => {
     });
 
     it("should exclude specific user ID when checking uniqueness", async () => {
-      const finalPromise = Promise.resolve({
-        data: [],
-        error: null,
-      });
-
-      mockSupabase.from().select().eq().eq().neq.mockReturnValue(finalPromise);
+      const mockThenable = {
+        then: (onResolve: (value: any) => any) => {
+          return Promise.resolve(onResolve({ data: [], error: null }));
+        },
+        catch: (onReject: (error: any) => any) => {
+          return Promise.resolve();
+        },
+        neq: vi.fn().mockReturnThis(),
+      };
+      
+      Object.assign(mockQueryBuilder, mockThenable);
 
       const result = await userRepository.isEmailUnique(
         "test@example.com",
@@ -225,12 +240,16 @@ describe("UserRepository", () => {
     });
 
     it("should throw DatabaseException on error", async () => {
-      const finalPromise = Promise.resolve({
-        data: null,
-        error: { message: "Database error" },
-      });
-
-      mockSupabase.from().select().eq().eq.mockReturnValue(finalPromise);
+      const mockThenable = {
+        then: (onResolve: (value: any) => any) => {
+          return Promise.resolve(onResolve({ data: null, error: { message: "Database error" } }));
+        },
+        catch: (onReject: (error: any) => any) => {
+          return Promise.resolve();
+        },
+      };
+      
+      Object.assign(mockQueryBuilder, mockThenable);
 
       await expect(
         userRepository.isEmailUnique("test@example.com")
@@ -337,12 +356,16 @@ describe("UserRepository", () => {
 
   describe("countByStatus", () => {
     it("should count users by status successfully", async () => {
-      const finalPromise = Promise.resolve({
-        count: 5,
-        error: null,
-      });
-
-      mockSupabase.from().select().eq().eq.mockReturnValue(finalPromise);
+      const mockThenable = {
+        then: (onResolve: (value: any) => any) => {
+          return Promise.resolve(onResolve({ count: 5, error: null }));
+        },
+        catch: (onReject: (error: any) => any) => {
+          return Promise.resolve();
+        },
+      };
+      
+      Object.assign(mockQueryBuilder, mockThenable);
 
       const result = await userRepository.countByStatus(UserStatus.ACTIVE);
 
@@ -354,12 +377,16 @@ describe("UserRepository", () => {
     });
 
     it("should return 0 when count is null", async () => {
-      const finalPromise = Promise.resolve({
-        count: null,
-        error: null,
-      });
-
-      mockSupabase.from().select().eq().eq.mockReturnValue(finalPromise);
+      const mockThenable = {
+        then: (onResolve: (value: any) => any) => {
+          return Promise.resolve(onResolve({ count: null, error: null }));
+        },
+        catch: (onReject: (error: any) => any) => {
+          return Promise.resolve();
+        },
+      };
+      
+      Object.assign(mockQueryBuilder, mockThenable);
 
       const result = await userRepository.countByStatus(UserStatus.ACTIVE);
 
@@ -367,12 +394,16 @@ describe("UserRepository", () => {
     });
 
     it("should throw DatabaseException on error", async () => {
-      const finalPromise = Promise.resolve({
-        count: null,
-        error: { message: "Count failed" },
-      });
-
-      mockSupabase.from().select().eq().eq.mockReturnValue(finalPromise);
+      const mockThenable = {
+        then: (onResolve: (value: any) => any) => {
+          return Promise.resolve(onResolve({ count: null, error: { message: "Count failed" } }));
+        },
+        catch: (onReject: (error: any) => any) => {
+          return Promise.resolve();
+        },
+      };
+      
+      Object.assign(mockQueryBuilder, mockThenable);
 
       await expect(
         userRepository.countByStatus(UserStatus.ACTIVE)

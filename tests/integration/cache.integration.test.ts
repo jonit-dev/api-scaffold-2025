@@ -23,7 +23,7 @@ describe("Cache Integration Tests", () => {
     // Create a mock Redis service
     const mockRedisService = {
       get: vi.fn(),
-      set: vi.fn(),
+      set: vi.fn().mockResolvedValue(undefined),
       del: vi.fn(),
       keys: vi.fn(),
       exists: vi.fn(),
@@ -106,7 +106,7 @@ describe("Cache Integration Tests", () => {
 
     it("should respect cache condition", async () => {
       app.get(
-        "/test",
+        "/test-condition",
         cacheMiddleware({
           condition: req => req.query.cache === "true",
         }),
@@ -116,14 +116,14 @@ describe("Cache Integration Tests", () => {
       );
 
       // Request without cache condition
-      await request(app).get("/test?cache=false").expect(200);
+      await request(app).get("/test-condition?cache=false").expect(200);
 
       expect(redisService.get).not.toHaveBeenCalled();
 
       // Request with cache condition
       vi.mocked(redisService.get).mockResolvedValue(null);
 
-      await request(app).get("/test?cache=true").expect(200);
+      await request(app).get("/test-condition?cache=true").expect(200);
 
       expect(redisService.get).toHaveBeenCalled();
     });
@@ -132,7 +132,7 @@ describe("Cache Integration Tests", () => {
       const customKeyGen = vi.fn().mockReturnValue("custom-key");
 
       app.get(
-        "/test",
+        "/test-custom-key",
         cacheMiddleware({
           keyGenerator: customKeyGen,
         }),
@@ -143,7 +143,7 @@ describe("Cache Integration Tests", () => {
 
       vi.mocked(redisService.get).mockResolvedValue(null);
 
-      await request(app).get("/test").expect(200);
+      await request(app).get("/test-custom-key").expect(200);
 
       expect(customKeyGen).toHaveBeenCalled();
       expect(redisService.get).toHaveBeenCalledWith("custom-key");
@@ -218,27 +218,27 @@ describe("Cache Integration Tests", () => {
 
   describe("Cache Headers", () => {
     it("should set appropriate cache headers", async () => {
-      app.get("/test", cacheMiddleware(), (req, res) => {
+      app.get("/test-headers", cacheMiddleware(), (req, res) => {
         res.json({ message: "Headers test" });
       });
 
       vi.mocked(redisService.get).mockResolvedValue(null);
 
-      const response = await request(app).get("/test").expect(200);
+      const response = await request(app).get("/test-headers").expect(200);
 
       expect(response.headers["x-cache"]).toBe("MISS");
       expect(response.headers["x-cache-key"]).toBeDefined();
     });
 
     it("should set cache hit headers", async () => {
-      app.get("/test", cacheMiddleware(), (req, res) => {
+      app.get("/test-hit", cacheMiddleware(), (req, res) => {
         res.json({ message: "Headers test" });
       });
 
       const cachedData = { message: "Cached response" };
       vi.mocked(redisService.get).mockResolvedValue(cachedData);
 
-      const response = await request(app).get("/test").expect(200);
+      const response = await request(app).get("/test-hit").expect(200);
 
       expect(response.headers["x-cache"]).toBe("HIT");
       expect(response.headers["x-cache-key"]).toBeDefined();

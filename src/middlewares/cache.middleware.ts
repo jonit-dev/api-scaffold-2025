@@ -30,9 +30,9 @@ function generateCacheKey(req: Request, prefix = "route:"): string {
 /**
  * Cache middleware for Express routes
  */
-export function cacheMiddleware(options: ICacheMiddlewareOptions = {}) {
-  const redisService = Container.get(RedisService);
-
+export function cacheMiddleware(
+  options: ICacheMiddlewareOptions = {}
+): (req: Request, res: Response, next: NextFunction) => Promise<void> {
   const defaultOptions: Required<ICacheMiddlewareOptions> = {
     ttl: 300, // 5 minutes
     keyGenerator: (req: Request) => generateCacheKey(req, options.prefix),
@@ -42,14 +42,16 @@ export function cacheMiddleware(options: ICacheMiddlewareOptions = {}) {
   };
 
   return async (req: Request, res: Response, next: NextFunction) => {
-    // Only cache GET requests by default
-    if (req.method !== "GET" || !defaultOptions.condition(req)) {
-      return next();
-    }
-
-    const cacheKey = defaultOptions.keyGenerator(req);
-
     try {
+      const redisService = Container.get(RedisService);
+
+      // Only cache GET requests by default
+      if (req.method !== "GET" || !defaultOptions.condition(req)) {
+        return next();
+      }
+
+      const cacheKey = defaultOptions.keyGenerator(req);
+
       const cachedResponse = await redisService.get(cacheKey);
 
       if (cachedResponse) {
@@ -57,7 +59,8 @@ export function cacheMiddleware(options: ICacheMiddlewareOptions = {}) {
         res.set("X-Cache", "HIT");
         res.set("X-Cache-Key", cacheKey);
 
-        return res.json(cachedResponse);
+        res.json(cachedResponse);
+        return;
       }
 
       // Cache miss - continue to route handler
@@ -66,7 +69,7 @@ export function cacheMiddleware(options: ICacheMiddlewareOptions = {}) {
 
       // Override res.json to cache the response
       const originalJson = res.json.bind(res);
-      res.json = function (data: any) {
+      res.json = function (data: object): Response<object> {
         // Cache the response asynchronously
         redisService.set(cacheKey, data, defaultOptions.ttl).catch(error => {
           console.error("Failed to cache response:", error);
@@ -87,10 +90,13 @@ export function cacheMiddleware(options: ICacheMiddlewareOptions = {}) {
  * Decorator-aware cache middleware
  * This middleware checks for cache decorator metadata and applies caching accordingly
  */
-export function decoratorCacheMiddleware() {
-  const redisService = Container.get(RedisService);
-
+export function decoratorCacheMiddleware(): (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => Promise<void> {
   return async (req: Request, res: Response, next: NextFunction) => {
+    const redisService = Container.get(RedisService);
     // Only for GET requests
     if (req.method !== "GET") {
       return next();
@@ -150,7 +156,8 @@ export function decoratorCacheMiddleware() {
         res.set("X-Cache-Key", cacheKey);
         res.set("X-Cache-TTL", (cacheConfig.ttl || 300).toString());
 
-        return res.json(cachedResponse);
+        res.json(cachedResponse);
+        return;
       }
 
       // Cache miss - continue to route handler
@@ -159,7 +166,7 @@ export function decoratorCacheMiddleware() {
 
       // Override res.json to cache the response
       const originalJson = res.json.bind(res);
-      res.json = function (data: any) {
+      res.json = function (data: object): Response<object> {
         // Cache the response asynchronously
         redisService
           .set(cacheKey, data, cacheConfig!.ttl || 300)
@@ -181,13 +188,14 @@ export function decoratorCacheMiddleware() {
 /**
  * Cache invalidation middleware
  */
-export function cacheInvalidationMiddleware(pattern?: string) {
-  const redisService = Container.get(RedisService);
-
+export function cacheInvalidationMiddleware(
+  pattern?: string
+): (req: Request, res: Response, next: NextFunction) => void {
   return async (req: Request, res: Response, next: NextFunction) => {
+    const redisService = Container.get(RedisService);
     // Override res.json to invalidate cache after response
     const originalJson = res.json.bind(res);
-    res.json = function (data: any) {
+    res.json = function (data: object): Response<object> {
       // Invalidate cache asynchronously
       if (pattern) {
         redisService.invalidateCachePattern(pattern).catch(error => {

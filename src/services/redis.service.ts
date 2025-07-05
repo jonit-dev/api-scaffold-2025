@@ -19,7 +19,7 @@ export class RedisService {
   /**
    * Set a key-value pair in Redis
    */
-  async set(key: string, value: any, ttl?: number): Promise<void> {
+  async set(key: string, value: object, ttl?: number): Promise<void> {
     const serializedValue = JSON.stringify(value);
     if (ttl) {
       await this.client.setex(key, ttl, serializedValue);
@@ -31,14 +31,14 @@ export class RedisService {
   /**
    * Get a value from Redis
    */
-  async get<T = any>(key: string): Promise<T | null> {
+  async get<T = object>(key: string): Promise<T | null> {
     const value = await this.client.get(key);
     if (value === null) {
       return null;
     }
     try {
       return JSON.parse(value);
-    } catch (error) {
+    } catch {
       return value as T;
     }
   }
@@ -94,7 +94,7 @@ export class RedisService {
   /**
    * Set multiple key-value pairs
    */
-  async mset(keyValuePairs: Record<string, any>): Promise<void> {
+  async mset(keyValuePairs: Record<string, object>): Promise<void> {
     const pairs: string[] = [];
     for (const [key, value] of Object.entries(keyValuePairs)) {
       pairs.push(key, JSON.stringify(value));
@@ -105,7 +105,7 @@ export class RedisService {
   /**
    * Get multiple values
    */
-  async mget<T = any>(keys: string[]): Promise<(T | null)[]> {
+  async mget<T = object>(keys: string[]): Promise<(T | null)[]> {
     const values = await this.client.mget(...keys);
     return values.map(value => {
       if (value === null) {
@@ -113,7 +113,7 @@ export class RedisService {
       }
       try {
         return JSON.parse(value);
-      } catch (error) {
+      } catch {
         return value as T;
       }
     });
@@ -136,18 +136,18 @@ export class RedisService {
   /**
    * Hash operations
    */
-  async hset(key: string, field: string, value: any): Promise<number> {
+  async hset(key: string, field: string, value: object): Promise<number> {
     return await this.client.hset(key, field, JSON.stringify(value));
   }
 
-  async hget<T = any>(key: string, field: string): Promise<T | null> {
+  async hget<T = object>(key: string, field: string): Promise<T | null> {
     const value = await this.client.hget(key, field);
     if (value === null) {
       return null;
     }
     try {
       return JSON.parse(value);
-    } catch (error) {
+    } catch {
       return value as T;
     }
   }
@@ -156,13 +156,13 @@ export class RedisService {
     return await this.client.hdel(key, field);
   }
 
-  async hgetall<T = any>(key: string): Promise<Record<string, T>> {
+  async hgetall<T = object>(key: string): Promise<Record<string, T>> {
     const result = await this.client.hgetall(key);
     const parsed: Record<string, T> = {};
     for (const [field, value] of Object.entries(result)) {
       try {
         parsed[field] = JSON.parse(value);
-      } catch (error) {
+      } catch {
         parsed[field] = value as T;
       }
     }
@@ -172,36 +172,36 @@ export class RedisService {
   /**
    * List operations
    */
-  async lpush(key: string, ...values: any[]): Promise<number> {
+  async lpush(key: string, ...values: object[]): Promise<number> {
     const serializedValues = values.map(value => JSON.stringify(value));
     return await this.client.lpush(key, ...serializedValues);
   }
 
-  async rpush(key: string, ...values: any[]): Promise<number> {
+  async rpush(key: string, ...values: object[]): Promise<number> {
     const serializedValues = values.map(value => JSON.stringify(value));
     return await this.client.rpush(key, ...serializedValues);
   }
 
-  async lpop<T = any>(key: string): Promise<T | null> {
+  async lpop<T = object>(key: string): Promise<T | null> {
     const value = await this.client.lpop(key);
     if (value === null) {
       return null;
     }
     try {
       return JSON.parse(value);
-    } catch (error) {
+    } catch {
       return value as T;
     }
   }
 
-  async rpop<T = any>(key: string): Promise<T | null> {
+  async rpop<T = object>(key: string): Promise<T | null> {
     const value = await this.client.rpop(key);
     if (value === null) {
       return null;
     }
     try {
       return JSON.parse(value);
-    } catch (error) {
+    } catch {
       return value as T;
     }
   }
@@ -227,7 +227,7 @@ export class RedisService {
     }
 
     const result = await fn();
-    await this.set(cacheKey, result, ttl);
+    await this.set(cacheKey, result as object, ttl);
     return result;
   }
 

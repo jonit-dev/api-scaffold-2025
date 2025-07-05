@@ -143,7 +143,7 @@ describe("AuthController", () => {
     it("should throw error when no authorization header", async () => {
       const requestWithoutAuth = { headers: {}, user: mockRequest.user };
 
-      await expect(authController.logout(requestWithoutAuth)).rejects.toThrow(
+      await expect(authController.logout(requestWithoutAuth as any)).rejects.toThrow(
         "No authorization header found"
       );
     });
@@ -155,7 +155,7 @@ describe("AuthController", () => {
       };
 
       await expect(
-        authController.logout(requestWithInvalidAuth)
+        authController.logout(requestWithInvalidAuth as any)
       ).rejects.toThrow("Invalid authorization format");
     });
   });
@@ -372,6 +372,7 @@ describe("AuthController", () => {
       };
 
       (mockAuthService.verifyUser as any).mockResolvedValue(expectedUser);
+      (mockAuthService.getCurrentUser as any).mockResolvedValue(expectedUser);
 
       const result = await authController.verifyToken(mockRequest);
 
@@ -394,7 +395,7 @@ describe("AuthController", () => {
     it("should return invalid when no token provided", async () => {
       const requestWithoutToken = { headers: {} };
 
-      const result = await authController.verifyToken(requestWithoutToken);
+      const result = await authController.verifyToken(requestWithoutToken as any);
 
       expect(result).toEqual({ valid: false });
     });

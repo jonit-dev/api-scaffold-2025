@@ -1,4 +1,4 @@
-import { UserResponseDto } from "../user";
+import { UserResponseDto } from "./user-response.dto";
 import { Session } from "@supabase/supabase-js";
 import { IsString, IsNotEmpty, IsEmail } from "class-validator";
 

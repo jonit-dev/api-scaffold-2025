@@ -1,26 +1,26 @@
-import { Service, Inject } from "typedi";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { UserRepository } from "../repositories/user.repository";
-import { IUserEntity } from "../models/entities/user.entity";
-import { UserRole, UserStatus } from "../models/enums";
+import { plainToInstance } from "class-transformer";
+import { Inject, Service } from "typedi";
+import { env } from "../config/env";
 import {
-  LoginDto,
-  RegisterDto,
-  AuthResponseDto,
-  SessionResponseDto,
-  RefreshTokenDto,
-  ChangePasswordDto,
-  UserResponseDto,
-} from "../models/dtos/auth";
-import {
+  AccountSuspendedException,
   AuthException,
   InvalidCredentialsException,
-  AccountSuspendedException,
-  UserNotFoundException,
   PasswordResetException,
+  UserNotFoundException,
 } from "../exceptions/auth.exception";
-import { env } from "../config/env";
-import { plainToInstance } from "class-transformer";
+import {
+  AuthResponseDto,
+  ChangePasswordDto,
+  LoginDto,
+  RefreshTokenDto,
+  RegisterDto,
+  SessionResponseDto,
+  UserResponseDto,
+} from "../models/dtos/auth";
+import { IUserEntity } from "../models/entities/user.entity";
+import { UserRole, UserStatus } from "../models/enums";
+import { UserRepository } from "../repositories/user.repository";
 
 @Service()
 export class AuthService {
@@ -78,6 +78,24 @@ export class AuthService {
           ? UserStatus.ACTIVE
           : UserStatus.PENDING_VERIFICATION,
         email_verified: !!authData.user.email_confirmed_at,
+        get full_name() {
+          return `${this.first_name} ${this.last_name}`;
+        },
+        isActive() {
+          return this.status === UserStatus.ACTIVE;
+        },
+        isAdmin() {
+          return this.role === UserRole.ADMIN;
+        },
+        isModerator() {
+          return this.role === UserRole.MODERATOR;
+        },
+        hasRole(role: UserRole) {
+          return this.role === role;
+        },
+        hasAnyRole(...roles: UserRole[]) {
+          return roles.includes(this.role);
+        },
       };
 
       const user = await this.userRepository.create(userEntity);

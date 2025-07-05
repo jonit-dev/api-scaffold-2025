@@ -276,6 +276,7 @@ describe("AuthController Simple Integration Tests", () => {
       };
 
       (mockAuthService.verifyUser as any).mockResolvedValue(expectedUser);
+      (mockAuthService.getCurrentUser as any).mockResolvedValue(expectedUser);
 
       const result = await authController.verifyToken(mockRequest as any);
 

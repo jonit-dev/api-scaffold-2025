@@ -18,7 +18,7 @@ export class RedisConfig {
       host: env.REDIS_HOST,
       port: env.REDIS_PORT,
       password: env.REDIS_PASSWORD,
-      retryStrategy: (times: number) => {
+      retryStrategy: (times: number): number => {
         const delay = Math.min(times * 50, 2000);
         return delay;
       },

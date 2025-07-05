@@ -3,27 +3,25 @@ import {
   Post,
   Get,
   Body,
-  Param,
   HttpCode,
   Req,
-  Res,
 } from "routing-controllers";
 import { Service } from "typedi";
-import { Request, Response } from "express";
+import { Request } from "express";
 import { AuthService } from "../services/auth.service";
 import {
   LoginDto,
   RegisterDto,
-  RefreshTokenDto,
   ChangePasswordDto,
-  ForgotPasswordDto,
+  AuthResponseDto,
+  RefreshTokenDto,
   VerifyEmailDto,
   ResendVerificationDto,
-  AuthResponseDto,
-  UserResponseDto,
 } from "../models/dtos/auth";
-import { Authenticated, OptionalAuth } from "../decorators/auth.decorator";
-import { AuthenticatedUser } from "../types/express";
+import { ForgotPasswordDto } from "../models/dtos/auth/forgot-password.dto";
+import { UserResponseDto } from "../models/dtos/auth/user-response.dto";
+import { Authenticated } from "../decorators/auth.decorator";
+import { IAuthenticatedUser } from "../types/express";
 
 @JsonController("/api/auth")
 @Service()
@@ -46,7 +44,7 @@ export class AuthController {
   @HttpCode(204)
   @Authenticated()
   async logout(
-    @Req() req: Request & { user: AuthenticatedUser }
+    @Req() req: Request & { user: IAuthenticatedUser }
   ): Promise<void> {
     const token = this.extractTokenFromRequest(req);
     await this.authService.logout(token);
@@ -56,7 +54,7 @@ export class AuthController {
   @HttpCode(200)
   async refreshToken(
     @Body() refreshTokenDto: RefreshTokenDto
-  ): Promise<{ session: any }> {
+  ): Promise<object> {
     return await this.authService.refreshToken(refreshTokenDto);
   }
 
@@ -74,7 +72,7 @@ export class AuthController {
   @Authenticated()
   async changePassword(
     @Body() changePasswordDto: ChangePasswordDto,
-    @Req() req: Request & { user: AuthenticatedUser }
+    @Req() req: Request & { user: IAuthenticatedUser }
   ): Promise<{ message: string }> {
     await this.authService.changePassword(req.user.id, changePasswordDto);
     return { message: "Password changed successfully" };
@@ -102,24 +100,9 @@ export class AuthController {
   @HttpCode(200)
   @Authenticated()
   async getCurrentUser(
-    @Req() req: Request & { user: AuthenticatedUser }
+    @Req() req: Request & { user: IAuthenticatedUser }
   ): Promise<UserResponseDto> {
-    const userProfile = await this.authService.getCurrentUser(req.user.id);
-    return {
-      id: userProfile.id,
-      email: userProfile.email,
-      first_name: userProfile.first_name,
-      last_name: userProfile.last_name,
-      role: userProfile.role,
-      status: userProfile.status,
-      email_verified: userProfile.email_verified,
-      phone: userProfile.phone,
-      avatar_url: userProfile.avatar_url,
-      last_login: userProfile.last_login,
-      created_at: userProfile.created_at,
-      updated_at: userProfile.updated_at,
-      full_name: userProfile.full_name,
-    };
+    return await this.authService.getCurrentUser(req.user.id);
   }
 
   @Post("/verify-token")
@@ -134,25 +117,12 @@ export class AuthController {
       }
 
       const user = await this.authService.verifyUser(token);
+      const userResponse = await this.authService.getCurrentUser(user.id);
       return {
         valid: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          role: user.role,
-          status: user.status,
-          email_verified: user.email_verified,
-          phone: user.phone,
-          avatar_url: user.avatar_url,
-          last_login: user.last_login,
-          created_at: user.created_at,
-          updated_at: user.updated_at,
-          full_name: user.full_name,
-        },
+        user: userResponse,
       };
-    } catch (error) {
+    } catch {
       return { valid: false };
     }
   }

@@ -1,26 +1,28 @@
 import { User } from "@supabase/supabase-js";
+import { Request } from "express";
 import { UserRole } from "../models/enums";
 
 declare global {
   namespace Express {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     interface Request {
-      user?: AuthenticatedUser;
+      user?: IAuthenticatedUser;
     }
   }
 }
 
-export interface AuthenticatedUser {
+export interface IAuthenticatedUser {
   id: string;
   email: string;
   role: UserRole;
   supabaseUser: User;
 }
 
-export interface AuthenticatedRequest extends Request {
-  user: AuthenticatedUser;
+export interface IAuthenticatedRequest extends Request {
+  user: IAuthenticatedUser;
 }
 
-export interface TokenPayload {
+export interface ITokenPayload {
   sub: string;
   email: string;
   aud: string;

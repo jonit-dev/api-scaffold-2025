@@ -20,7 +20,7 @@ import {
   Middleware,
 } from "routing-controllers";
 import { Service } from "typedi";
-import { AuthenticatedUser } from "../../src/types/express";
+import { IAuthenticatedUser } from "../../src/types/express";
 
 @JsonController("/test-auth")
 @Service()

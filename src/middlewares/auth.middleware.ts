@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { Service, Inject } from "typedi";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { AuthService } from "../services/auth.service";
-import { AuthenticatedUser } from "../types/express";
+import { IAuthenticatedUser } from "../types/express";
 import { UnauthorizedException } from "../exceptions/http-exceptions";
 
 @Service()
@@ -37,7 +37,7 @@ export class AuthMiddleware {
       // Get user profile from our database
       const userProfile = await this.authService.getUserProfile(user.id);
 
-      const authenticatedUser: AuthenticatedUser = {
+      const authenticatedUser: IAuthenticatedUser = {
         id: user.id,
         email: user.email!,
         role: userProfile.role,

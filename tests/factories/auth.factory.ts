@@ -6,7 +6,7 @@ import {
   AuthResponseDto,
 } from "../../src/models/dtos/auth";
 import { User, Session } from "@supabase/supabase-js";
-import { AuthenticatedUser } from "../../src/types/express";
+import { IAuthenticatedUser } from "../../src/types/express";
 import { vi } from "vitest";
 
 export class AuthFactory {
@@ -26,6 +26,24 @@ export class AuthFactory {
       last_login: now,
       created_at: now,
       updated_at: now,
+      get full_name() {
+        return `${this.first_name} ${this.last_name}`;
+      },
+      isActive() {
+        return this.status === UserStatus.ACTIVE;
+      },
+      isAdmin() {
+        return this.role === UserRole.ADMIN;
+      },
+      isModerator() {
+        return this.role === UserRole.MODERATOR;
+      },
+      hasRole(role: UserRole) {
+        return this.role === role;
+      },
+      hasAnyRole(...roles: UserRole[]) {
+        return roles.includes(this.role);
+      },
       ...overrides,
     };
   }
@@ -126,8 +144,8 @@ export class AuthFactory {
   }
 
   static createAuthenticatedUser(
-    overrides?: Partial<AuthenticatedUser>
-  ): AuthenticatedUser {
+    overrides?: Partial<IAuthenticatedUser>
+  ): IAuthenticatedUser {
     return {
       id: "test-user-id-123",
       email: "test@example.com",
@@ -151,9 +169,9 @@ export class AuthFactory {
         email_verified: true,
         phone: "+1234567890",
         avatar_url: "https://example.com/avatar.jpg",
-        last_login: new Date(),
-        created_at: new Date(),
-        updated_at: new Date(),
+        last_login: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         full_name: "Test User",
         password_hash: "hashed_password_123",
       },
@@ -186,7 +204,7 @@ export class AuthFactory {
     };
   }
 
-  static createMockAuthRequest(user?: AuthenticatedUser): any {
+  static createMockAuthRequest(user?: IAuthenticatedUser): any {
     return {
       headers: {
         authorization: user

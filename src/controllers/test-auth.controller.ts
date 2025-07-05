@@ -2,13 +2,12 @@ import { JsonController, Get, Post, Body, Param } from "routing-controllers";
 import { Service } from "typedi";
 import { Authenticated, RequireRole } from "../decorators/auth.decorator";
 import { UserRole } from "../models/enums";
-import { AuthenticatedUser } from "../types/express";
 
 @JsonController("/api/test-auth")
 @Service()
 export class TestAuthController {
   @Get("/public")
-  public getPublicEndpoint() {
+  public getPublicEndpoint(): object {
     return {
       message: "This is a public endpoint",
       timestamp: new Date().toISOString(),
@@ -17,7 +16,7 @@ export class TestAuthController {
 
   @Get("/protected")
   @Authenticated()
-  public getProtectedEndpoint() {
+  public getProtectedEndpoint(): object {
     return {
       message: "This is a protected endpoint - you are authenticated!",
       timestamp: new Date().toISOString(),
@@ -26,7 +25,7 @@ export class TestAuthController {
 
   @Get("/admin-only")
   @RequireRole(UserRole.ADMIN)
-  public getAdminOnlyEndpoint() {
+  public getAdminOnlyEndpoint(): object {
     return {
       message: "This is an admin-only endpoint",
       timestamp: new Date().toISOString(),
@@ -35,7 +34,7 @@ export class TestAuthController {
 
   @Get("/moderator-or-admin")
   @RequireRole(UserRole.MODERATOR, UserRole.ADMIN)
-  public getModeratorOrAdminEndpoint() {
+  public getModeratorOrAdminEndpoint(): object {
     return {
       message: "This endpoint requires moderator or admin role",
       timestamp: new Date().toISOString(),
@@ -44,7 +43,7 @@ export class TestAuthController {
 
   @Post("/create-user")
   @RequireRole(UserRole.ADMIN)
-  public createUser(@Body() userData: any) {
+  public createUser(@Body() userData: object): object {
     return {
       message: "User created successfully",
       data: userData,
@@ -54,7 +53,7 @@ export class TestAuthController {
 
   @Get("/profile/:id")
   @Authenticated()
-  public getUserProfile(@Param("id") id: string) {
+  public getUserProfile(@Param("id") id: string): object {
     return {
       message: `Fetching profile for user ${id}`,
       userId: id,
@@ -64,7 +63,7 @@ export class TestAuthController {
 
   @Post("/admin/users")
   @RequireRole(UserRole.ADMIN)
-  public adminCreateUser(@Body() createUserData: any) {
+  public adminCreateUser(@Body() createUserData: object): object {
     return {
       message: "Admin created user",
       data: createUserData,

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { Service } from "typedi";
 import { UserRole } from "../models/enums";
-import { AuthenticatedUser } from "../types/express";
+import { IAuthenticatedUser } from "../types/express";
 import {
   UnauthorizedException,
   ForbiddenException,
@@ -13,7 +13,7 @@ export class RbacMiddleware {
 
   use(request: Request, response: Response, next: NextFunction): void {
     try {
-      const user = request.user as AuthenticatedUser;
+      const user = request.user as IAuthenticatedUser;
 
       if (!user) {
         throw new UnauthorizedException("Authentication required");
@@ -43,6 +43,6 @@ export class RbacMiddleware {
 }
 
 // Factory function to create role middleware instances
-export function createRoleMiddleware(...roles: UserRole[]) {
+export function createRoleMiddleware(...roles: UserRole[]): RbacMiddleware {
   return new RbacMiddleware(roles);
 }
