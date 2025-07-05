@@ -1,5 +1,6 @@
 import { IBaseEntity } from "../../types/database.types";
-import { UserRole, UserStatus } from "../enums";
+import { UserRole } from "../enums/user-roles.enum";
+import { UserStatus } from "../enums/user-status.enum";
 
 export interface IUserEntity extends IBaseEntity {
   id: string;

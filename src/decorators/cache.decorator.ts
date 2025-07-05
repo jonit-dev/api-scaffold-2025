@@ -17,7 +17,7 @@ export function Cache(config: ICacheConfig = {}): MethodDecorator {
   return function (
     target: object,
     propertyKey: string | symbol | undefined,
-    descriptor: PropertyDescriptor
+    descriptor: PropertyDescriptor,
   ): PropertyDescriptor {
     const defaultConfig: ICacheConfig = {
       ttl: 300, // 5 minutes
@@ -30,7 +30,7 @@ export function Cache(config: ICacheConfig = {}): MethodDecorator {
       CACHE_METADATA_KEY,
       defaultConfig,
       target,
-      propertyKey!
+      propertyKey!,
     );
     return descriptor;
   };

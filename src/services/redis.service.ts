@@ -216,7 +216,7 @@ export class RedisService {
   async cache<T>(
     key: string,
     fn: () => Promise<T>,
-    options: ICacheOptions = {}
+    options: ICacheOptions = {},
   ): Promise<T> {
     const { ttl = this.defaultTTL, prefix = "cache:" } = options;
     const cacheKey = `${prefix}${key}`;
@@ -238,7 +238,7 @@ export class RedisService {
 
   async invalidateCachePattern(
     pattern: string,
-    prefix = "cache:"
+    prefix = "cache:",
   ): Promise<number> {
     const cachePattern = `${prefix}${pattern}`;
     return await this.clearByPattern(cachePattern);

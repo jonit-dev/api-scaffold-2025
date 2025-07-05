@@ -2,12 +2,12 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import request from "supertest";
 import express from "express";
 import { Container } from "typedi";
-import { RedisService } from "../../src/services/redis.service";
+import { RedisService } from "../../services/redis.service";
 import {
   cacheMiddleware,
   decoratorCacheMiddleware,
-} from "../../src/middlewares/cache.middleware";
-import { Cache } from "../../src/decorators/cache.decorator";
+} from "../../middlewares/cache.middleware";
+import { Cache } from "../../decorators/cache.decorator";
 
 describe("Cache Integration Tests", () => {
   let app: express.Application;

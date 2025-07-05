@@ -19,7 +19,8 @@ import {
   UserResponseDto,
 } from "../models/dtos/auth";
 import { IUserEntity } from "../models/entities/user.entity";
-import { UserRole, UserStatus } from "../models/enums";
+import { UserRole } from "../models/enums/user-roles.enum";
+import { UserStatus } from "../models/enums/user-status.enum";
 import { UserRepository } from "../repositories/user.repository";
 
 @Service()
@@ -27,7 +28,7 @@ export class AuthService {
   constructor(
     private userRepository: UserRepository,
     @Inject("supabaseAuth") private supabaseAuth: SupabaseClient,
-    @Inject("supabaseAdmin") private supabaseAdmin: SupabaseClient
+    @Inject("supabaseAdmin") private supabaseAdmin: SupabaseClient,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
@@ -38,7 +39,7 @@ export class AuthService {
 
     // Check if email already exists
     const existingUser = await this.userRepository.findByEmail(
-      registerDto.email
+      registerDto.email,
     );
     if (existingUser) {
       throw new AuthException("Email already registered", 409);
@@ -180,7 +181,7 @@ export class AuthService {
   }
 
   async refreshToken(
-    refreshTokenDto: RefreshTokenDto
+    refreshTokenDto: RefreshTokenDto,
   ): Promise<SessionResponseDto> {
     try {
       const { data: authData, error } =
@@ -209,7 +210,7 @@ export class AuthService {
         email,
         {
           redirectTo: `${env.FRONTEND_URL}/reset-password`,
-        }
+        },
       );
 
       if (error) {
@@ -242,7 +243,7 @@ export class AuthService {
 
   async changePassword(
     userId: string,
-    changePasswordDto: ChangePasswordDto
+    changePasswordDto: ChangePasswordDto,
   ): Promise<void> {
     // Validate password confirmation
     if (changePasswordDto.newPassword !== changePasswordDto.confirmPassword) {

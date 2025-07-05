@@ -2,7 +2,7 @@ import { Container } from "typedi";
 import { Request, Response } from "express";
 import { AuthMiddleware } from "../middlewares/auth.middleware";
 import { createRoleMiddleware } from "../middlewares/rbac.middleware";
-import { UserRole } from "../models/enums";
+import { UserRole } from "../models/enums/user-roles.enum";
 import { IAuthenticatedUser } from "../types/express";
 import { AuthService } from "../services/auth.service";
 import { User } from "@supabase/supabase-js";
@@ -12,17 +12,17 @@ export function Authenticated(): MethodDecorator {
   return function (
     target: object,
     propertyKey: string | symbol,
-    descriptor: PropertyDescriptor
+    descriptor: PropertyDescriptor,
   ): void {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: unknown[]): Promise<unknown> {
       // Extract request, response, and next from arguments
       const req = args.find(
-        arg => arg && typeof arg === "object" && "headers" in arg
+        arg => arg && typeof arg === "object" && "headers" in arg,
       );
       const res = args.find(
-        arg => arg && typeof arg === "object" && "json" in arg
+        arg => arg && typeof arg === "object" && "json" in arg,
       );
 
       if (req && res) {
@@ -54,17 +54,17 @@ export function RequireRole(...roles: UserRole[]): MethodDecorator {
   return function (
     target: object,
     propertyKey: string | symbol,
-    descriptor: PropertyDescriptor
+    descriptor: PropertyDescriptor,
   ): void {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: unknown[]): Promise<unknown> {
       // Extract request, response, and next from arguments
       const req = args.find(
-        arg => arg && typeof arg === "object" && "headers" in arg
+        arg => arg && typeof arg === "object" && "headers" in arg,
       );
       const res = args.find(
-        arg => arg && typeof arg === "object" && "json" in arg
+        arg => arg && typeof arg === "object" && "json" in arg,
       );
 
       if (req && res) {
@@ -101,13 +101,13 @@ export function OptionalAuth(): MethodDecorator {
   return function (
     target: object,
     propertyKey: string | symbol,
-    descriptor: PropertyDescriptor
+    descriptor: PropertyDescriptor,
   ): void {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: unknown[]): Promise<unknown> {
       const request = args.find(
-        arg => arg && typeof arg === "object" && "headers" in arg
+        arg => arg && typeof arg === "object" && "headers" in arg,
       ) as Request;
 
       if (request) {
@@ -118,7 +118,7 @@ export function OptionalAuth(): MethodDecorator {
             const supabaseAuth = Container.get("supabaseAuth") as {
               auth: {
                 getUser: (
-                  token: string
+                  token: string,
                 ) => Promise<{ data: { user: User | null }; error: unknown }>;
               };
             };
@@ -157,7 +157,7 @@ export function CurrentUser(): ParameterDecorator {
   return function (
     target: object,
     propertyKey: string | symbol | undefined,
-    parameterIndex: number
+    parameterIndex: number,
   ): void {
     if (!propertyKey) return;
 
@@ -169,7 +169,7 @@ export function CurrentUser(): ParameterDecorator {
       "custom:currentUser",
       existingMetadata,
       target,
-      propertyKey
+      propertyKey,
     );
 
     // Get the original method
@@ -183,7 +183,7 @@ export function CurrentUser(): ParameterDecorator {
     ): unknown {
       // Find the request object
       const request = args.find(
-        arg => arg && typeof arg === "object" && "user" in arg
+        arg => arg && typeof arg === "object" && "user" in arg,
       ) as { user: IAuthenticatedUser };
 
       if (request && request.user) {
@@ -193,7 +193,7 @@ export function CurrentUser(): ParameterDecorator {
 
       return (originalMethod as (...args: unknown[]) => unknown).apply(
         this,
-        args
+        args,
       );
     };
   };

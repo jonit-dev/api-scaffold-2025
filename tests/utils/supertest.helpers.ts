@@ -11,7 +11,7 @@ export class SupertestHelpers {
   static async expectJsonResponse(
     response: request.Response,
     expectedStatus: number,
-    expectedData?: any
+    expectedData?: any,
   ) {
     expect(response.status).toBe(expectedStatus);
     expect(response.headers["content-type"]).toMatch(/json/);
@@ -26,7 +26,7 @@ export class SupertestHelpers {
   static async expectErrorResponse(
     response: request.Response,
     expectedStatus: number,
-    expectedMessage?: string
+    expectedMessage?: string,
   ) {
     expect(response.status).toBe(expectedStatus);
     expect(response.body.success).toBe(false);
@@ -36,7 +36,7 @@ export class SupertestHelpers {
         message: expectedMessage || expect.any(String),
         timestamp: expect.any(String),
         path: expect.any(String),
-      })
+      }),
     );
 
     return response;
@@ -45,7 +45,7 @@ export class SupertestHelpers {
   static async expectSuccessResponse(
     response: request.Response,
     expectedData?: any,
-    expectedMessage?: string
+    expectedMessage?: string,
   ) {
     expect(response.status).toBe(HttpStatus.Ok);
     expect(response.body.success).toBe(true);
@@ -63,7 +63,7 @@ export class SupertestHelpers {
 
   static async expectCreatedResponse(
     response: request.Response,
-    expectedData?: any
+    expectedData?: any,
   ) {
     expect(response.status).toBe(HttpStatus.Created);
     expect(response.body.success).toBe(true);
@@ -77,78 +77,78 @@ export class SupertestHelpers {
 
   static async expectNotFoundResponse(
     response: request.Response,
-    expectedMessage?: string
+    expectedMessage?: string,
   ) {
     return this.expectErrorResponse(
       response,
       HttpStatus.NotFound,
-      expectedMessage
+      expectedMessage,
     );
   }
 
   static async expectBadRequestResponse(
     response: request.Response,
-    expectedMessage?: string
+    expectedMessage?: string,
   ) {
     return this.expectErrorResponse(
       response,
       HttpStatus.BadRequest,
-      expectedMessage
+      expectedMessage,
     );
   }
 
   static async expectUnauthorizedResponse(
     response: request.Response,
-    expectedMessage?: string
+    expectedMessage?: string,
   ) {
     return this.expectErrorResponse(
       response,
       HttpStatus.Unauthorized,
-      expectedMessage
+      expectedMessage,
     );
   }
 
   static async expectForbiddenResponse(
     response: request.Response,
-    expectedMessage?: string
+    expectedMessage?: string,
   ) {
     return this.expectErrorResponse(
       response,
       HttpStatus.Forbidden,
-      expectedMessage
+      expectedMessage,
     );
   }
 
   static async expectConflictResponse(
     response: request.Response,
-    expectedMessage?: string
+    expectedMessage?: string,
   ) {
     return this.expectErrorResponse(
       response,
       HttpStatus.Conflict,
-      expectedMessage
+      expectedMessage,
     );
   }
 
   static async expectValidationErrorResponse(
     response: request.Response,
-    expectedMessage?: string
+    expectedMessage?: string,
   ) {
     return this.expectErrorResponse(
       response,
       HttpStatus.UnprocessableEntity,
-      expectedMessage
+      expectedMessage,
     );
   }
 
   static async expectInternalServerErrorResponse(
     response: request.Response,
-    expectedMessage?: string
+    expectedMessage?: string,
   ) {
     return this.expectErrorResponse(
       response,
       HttpStatus.InternalServerError,
-      expectedMessage
+      expectedMessage,
     );
   }
 
@@ -156,7 +156,7 @@ export class SupertestHelpers {
     app: Express,
     endpoint: string,
     data: any,
-    headers: any = {}
+    headers: any = {},
   ) {
     return request(app).post(endpoint).send(data).set(headers);
   }
@@ -169,7 +169,7 @@ export class SupertestHelpers {
     app: Express,
     endpoint: string,
     data: any,
-    headers: any = {}
+    headers: any = {},
   ) {
     return request(app).put(endpoint).send(data).set(headers);
   }
@@ -178,7 +178,7 @@ export class SupertestHelpers {
     app: Express,
     endpoint: string,
     data: any,
-    headers: any = {}
+    headers: any = {},
   ) {
     return request(app).patch(endpoint).send(data).set(headers);
   }
@@ -186,7 +186,7 @@ export class SupertestHelpers {
   static createDeleteRequest(
     app: Express,
     endpoint: string,
-    headers: any = {}
+    headers: any = {},
   ) {
     return request(app).delete(endpoint).set(headers);
   }
@@ -196,7 +196,7 @@ export class SupertestHelpers {
     method: string,
     endpoint: string,
     token: string,
-    data?: any
+    data?: any,
   ) {
     const methodLower = method.toLowerCase();
     let req: request.Test;
@@ -232,7 +232,7 @@ export class SupertestHelpers {
 
   static async expectPaginatedResponse(
     response: request.Response,
-    expectedData?: any
+    expectedData?: any,
   ) {
     expect(response.status).toBe(HttpStatus.Ok);
     expect(response.body.success).toBe(true);
@@ -247,7 +247,7 @@ export class SupertestHelpers {
           hasNextPage: expect.any(Boolean),
           hasPreviousPage: expect.any(Boolean),
         }),
-      })
+      }),
     );
 
     if (expectedData) {
@@ -271,7 +271,7 @@ export class SupertestHelpers {
           hasNextPage: false,
           hasPreviousPage: expect.any(Boolean),
         }),
-      })
+      }),
     );
 
     return response;

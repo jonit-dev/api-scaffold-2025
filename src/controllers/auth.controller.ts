@@ -44,7 +44,7 @@ export class AuthController {
   @HttpCode(204)
   @Authenticated()
   async logout(
-    @Req() req: Request & { user: IAuthenticatedUser }
+    @Req() req: Request & { user: IAuthenticatedUser },
   ): Promise<void> {
     const token = this.extractTokenFromRequest(req);
     await this.authService.logout(token);
@@ -53,7 +53,7 @@ export class AuthController {
   @Post("/refresh")
   @HttpCode(200)
   async refreshToken(
-    @Body() refreshTokenDto: RefreshTokenDto
+    @Body() refreshTokenDto: RefreshTokenDto,
   ): Promise<object> {
     return await this.authService.refreshToken(refreshTokenDto);
   }
@@ -61,7 +61,7 @@ export class AuthController {
   @Post("/forgot-password")
   @HttpCode(200)
   async forgotPassword(
-    @Body() forgotPasswordDto: ForgotPasswordDto
+    @Body() forgotPasswordDto: ForgotPasswordDto,
   ): Promise<{ message: string }> {
     await this.authService.forgotPassword(forgotPasswordDto.email);
     return { message: "Password reset email sent successfully" };
@@ -72,7 +72,7 @@ export class AuthController {
   @Authenticated()
   async changePassword(
     @Body() changePasswordDto: ChangePasswordDto,
-    @Req() req: Request & { user: IAuthenticatedUser }
+    @Req() req: Request & { user: IAuthenticatedUser },
   ): Promise<{ message: string }> {
     await this.authService.changePassword(req.user.id, changePasswordDto);
     return { message: "Password changed successfully" };
@@ -81,7 +81,7 @@ export class AuthController {
   @Post("/verify-email")
   @HttpCode(200)
   async verifyEmail(
-    @Body() verifyEmailDto: VerifyEmailDto
+    @Body() verifyEmailDto: VerifyEmailDto,
   ): Promise<{ message: string }> {
     await this.authService.verifyEmail(verifyEmailDto.token);
     return { message: "Email verified successfully" };
@@ -90,7 +90,7 @@ export class AuthController {
   @Post("/resend-verification")
   @HttpCode(200)
   async resendVerification(
-    @Body() resendVerificationDto: ResendVerificationDto
+    @Body() resendVerificationDto: ResendVerificationDto,
   ): Promise<{ message: string }> {
     await this.authService.resendVerification(resendVerificationDto.email);
     return { message: "Verification email sent successfully" };
@@ -100,7 +100,7 @@ export class AuthController {
   @HttpCode(200)
   @Authenticated()
   async getCurrentUser(
-    @Req() req: Request & { user: IAuthenticatedUser }
+    @Req() req: Request & { user: IAuthenticatedUser },
   ): Promise<UserResponseDto> {
     return await this.authService.getCurrentUser(req.user.id);
   }
@@ -108,7 +108,7 @@ export class AuthController {
   @Post("/verify-token")
   @HttpCode(200)
   async verifyToken(
-    @Req() req: Request
+    @Req() req: Request,
   ): Promise<{ valid: boolean; user?: UserResponseDto }> {
     try {
       const token = this.extractTokenFromRequest(req);

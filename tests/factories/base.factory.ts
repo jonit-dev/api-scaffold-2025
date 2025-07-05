@@ -12,7 +12,7 @@ export class BaseFactory {
   }
 
   static createDeletedEntity(
-    overrides: Partial<IBaseEntity> = {}
+    overrides: Partial<IBaseEntity> = {},
   ): IBaseEntity {
     return this.createBaseEntity({
       deleted_at: "2023-01-02T00:00:00.000Z",
@@ -22,7 +22,7 @@ export class BaseFactory {
 
   static createMultipleEntities(
     count: number,
-    overrides: Partial<IBaseEntity> = {}
+    overrides: Partial<IBaseEntity> = {},
   ): IBaseEntity[] {
     return Array.from({ length: count }, (_, index) =>
       this.createBaseEntity({
@@ -30,7 +30,7 @@ export class BaseFactory {
         created_at: `2023-01-0${index + 1}T00:00:00.000Z`,
         updated_at: `2023-01-0${index + 1}T00:00:00.000Z`,
         ...overrides,
-      })
+      }),
     );
   }
 }

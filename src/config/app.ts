@@ -15,7 +15,7 @@ export const config = {
     poolSize: parseInt(process.env.DB_POOL_SIZE || "20", 10),
     connectionTimeout: parseInt(
       process.env.DB_CONNECTION_TIMEOUT || "30000",
-      10
+      10,
     ),
   },
   cors: {
@@ -39,7 +39,7 @@ const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
   console.warn(
-    `⚠️  Missing optional environment variables: ${missingEnvVars.join(", ")}`
+    `⚠️  Missing optional environment variables: ${missingEnvVars.join(", ")}`,
   );
 }
 

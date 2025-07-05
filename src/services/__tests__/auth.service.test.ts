@@ -1,16 +1,17 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Container } from "typedi";
-import { AuthService } from "../../../src/services/auth.service";
-import { UserRepository } from "../../../src/repositories/user.repository";
-import { UserRole, UserStatus } from "../../../src/models/enums";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import {
+  AccountSuspendedException,
   AuthException,
   InvalidCredentialsException,
-  AccountSuspendedException,
   UserNotFoundException,
-} from "../../../src/exceptions/auth.exception";
-import { TestHelpers } from "../../utils/test.helpers";
-import { AuthFactory } from "../../factories/auth.factory";
+} from "@/exceptions";
+import { UserRole, UserStatus } from "@/models";
+import { UserRepository } from "@/repositories/user.repository";
+import { AuthFactory } from "../../../tests/factories/auth.factory";
+import { TestHelpers } from "../../../tests/utils/test.helpers";
+import { AuthService } from "../auth.service";
 
 describe("AuthService", () => {
   let authService: AuthService;

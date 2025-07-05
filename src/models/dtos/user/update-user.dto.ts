@@ -8,7 +8,8 @@ import {
   IsUrl,
   IsBoolean,
 } from "class-validator";
-import { UserRole, UserStatus } from "../../enums";
+import { UserRole } from "../../enums/user-roles.enum";
+import { UserStatus } from "../../enums/user-status.enum";
 
 export class UpdateUserDto {
   @IsString()

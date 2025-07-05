@@ -54,7 +54,7 @@ export class TestHelpers {
 
   static createFailedQuery(error: string) {
     return Promise.resolve(
-      DatabaseFactory.createSupabaseResponse([], new Error(error))
+      DatabaseFactory.createSupabaseResponse([], new Error(error)),
     );
   }
 
@@ -134,7 +134,7 @@ export class TestHelpers {
 
   static async expectAsyncToResolve(
     fn: () => Promise<any>,
-    expectedValue: any
+    expectedValue: any,
   ) {
     await expect(fn()).resolves.toEqual(expectedValue);
   }

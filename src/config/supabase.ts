@@ -19,7 +19,7 @@ function createSupabaseClient(): SupabaseClient<IDatabase> {
     key.includes("your_supabase")
   ) {
     console.warn(
-      "⚠️  Supabase configuration not found or using placeholder values. Creating mock client for development."
+      "⚠️  Supabase configuration not found or using placeholder values. Creating mock client for development.",
     );
 
     // Create a mock client for development when Supabase is not configured

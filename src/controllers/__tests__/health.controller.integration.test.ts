@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { app } from "@/app";
-import { SupertestHelpers } from "../utils/supertest.helpers";
-import { TestHelpers } from "../utils/test.helpers";
+import { SupertestHelpers } from "../../../tests/utils/supertest.helpers";
+import { TestHelpers } from "../../../tests/utils/test.helpers";
 
 describe("Health Controller", () => {
   beforeEach(() => {

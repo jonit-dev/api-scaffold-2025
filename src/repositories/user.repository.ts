@@ -2,7 +2,8 @@ import { Service } from "typedi";
 import { BaseRepository } from "./base.repository";
 import { IUserEntity } from "../models/entities/user.entity";
 import { IUserFilters } from "../models/interfaces/user.interface";
-import { UserRole, UserStatus } from "../models/enums";
+import { UserRole } from "../models/enums/user-roles.enum";
+import { UserStatus } from "../models/enums/user-status.enum";
 import { DatabaseException } from "../exceptions/database.exception";
 import { IPaginatedResult } from "../types/database.types";
 
@@ -28,7 +29,7 @@ export class UserRepository extends BaseRepository<IUserEntity> {
   async findUsersPaginated(
     page: number = 1,
     limit: number = 10,
-    filters?: IUserFilters
+    filters?: IUserFilters,
   ): Promise<IPaginatedResult<IUserEntity>> {
     const offset = (page - 1) * limit;
     let query = this.supabase
@@ -48,7 +49,7 @@ export class UserRepository extends BaseRepository<IUserEntity> {
     }
     if (filters?.search) {
       query = query.or(
-        `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`
+        `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`,
       );
     }
 

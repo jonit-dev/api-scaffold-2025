@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { AuthController } from "../../src/controllers/auth.controller";
-import { AuthService } from "../../src/services/auth.service";
-import { UserRole, UserStatus } from "../../src/models/enums";
-import { TestHelpers } from "../utils/test.helpers";
-import { AuthFactory } from "../factories/auth.factory";
+import { AuthController } from "../../controllers/auth.controller";
+import { AuthService } from "../../services/auth.service";
+import { UserRole } from "../../models/enums/user-roles.enum";
+import { UserStatus } from "../../models/enums/user-status.enum";
+import { TestHelpers } from "../../../tests/utils/test.helpers";
+import { AuthFactory } from "../../../tests/factories/auth.factory";
 import {
   AuthException,
   InvalidCredentialsException,
-  UserNotFoundException,
-} from "../../src/exceptions/auth.exception";
+} from "../../exceptions/auth.exception";
 
 describe("AuthController Simple Integration Tests", () => {
   let authController: AuthController;
@@ -52,7 +52,7 @@ describe("AuthController Simple Integration Tests", () => {
         confirmPassword: "different",
       });
 
-      (mockAuthService.register as any).mockRejectedValue(
+      (mockAuthService.register as unknown as any).mockRejectedValue(
         new AuthException("Passwords do not match", 400),
       );
 
@@ -67,7 +67,9 @@ describe("AuthController Simple Integration Tests", () => {
       const loginDto = AuthFactory.createLoginDto();
       const expectedResponse = AuthFactory.createAuthResponseDto();
 
-      (mockAuthService.login as any).mockResolvedValue(expectedResponse);
+      (mockAuthService.login as unknown as any).mockResolvedValue(
+        expectedResponse,
+      );
 
       const result = await authController.login(loginDto);
 
@@ -81,7 +83,7 @@ describe("AuthController Simple Integration Tests", () => {
         password: "wrongpassword",
       });
 
-      (mockAuthService.login as any).mockRejectedValue(
+      (mockAuthService.login as unknown as any).mockRejectedValue(
         new InvalidCredentialsException(),
       );
 
@@ -98,9 +100,9 @@ describe("AuthController Simple Integration Tests", () => {
         user: AuthFactory.createAuthenticatedUser(),
       };
 
-      (mockAuthService.logout as any).mockResolvedValue(undefined);
+      (mockAuthService.logout as unknown as any).mockResolvedValue(undefined);
 
-      await authController.logout(mockRequest as any);
+      await authController.logout(mockRequest as never);
 
       expect(mockAuthService.logout).toHaveBeenCalledWith("valid-token-123");
     });
@@ -112,7 +114,7 @@ describe("AuthController Simple Integration Tests", () => {
       };
 
       await expect(
-        authController.logout(requestWithoutAuth as any),
+        authController.logout(requestWithoutAuth as never),
       ).rejects.toThrow("No authorization header found");
     });
   });
@@ -122,7 +124,9 @@ describe("AuthController Simple Integration Tests", () => {
       const refreshTokenDto = { refresh_token: "refresh-token-123" };
       const expectedResponse = AuthFactory.createAuthResponseDto();
 
-      (mockAuthService.refreshToken as any).mockResolvedValue(expectedResponse);
+      (mockAuthService.refreshToken as unknown as any).mockResolvedValue(
+        expectedResponse,
+      );
 
       const result = await authController.refreshToken(refreshTokenDto);
 
@@ -135,7 +139,7 @@ describe("AuthController Simple Integration Tests", () => {
     it("should throw AuthException for invalid refresh token", async () => {
       const refreshTokenDto = { refresh_token: "invalid-token" };
 
-      (mockAuthService.refreshToken as any).mockRejectedValue(
+      (mockAuthService.refreshToken as unknown as any).mockRejectedValue(
         new AuthException("Token refresh failed", 401),
       );
 
@@ -149,7 +153,9 @@ describe("AuthController Simple Integration Tests", () => {
     it("should send forgot password email successfully", async () => {
       const forgotPasswordDto = { email: "test@example.com" };
 
-      (mockAuthService.forgotPassword as any).mockResolvedValue(undefined);
+      (mockAuthService.forgotPassword as unknown as any).mockResolvedValue(
+        undefined,
+      );
 
       const result = await authController.forgotPassword(forgotPasswordDto);
 
@@ -173,11 +179,13 @@ describe("AuthController Simple Integration Tests", () => {
         user: AuthFactory.createAuthenticatedUser(),
       };
 
-      (mockAuthService.changePassword as any).mockResolvedValue(undefined);
+      (mockAuthService.changePassword as unknown as any).mockResolvedValue(
+        undefined,
+      );
 
       const result = await authController.changePassword(
         changePasswordDto,
-        mockRequest as any,
+        mockRequest as never,
       );
 
       expect(result).toEqual({ message: "Password changed successfully" });
@@ -192,7 +200,9 @@ describe("AuthController Simple Integration Tests", () => {
     it("should verify email successfully", async () => {
       const verifyEmailDto = { token: "verification-token-123" };
 
-      (mockAuthService.verifyEmail as any).mockResolvedValue(undefined);
+      (mockAuthService.verifyEmail as unknown as any).mockResolvedValue(
+        undefined,
+      );
 
       const result = await authController.verifyEmail(verifyEmailDto);
 
@@ -207,7 +217,9 @@ describe("AuthController Simple Integration Tests", () => {
     it("should resend verification email successfully", async () => {
       const resendVerificationDto = { email: "test@example.com" };
 
-      (mockAuthService.resendVerification as any).mockResolvedValue(undefined);
+      (mockAuthService.resendVerification as unknown as any).mockResolvedValue(
+        undefined,
+      );
 
       const result = await authController.resendVerification(
         resendVerificationDto,
@@ -243,9 +255,13 @@ describe("AuthController Simple Integration Tests", () => {
         full_name: "Test User",
       };
 
-      (mockAuthService.getCurrentUser as any).mockResolvedValue(expectedUser);
+      (mockAuthService.getCurrentUser as unknown as any).mockResolvedValue(
+        expectedUser,
+      );
 
-      const result = await authController.getCurrentUser(mockRequest as any);
+      const result = await authController.getCurrentUser(
+        mockRequest as unknown as any,
+      );
 
       expect(result).toEqual(expectedUser);
       expect(mockAuthService.getCurrentUser).toHaveBeenCalledWith(
@@ -275,10 +291,16 @@ describe("AuthController Simple Integration Tests", () => {
         full_name: "Test User",
       };
 
-      (mockAuthService.verifyUser as any).mockResolvedValue(expectedUser);
-      (mockAuthService.getCurrentUser as any).mockResolvedValue(expectedUser);
+      (mockAuthService.verifyUser as unknown as any).mockResolvedValue(
+        expectedUser,
+      );
+      (mockAuthService.getCurrentUser as unknown as any).mockResolvedValue(
+        expectedUser,
+      );
 
-      const result = await authController.verifyToken(mockRequest as any);
+      const result = await authController.verifyToken(
+        mockRequest as unknown as any,
+      );
 
       expect(result).toEqual({ valid: true, user: expectedUser });
       expect(mockAuthService.verifyUser).toHaveBeenCalledWith(
@@ -290,7 +312,7 @@ describe("AuthController Simple Integration Tests", () => {
       const requestWithoutToken = { headers: {} };
 
       const result = await authController.verifyToken(
-        requestWithoutToken as any,
+        requestWithoutToken as unknown as any,
       );
 
       expect(result).toEqual({ valid: false });
@@ -301,11 +323,13 @@ describe("AuthController Simple Integration Tests", () => {
         headers: { authorization: "Bearer invalid-token" },
       };
 
-      (mockAuthService.verifyUser as any).mockRejectedValue(
+      (mockAuthService.verifyUser as unknown as any).mockRejectedValue(
         new AuthException("Invalid token", 401),
       );
 
-      const result = await authController.verifyToken(mockRequest as any);
+      const result = await authController.verifyToken(
+        mockRequest as unknown as any,
+      );
 
       expect(result).toEqual({ valid: false });
     });

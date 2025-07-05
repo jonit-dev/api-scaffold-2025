@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Container } from "typedi";
-import { UserRepository } from "../../../src/repositories/user.repository";
-import { UserRole, UserStatus } from "../../../src/models/enums";
-import { IUserEntity } from "../../../src/models/entities/user.entity";
-import { DatabaseException } from "../../../src/exceptions/database.exception";
-import { TestHelpers } from "../../utils/test.helpers";
-import { AuthFactory } from "../../factories/auth.factory";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { DatabaseException } from "@/exceptions";
+import { UserRole, UserStatus } from "@/models";
+import { AuthFactory } from "../../../tests/factories/auth.factory";
+import { TestHelpers } from "../../../tests/utils/test.helpers";
+import { UserRepository } from "../user.repository";
 
 describe("UserRepository", () => {
   let userRepository: UserRepository;

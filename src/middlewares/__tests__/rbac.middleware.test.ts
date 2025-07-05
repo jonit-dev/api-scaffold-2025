@@ -1,14 +1,9 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import {
-  RbacMiddleware,
-  createRoleMiddleware,
-} from "../../../src/middlewares/rbac.middleware";
-import { UserRole } from "../../../src/models/enums";
-import {
-  UnauthorizedException,
-  ForbiddenException,
-} from "../../../src/exceptions/http-exceptions";
-import { AuthFactory } from "../../factories/auth.factory";
+import { beforeEach, describe, expect, it } from "vitest";
+
+import { ForbiddenException, UnauthorizedException } from "@/exceptions";
+import { UserRole } from "@/models";
+import { AuthFactory } from "../../../tests/factories/auth.factory";
+import { RbacMiddleware, createRoleMiddleware } from "../rbac.middleware";
 
 describe("RbacMiddleware", () => {
   let mockRequest: any;

@@ -5,7 +5,7 @@ import {
 
 export class HealthFactory {
   static createHealthResponse(
-    overrides: Partial<IHealthResponseDto> = {}
+    overrides: Partial<IHealthResponseDto> = {},
   ): IHealthResponseDto {
     return {
       status: "healthy",
@@ -28,7 +28,7 @@ export class HealthFactory {
   }
 
   static createServiceStatus(
-    overrides: Partial<IServiceStatusDto> = {}
+    overrides: Partial<IServiceStatusDto> = {},
   ): IServiceStatusDto {
     return {
       status: "healthy",
@@ -39,7 +39,7 @@ export class HealthFactory {
   }
 
   static createUnhealthyResponse(
-    overrides: Partial<IHealthResponseDto> = {}
+    overrides: Partial<IHealthResponseDto> = {},
   ): IHealthResponseDto {
     return this.createHealthResponse({
       status: "unhealthy",
@@ -55,7 +55,7 @@ export class HealthFactory {
   }
 
   static createPartiallyHealthyResponse(
-    overrides: Partial<IHealthResponseDto> = {}
+    overrides: Partial<IHealthResponseDto> = {},
   ): IHealthResponseDto {
     return this.createHealthResponse({
       status: "degraded",

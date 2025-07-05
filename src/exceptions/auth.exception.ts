@@ -8,7 +8,7 @@ export class AuthException extends Error {
   constructor(
     message: string,
     statusCode: HttpStatus = HttpStatus.Unauthorized,
-    code?: string
+    code?: string,
   ) {
     super(message);
     this.name = "AuthException";

@@ -69,11 +69,11 @@ describe("AuthController", () => {
       });
 
       (mockAuthService.register as any).mockRejectedValue(
-        new AuthException("Passwords do not match", 400)
+        new AuthException("Passwords do not match", 400),
       );
 
       await expect(authController.register(registerDto)).rejects.toThrow(
-        AuthException
+        AuthException,
       );
     });
 
@@ -81,11 +81,11 @@ describe("AuthController", () => {
       const registerDto = AuthFactory.createRegisterDto();
 
       (mockAuthService.register as any).mockRejectedValue(
-        new AuthException("Email already registered", 409)
+        new AuthException("Email already registered", 409),
       );
 
       await expect(authController.register(registerDto)).rejects.toThrow(
-        AuthException
+        AuthException,
       );
     });
   });
@@ -110,11 +110,11 @@ describe("AuthController", () => {
       });
 
       (mockAuthService.login as any).mockRejectedValue(
-        new InvalidCredentialsException()
+        new InvalidCredentialsException(),
       );
 
       await expect(authController.login(loginDto)).rejects.toThrow(
-        InvalidCredentialsException
+        InvalidCredentialsException,
       );
     });
 
@@ -122,11 +122,11 @@ describe("AuthController", () => {
       const loginDto = AuthFactory.createLoginDto();
 
       (mockAuthService.login as any).mockRejectedValue(
-        new UserNotFoundException()
+        new UserNotFoundException(),
       );
 
       await expect(authController.login(loginDto)).rejects.toThrow(
-        UserNotFoundException
+        UserNotFoundException,
       );
     });
   });
@@ -143,9 +143,9 @@ describe("AuthController", () => {
     it("should throw error when no authorization header", async () => {
       const requestWithoutAuth = { headers: {}, user: mockRequest.user };
 
-      await expect(authController.logout(requestWithoutAuth as any)).rejects.toThrow(
-        "No authorization header found"
-      );
+      await expect(
+        authController.logout(requestWithoutAuth as any),
+      ).rejects.toThrow("No authorization header found");
     });
 
     it("should throw error when invalid authorization format", async () => {
@@ -155,7 +155,7 @@ describe("AuthController", () => {
       };
 
       await expect(
-        authController.logout(requestWithInvalidAuth as any)
+        authController.logout(requestWithInvalidAuth as any),
       ).rejects.toThrow("Invalid authorization format");
     });
   });
@@ -171,7 +171,7 @@ describe("AuthController", () => {
 
       expect(result).toEqual(expectedResponse);
       expect(mockAuthService.refreshToken).toHaveBeenCalledWith(
-        refreshTokenDto
+        refreshTokenDto,
       );
     });
 
@@ -179,11 +179,11 @@ describe("AuthController", () => {
       const refreshTokenDto = { refresh_token: "invalid-token" };
 
       (mockAuthService.refreshToken as any).mockRejectedValue(
-        new AuthException("Token refresh failed", 401)
+        new AuthException("Token refresh failed", 401),
       );
 
       await expect(
-        authController.refreshToken(refreshTokenDto)
+        authController.refreshToken(refreshTokenDto),
       ).rejects.toThrow(AuthException);
     });
   });
@@ -200,7 +200,7 @@ describe("AuthController", () => {
         message: "Password reset email sent successfully",
       });
       expect(mockAuthService.forgotPassword).toHaveBeenCalledWith(
-        forgotPasswordDto.email
+        forgotPasswordDto.email,
       );
     });
 
@@ -208,11 +208,11 @@ describe("AuthController", () => {
       const forgotPasswordDto = { email: "test@example.com" };
 
       (mockAuthService.forgotPassword as any).mockRejectedValue(
-        new AuthException("Password reset request failed", 500)
+        new AuthException("Password reset request failed", 500),
       );
 
       await expect(
-        authController.forgotPassword(forgotPasswordDto)
+        authController.forgotPassword(forgotPasswordDto),
       ).rejects.toThrow(AuthException);
     });
   });
@@ -229,13 +229,13 @@ describe("AuthController", () => {
 
       const result = await authController.changePassword(
         changePasswordDto,
-        mockRequest
+        mockRequest,
       );
 
       expect(result).toEqual({ message: "Password changed successfully" });
       expect(mockAuthService.changePassword).toHaveBeenCalledWith(
         mockRequest.user.id,
-        changePasswordDto
+        changePasswordDto,
       );
     });
 
@@ -247,11 +247,11 @@ describe("AuthController", () => {
       };
 
       (mockAuthService.changePassword as any).mockRejectedValue(
-        new AuthException("Passwords do not match", 400)
+        new AuthException("Passwords do not match", 400),
       );
 
       await expect(
-        authController.changePassword(changePasswordDto, mockRequest)
+        authController.changePassword(changePasswordDto, mockRequest),
       ).rejects.toThrow(AuthException);
     });
   });
@@ -266,7 +266,7 @@ describe("AuthController", () => {
 
       expect(result).toEqual({ message: "Email verified successfully" });
       expect(mockAuthService.verifyEmail).toHaveBeenCalledWith(
-        verifyEmailDto.token
+        verifyEmailDto.token,
       );
     });
 
@@ -274,11 +274,11 @@ describe("AuthController", () => {
       const verifyEmailDto = { token: "invalid-token" };
 
       (mockAuthService.verifyEmail as any).mockRejectedValue(
-        new AuthException("Email verification failed", 400)
+        new AuthException("Email verification failed", 400),
       );
 
       await expect(authController.verifyEmail(verifyEmailDto)).rejects.toThrow(
-        AuthException
+        AuthException,
       );
     });
   });
@@ -290,14 +290,14 @@ describe("AuthController", () => {
       (mockAuthService.resendVerification as any).mockResolvedValue(undefined);
 
       const result = await authController.resendVerification(
-        resendVerificationDto
+        resendVerificationDto,
       );
 
       expect(result).toEqual({
         message: "Verification email sent successfully",
       });
       expect(mockAuthService.resendVerification).toHaveBeenCalledWith(
-        resendVerificationDto.email
+        resendVerificationDto.email,
       );
     });
 
@@ -305,11 +305,11 @@ describe("AuthController", () => {
       const resendVerificationDto = { email: "test@example.com" };
 
       (mockAuthService.resendVerification as any).mockRejectedValue(
-        new AuthException("Verification email resend failed", 400)
+        new AuthException("Verification email resend failed", 400),
       );
 
       await expect(
-        authController.resendVerification(resendVerificationDto)
+        authController.resendVerification(resendVerificationDto),
       ).rejects.toThrow(AuthException);
     });
   });
@@ -338,17 +338,17 @@ describe("AuthController", () => {
 
       expect(result).toEqual(expectedUser);
       expect(mockAuthService.getCurrentUser).toHaveBeenCalledWith(
-        mockRequest.user.id
+        mockRequest.user.id,
       );
     });
 
     it("should throw UserNotFoundException when user not found", async () => {
       (mockAuthService.getCurrentUser as any).mockRejectedValue(
-        new UserNotFoundException()
+        new UserNotFoundException(),
       );
 
       await expect(authController.getCurrentUser(mockRequest)).rejects.toThrow(
-        UserNotFoundException
+        UserNotFoundException,
       );
     });
   });
@@ -378,13 +378,13 @@ describe("AuthController", () => {
 
       expect(result).toEqual({ valid: true, user: expectedUser });
       expect(mockAuthService.verifyUser).toHaveBeenCalledWith(
-        "valid-token-123"
+        "valid-token-123",
       );
     });
 
     it("should return invalid for invalid token", async () => {
       (mockAuthService.verifyUser as any).mockRejectedValue(
-        new AuthException("Invalid token", 401)
+        new AuthException("Invalid token", 401),
       );
 
       const result = await authController.verifyToken(mockRequest);
@@ -395,7 +395,9 @@ describe("AuthController", () => {
     it("should return invalid when no token provided", async () => {
       const requestWithoutToken = { headers: {} };
 
-      const result = await authController.verifyToken(requestWithoutToken as any);
+      const result = await authController.verifyToken(
+        requestWithoutToken as any,
+      );
 
       expect(result).toEqual({ valid: false });
     });

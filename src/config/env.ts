@@ -22,11 +22,11 @@ export const env: IEnvironment = {
   SUPABASE_URL: getEnvVar("SUPABASE_URL", "https://your_supabase_url_here"),
   SUPABASE_ANON_KEY: getEnvVar(
     "SUPABASE_ANON_KEY",
-    "your_supabase_anon_key_here"
+    "your_supabase_anon_key_here",
   ),
   SUPABASE_SERVICE_KEY: getEnvVar(
     "SUPABASE_SERVICE_KEY",
-    "your_supabase_service_key_here"
+    "your_supabase_service_key_here",
   ),
   FRONTEND_URL: getEnvVar("FRONTEND_URL", "http://localhost:3000"),
   NODE_ENV: (process.env.NODE_ENV as IEnvironment["NODE_ENV"]) || "development",

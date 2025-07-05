@@ -1,15 +1,15 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { Container } from "typedi";
+import { RedisConfig } from "@/config/redis";
 import Redis from "ioredis";
-import { RedisService } from "../../../src/services/redis.service";
-import { RedisConfig } from "../../../src/config/redis";
+import { Container } from "typedi";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { RedisService } from "../redis.service";
 
 // Mock Redis
 vi.mock("ioredis");
 const MockedRedis = vi.mocked(Redis);
 
 // Mock RedisConfig
-vi.mock("../../../src/config/redis", () => ({
+vi.mock("../../config/redis", () => ({
   RedisConfig: {
     getClient: vi.fn(),
     disconnect: vi.fn(),

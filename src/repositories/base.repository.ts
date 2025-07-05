@@ -154,7 +154,7 @@ export abstract class BaseRepository<T extends IBaseEntity> {
   // Update a record
   async update(
     id: string,
-    data: Partial<Omit<T, "id" | "created_at" | "updated_at">>
+    data: Partial<Omit<T, "id" | "created_at" | "updated_at">>,
   ): Promise<T> {
     return handleDatabaseOperation(async () => {
       const { data: result, error } = await this.supabase

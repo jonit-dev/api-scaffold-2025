@@ -9,7 +9,7 @@ import { BaseFactory } from "./base.factory";
 
 export class DatabaseFactory {
   static createPaginationOptions(
-    overrides: Partial<IPaginationOptions> = {}
+    overrides: Partial<IPaginationOptions> = {},
   ): IPaginationOptions {
     return {
       page: 1,
@@ -22,7 +22,7 @@ export class DatabaseFactory {
     data: T[],
     options: IPaginationOptions,
     total: number,
-    overrides: Partial<IPaginatedResult<T>> = {}
+    overrides: Partial<IPaginatedResult<T>> = {},
   ): IPaginatedResult<T> {
     const totalPages = Math.ceil(total / (options.limit || 10));
     const hasNextPage = (options.page || 1) < totalPages;
@@ -42,7 +42,7 @@ export class DatabaseFactory {
   }
 
   static createFilterOptions(
-    overrides: Partial<IFilterOptions> = {}
+    overrides: Partial<IFilterOptions> = {},
   ): IFilterOptions {
     return {
       where: {},
@@ -51,7 +51,7 @@ export class DatabaseFactory {
   }
 
   static createOrderOptions(
-    overrides: Partial<IOrderByOptions> = {}
+    overrides: Partial<IOrderByOptions> = {},
   ): IOrderByOptions {
     return {
       column: "created_at",
@@ -81,7 +81,7 @@ export class DatabaseFactory {
 
   static createEmptyPaginationResult<T>(
     options: IPaginationOptions,
-    overrides: Partial<IPaginatedResult<T>> = {}
+    overrides: Partial<IPaginatedResult<T>> = {},
   ): IPaginatedResult<T> {
     return this.createPaginationResult<T>([], options, 0, overrides);
   }
@@ -90,10 +90,10 @@ export class DatabaseFactory {
     count: number,
     options: IPaginationOptions,
     entityFactory: (index: number) => IBaseEntity = index =>
-      BaseFactory.createBaseEntity({ id: `entity-${index}` })
+      BaseFactory.createBaseEntity({ id: `entity-${index}` }),
   ): IPaginatedResult<IBaseEntity> {
     const entities = Array.from({ length: count }, (_, index) =>
-      entityFactory(index)
+      entityFactory(index),
     );
     return this.createPaginationResult(entities, options, count);
   }
@@ -109,7 +109,7 @@ export class DatabaseFactory {
   static createDatabaseConstraintError() {
     return this.createSupabaseError(
       "duplicate key value violates unique constraint",
-      "PGRST002"
+      "PGRST002",
     );
   }
 }

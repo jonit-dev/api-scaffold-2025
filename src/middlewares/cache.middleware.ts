@@ -31,7 +31,7 @@ function generateCacheKey(req: Request, prefix = "route:"): string {
  * Cache middleware for Express routes
  */
 export function cacheMiddleware(
-  options: ICacheMiddlewareOptions = {}
+  options: ICacheMiddlewareOptions = {},
 ): (req: Request, res: Response, next: NextFunction) => Promise<void> {
   const defaultOptions: Required<ICacheMiddlewareOptions> = {
     ttl: 300, // 5 minutes
@@ -93,7 +93,7 @@ export function cacheMiddleware(
 export function decoratorCacheMiddleware(): (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => Promise<void> {
   return async (req: Request, res: Response, next: NextFunction) => {
     const redisService = Container.get(RedisService);
@@ -118,7 +118,7 @@ export function decoratorCacheMiddleware(): (
           // Check the handler for cache metadata
           const metadata = Reflect.getMetadata(
             CACHE_METADATA_KEY,
-            layer.handle
+            layer.handle,
           );
           if (metadata) {
             cacheConfig = metadata;
@@ -189,7 +189,7 @@ export function decoratorCacheMiddleware(): (
  * Cache invalidation middleware
  */
 export function cacheInvalidationMiddleware(
-  pattern?: string
+  pattern?: string,
 ): (req: Request, res: Response, next: NextFunction) => void {
   return async (req: Request, res: Response, next: NextFunction) => {
     const redisService = Container.get(RedisService);

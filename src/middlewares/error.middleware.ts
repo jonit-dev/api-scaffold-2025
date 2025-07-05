@@ -27,7 +27,7 @@ export class GlobalErrorHandler {
     req: Request,
     res: Response,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _next: NextFunction
+    _next: NextFunction,
   ): void {
     const timestamp = new Date().toISOString();
     const path = req.path;
@@ -90,7 +90,7 @@ export class GlobalErrorHandler {
     // Handle database errors - convert to custom exceptions
     else if (errorObj.code === "ECONNREFUSED") {
       const dbError = new ServiceUnavailableException(
-        "Database connection failed"
+        "Database connection failed",
       );
       statusCode = dbError.statusCode;
       message = dbError.message;
@@ -102,7 +102,7 @@ export class GlobalErrorHandler {
       message = supabaseError.message;
     } else if (errorObj.code === "PGRST204") {
       const supabaseError = new BadRequestException(
-        "Invalid request parameters"
+        "Invalid request parameters",
       );
       statusCode = supabaseError.statusCode;
       message = supabaseError.message;

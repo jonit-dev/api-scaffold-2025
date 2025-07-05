@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { Service } from "typedi";
-import { UserRole } from "../models/enums";
+import { UserRole } from "../models/enums/user-roles.enum";
 import { IAuthenticatedUser } from "../types/express";
 import {
   UnauthorizedException,
@@ -31,7 +31,7 @@ export class RbacMiddleware {
 
   private hasRequiredRole(
     userRole: UserRole,
-    requiredRoles: UserRole[]
+    requiredRoles: UserRole[],
   ): boolean {
     // Admin has access to everything
     if (userRole === UserRole.ADMIN) {

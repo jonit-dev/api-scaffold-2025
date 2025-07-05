@@ -28,7 +28,7 @@ export class CacheDemoController {
     condition: req => !!req.query?.id,
   })
   async dynamicCache(
-    @QueryParam("id", { required: false }) id?: string
+    @QueryParam("id", { required: false }) id?: string,
   ): Promise<object> {
     if (!id) {
       return {
@@ -53,7 +53,7 @@ export class CacheDemoController {
 
   @Get("/manual")
   async manualCache(
-    @QueryParam("refresh", { required: false }) refresh?: boolean
+    @QueryParam("refresh", { required: false }) refresh?: boolean,
   ): Promise<object> {
     const cacheKey = "manual-cache-demo";
 
@@ -84,7 +84,7 @@ export class CacheDemoController {
 
   @Get("/expensive")
   async expensiveOperation(
-    @QueryParam("category", { required: false }) category: string = "default"
+    @QueryParam("category", { required: false }) category: string = "default",
   ): Promise<object> {
     return await this.redisService.cache(
       `expensive-op-${category}`,
@@ -100,7 +100,7 @@ export class CacheDemoController {
           timestamp: new Date().toISOString(),
         };
       },
-      { ttl: 600, prefix: "expensive:" }
+      { ttl: 600, prefix: "expensive:" },
     );
   }
 
@@ -124,7 +124,7 @@ export class CacheDemoController {
           keys.map(async key => ({
             key,
             ttl: await this.redisService.ttl(key),
-          }))
+          })),
         ),
       };
     }
@@ -138,7 +138,7 @@ export class CacheDemoController {
 
   @Get("/clear")
   async clearCache(
-    @QueryParam("pattern", { required: false }) pattern?: string
+    @QueryParam("pattern", { required: false }) pattern?: string,
   ): Promise<object> {
     let deletedCount = 0;
 

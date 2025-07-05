@@ -42,7 +42,7 @@ export class HttpFactory {
 
   static createAuthenticatedRequest(
     token: string,
-    overrides: Partial<Request> = {}
+    overrides: Partial<Request> = {},
   ): Partial<Request> {
     return this.createMockRequest({
       headers: {
@@ -53,13 +53,13 @@ export class HttpFactory {
   }
 
   static createBadRequestException(
-    message = "Bad request"
+    message = "Bad request",
   ): BadRequestException {
     return new BadRequestException(message);
   }
 
   static createUnauthorizedException(
-    message = "Unauthorized"
+    message = "Unauthorized",
   ): UnauthorizedException {
     return new UnauthorizedException(message);
   }
@@ -77,20 +77,20 @@ export class HttpFactory {
   }
 
   static createValidationException(
-    message = "Validation failed"
+    message = "Validation failed",
   ): ValidationException {
     return new ValidationException(message);
   }
 
   static createInternalServerErrorException(
-    message = "Internal server error"
+    message = "Internal server error",
   ): InternalServerErrorException {
     return new InternalServerErrorException(message);
   }
 
   static createHttpException(
     status: HttpStatus,
-    message: string
+    message: string,
   ): BadRequestException {
     return new BadRequestException(message);
   }
@@ -98,7 +98,7 @@ export class HttpFactory {
   static createErrorResponse(
     status: HttpStatus,
     message: string,
-    details?: any
+    details?: any,
   ) {
     return {
       success: false,

@@ -9,13 +9,13 @@ import { UnauthorizedException } from "../exceptions/http-exceptions";
 export class AuthMiddleware {
   constructor(
     private authService: AuthService,
-    @Inject("supabaseAuth") private supabaseClient: SupabaseClient
+    @Inject("supabaseAuth") private supabaseClient: SupabaseClient,
   ) {}
 
   async use(
     request: Request,
     response: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const token = this.extractTokenFromHeader(request);

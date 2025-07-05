@@ -12,7 +12,7 @@ interface ISupabaseError {
 export class DatabaseException extends HttpException {
   constructor(
     message: string,
-    statusCode: HttpStatus = HttpStatus.InternalServerError
+    statusCode: HttpStatus = HttpStatus.InternalServerError,
   ) {
     super(statusCode, message);
     this.name = "DatabaseException";
@@ -71,7 +71,7 @@ export function mapSupabaseError(error: ISupabaseError): DatabaseException {
       return new DatabaseValidationException(message || "Validation failed");
     case "PGRST000":
       return new DatabaseConnectionException(
-        message || "Database connection failed"
+        message || "Database connection failed",
       );
     default:
       return new DatabaseException(message || "Database operation failed");
@@ -80,7 +80,7 @@ export function mapSupabaseError(error: ISupabaseError): DatabaseException {
 
 // Helper function to handle database operations with proper error mapping
 export async function handleDatabaseOperation<T>(
-  operation: () => Promise<{ data: T; error: ISupabaseError | null }>
+  operation: () => Promise<{ data: T; error: ISupabaseError | null }>,
 ): Promise<T> {
   try {
     const { data, error } = await operation();
@@ -97,7 +97,7 @@ export async function handleDatabaseOperation<T>(
 
     // Handle unexpected errors
     throw new DatabaseException(
-      error instanceof Error ? error.message : "Unknown database error"
+      error instanceof Error ? error.message : "Unknown database error",
     );
   }
 }

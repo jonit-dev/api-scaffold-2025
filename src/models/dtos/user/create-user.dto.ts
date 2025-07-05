@@ -9,7 +9,7 @@ import {
   IsOptional,
   IsPhoneNumber,
 } from "class-validator";
-import { UserRole } from "../../enums";
+import { UserRole } from "../../enums/user-roles.enum";
 
 export class CreateUserDto {
   @IsEmail()

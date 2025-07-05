@@ -21,6 +21,10 @@ export default [
         Buffer: "readonly",
         __dirname: "readonly",
         __filename: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
       },
     },
     plugins: {
@@ -40,6 +44,16 @@ export default [
         },
       ],
       "@typescript-eslint/explicit-function-return-type": "error",
+    },
+  },
+  {
+    files: ["**/*.test.ts", "**/__tests__/**/*.ts", "**/tests/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "no-undef": "off",
+      "no-redeclare": "off",
     },
   },
 ];

@@ -1,25 +1,17 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { Container } from "typedi";
-import request from "supertest";
 import express from "express";
 import { useExpressServer } from "routing-controllers";
-import { AuthService } from "@services/auth.service";
-import { UserRepository } from "@repositories/user.repository";
+import request from "supertest";
+import { Container } from "typedi";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthMiddleware } from "@middlewares/auth.middleware";
-import { UserRole, UserStatus } from "@models/enums";
-import { TestHelpers } from "../utils/test.helpers";
-import { AuthFactory } from "../factories/auth.factory";
+import { UserRepository } from "@repositories/user.repository";
+import { AuthService } from "@services/auth.service";
+
+import { TestHelpers } from "@/../tests/utils/test.helpers";
 
 // Test controller for integration testing without decorators
-import {
-  JsonController,
-  Get,
-  Post,
-  Body,
-  Middleware,
-} from "routing-controllers";
+import { Body, Get, JsonController, Post } from "routing-controllers";
 import { Service } from "typedi";
-import { IAuthenticatedUser } from "../../src/types/express";
 
 @JsonController("/test-auth")
 @Service()

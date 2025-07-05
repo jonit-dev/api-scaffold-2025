@@ -144,7 +144,7 @@ export class AuthFactory {
   }
 
   static createAuthenticatedUser(
-    overrides?: Partial<IAuthenticatedUser>
+    overrides?: Partial<IAuthenticatedUser>,
   ): IAuthenticatedUser {
     return {
       id: "test-user-id-123",
@@ -156,7 +156,7 @@ export class AuthFactory {
   }
 
   static createAuthResponseDto(
-    overrides?: Partial<AuthResponseDto>
+    overrides?: Partial<AuthResponseDto>,
   ): AuthResponseDto {
     return {
       user: {
@@ -196,7 +196,7 @@ export class AuthFactory {
 
   static createMockSupabaseAuthResponse(
     user?: User | null,
-    error?: any
+    error?: any,
   ): { data: { user: User | null }; error: any } {
     return {
       data: { user: user || null },

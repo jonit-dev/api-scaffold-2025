@@ -19,7 +19,7 @@ export function setupMiddlewares(app: Express): void {
           imgSrc: ["'self'", "data:", "https:"],
         },
       },
-    })
+    }),
   );
 
   // CORS configuration
@@ -29,7 +29,7 @@ export function setupMiddlewares(app: Express): void {
       credentials: config.cors.credentials,
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-    })
+    }),
   );
 
   // Rate limiting
@@ -56,7 +56,7 @@ export function setupMiddlewares(app: Express): void {
         }
         return compression.filter(req, res);
       },
-    })
+    }),
   );
 
   // Request logging

@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Container } from "typedi";
-import { AuthMiddleware } from "../../../src/middlewares/auth.middleware";
-import { AuthService } from "../../../src/services/auth.service";
-import { UnauthorizedException } from "../../../src/exceptions/http-exceptions";
-import { TestHelpers } from "../../utils/test.helpers";
-import { AuthFactory } from "../../factories/auth.factory";
+import { AuthMiddleware } from "../auth.middleware";
+import { AuthService } from "../../services/auth.service";
+import { UnauthorizedException } from "../../exceptions/http-exceptions";
+import { TestHelpers } from "../../../tests/utils/test.helpers";
+import { AuthFactory } from "../../../tests/factories/auth.factory";
 
 describe("AuthMiddleware", () => {
   let authMiddleware: AuthMiddleware;
