@@ -1,4 +1,4 @@
-import { Service } from "typedi";
+import { Service, Inject } from "typedi";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseClient } from "../config/supabase";
 import {
@@ -19,8 +19,8 @@ export abstract class BaseRepository<T extends IBaseEntity> {
   protected supabase: SupabaseClient<IDatabase>;
   protected abstract tableName: string;
 
-  constructor() {
-    this.supabase = getSupabaseClient();
+  constructor(@Inject("supabase") supabase?: SupabaseClient<IDatabase>) {
+    this.supabase = supabase || getSupabaseClient();
   }
 
   // Create a new record

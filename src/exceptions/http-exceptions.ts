@@ -107,6 +107,15 @@ export class UnprocessableEntityException extends HttpException {
   }
 }
 
+export class ValidationException extends HttpException {
+  constructor(
+    message: string = "Validation Error",
+    details?: ExceptionDetails,
+  ) {
+    super(HttpStatus.UnprocessableEntity, message, details);
+  }
+}
+
 export class TooManyRequestsException extends HttpException {
   constructor(
     message: string = "Too Many Requests",

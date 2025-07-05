@@ -10,13 +10,13 @@ Quality Assurance
 Medium
 
 ## Description
-Set up comprehensive testing framework with unit tests, integration tests, and test utilities for the API scaffold.
+Set up comprehensive testing framework with unit tests, integration tests, and test utilities for the API scaffold using Vitest for modern, fast TypeScript testing.
 
 ## Acceptance Criteria
 
 ### ✅ Testing Framework Setup
-- [ ] Configure Jest testing framework
-- [ ] Set up TypeScript support for tests
+- [ ] Configure Vitest testing framework
+- [ ] Set up TypeScript support for tests (native)
 - [ ] Configure test environment variables
 - [ ] Set up test database configuration
 - [ ] Create test scripts in package.json
@@ -57,57 +57,66 @@ Set up comprehensive testing framework with unit tests, integration tests, and t
 
 ### Testing Dependencies Installation
 ```bash
-# Core testing framework
-npm install -D jest ts-jest @types/jest
+# Remove Jest dependencies
+yarn remove jest ts-jest @types/jest
+
+# Core testing framework (Vitest)
+yarn add -D vitest @vitest/ui c8
 
 # Testing utilities
-npm install -D supertest @types/supertest
+yarn add -D supertest @types/supertest
 
-# Additional testing utilities
-npm install -D jest-extended
-npm install -D @jest/globals
-
-# For mocking and test utilities (if needed)
-npm install -D jest-mock-extended
+# Additional testing utilities (if needed)
+yarn add -D @vitest/coverage-v8
 ```
 
-### Jest Configuration
+### Vitest Configuration
 ```typescript
-// jest.config.js
-module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/src', '<rootDir>/tests'],
-  testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
-  transform: {
-    '^.+\\.ts$': 'ts-jest',
+// vitest.config.ts
+import { defineConfig } from 'vitest/config';
+import { resolve } from 'path';
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+    setupFiles: ['./tests/setup.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      exclude: [
+        'node_modules/',
+        'dist/',
+        'tests/',
+        'src/server.ts',
+        'src/config/**',
+        '**/*.d.ts'
+      ],
+      thresholds: {
+        global: {
+          branches: 80,
+          functions: 80,
+          lines: 80,
+          statements: 80
+        }
+      }
+    }
   },
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.d.ts',
-    '!src/server.ts',
-    '!src/config/**',
-  ],
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
-  coverageThreshold: {
-    global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80,
-    },
-  },
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
-  moduleNameMapping: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-    '^@controllers/(.*)$': '<rootDir>/src/controllers/$1',
-    '^@services/(.*)$': '<rootDir>/src/services/$1',
-    '^@repositories/(.*)$': '<rootDir>/src/repositories/$1',
-    '^@models/(.*)$': '<rootDir>/src/models/$1',
-    '^@utils/(.*)$': '<rootDir>/src/utils/$1',
-  },
-};
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src'),
+      '@controllers': resolve(__dirname, 'src/controllers'),
+      '@services': resolve(__dirname, 'src/services'),
+      '@repositories': resolve(__dirname, 'src/repositories'),
+      '@models': resolve(__dirname, 'src/models'),
+      '@middlewares': resolve(__dirname, 'src/middlewares'),
+      '@config': resolve(__dirname, 'src/config'),
+      '@utils': resolve(__dirname, 'src/utils'),
+      '@exceptions': resolve(__dirname, 'src/exceptions'),
+      '@types': resolve(__dirname, 'src/types')
+    }
+  }
+});
 ```
 
 ### Test Setup
@@ -117,6 +126,7 @@ import 'reflect-metadata'; // CRITICAL: Must be imported first for TypeDI
 import { Container } from 'typedi';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import { beforeAll, afterAll, afterEach } from 'vitest';
 
 // Load test environment variables
 dotenv.config({ path: '.env.test' });
@@ -149,7 +159,6 @@ afterAll(async () => {
 
 afterEach(async () => {
   // Cleanup after each test
-  jest.clearAllMocks();
   // Reset container instances for fresh test state
   Container.reset();
 });
@@ -219,6 +228,7 @@ export class UserFactory {
 ### Service Unit Test Example
 ```typescript
 // tests/unit/services/user.service.test.ts
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { UserService } from '@services/user.service';
 import { UserRepository } from '@repositories/user.repository';
 import { UserFactory } from '../../factories/user.factory';
@@ -226,19 +236,23 @@ import { NotFoundException, ValidationException } from '@exceptions';
 
 describe('UserService', () => {
   let userService: UserService;
-  let userRepository: jest.Mocked<UserRepository>;
+  let userRepository: MockedUserRepository;
+
+  type MockedUserRepository = {
+    [K in keyof UserRepository]: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     userRepository = {
-      findById: jest.fn(),
-      findByEmail: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      softDelete: jest.fn(),
-      findWithPagination: jest.fn(),
-    } as any;
+      findById: vi.fn(),
+      findByEmail: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      softDelete: vi.fn(),
+      findWithPagination: vi.fn(),
+    } as MockedUserRepository;
 
-    userService = new UserService(userRepository);
+    userService = new UserService(userRepository as any);
   });
 
   describe('findById', () => {
@@ -302,6 +316,7 @@ describe('UserService', () => {
 ### Controller Integration Test Example
 ```typescript
 // tests/integration/auth.controller.test.ts
+import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { app } from '@/server';
 import { UserFactory } from '../factories/user.factory';
@@ -390,7 +405,7 @@ export function createAuthenticatedRequest(user: UserEntity) {
 ```
 
 ## Definition of Done
-- [ ] Jest configuration complete and working
+- [ ] Vitest configuration complete and working
 - [ ] Unit tests written for all services
 - [ ] Integration tests for all controllers
 - [ ] Test utilities and factories created

@@ -11,12 +11,14 @@ import {
 } from "../exceptions/http-exceptions";
 
 export interface IErrorResponse {
-  error: string;
-  message: string;
-  statusCode: HttpStatus;
-  timestamp: string;
-  path: string;
-  details?: unknown;
+  success: false;
+  error: {
+    status: HttpStatus;
+    message: string;
+    timestamp: string;
+    path: string;
+    details?: unknown;
+  };
 }
 
 export class GlobalErrorHandler {
@@ -112,12 +114,14 @@ export class GlobalErrorHandler {
     }
 
     const errorResponse: IErrorResponse = {
-      error: errorObj.name || "UnknownError",
-      message,
-      statusCode,
-      timestamp,
-      path,
-      ...(details !== undefined && { details }),
+      success: false,
+      error: {
+        status: statusCode,
+        message,
+        timestamp,
+        path,
+        ...(details !== undefined && { details }),
+      },
     };
 
     // Log error details for debugging

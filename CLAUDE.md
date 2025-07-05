@@ -4,3 +4,4 @@
 - Always prefix interfaces with `I`
 - Follow existing project structure and naming conventions
 - Run tests / lint / type checks proactively, after changes.
+- To validate endpoints, use `curl`
