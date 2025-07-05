@@ -1,12 +1,22 @@
-import { Service } from 'typedi';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { getSupabaseClient } from '../config/supabase';
-import { Database, BaseEntity, PaginationOptions, PaginatedResult, FilterOptions, OrderByOptions } from '../types/database.types';
-import { DatabaseException, handleDatabaseOperation } from '../exceptions/database.exception';
+import { Service } from "typedi";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { getSupabaseClient } from "../config/supabase";
+import {
+  IDatabase,
+  IBaseEntity,
+  IPaginationOptions,
+  IPaginatedResult,
+  IFilterOptions,
+  IOrderByOptions,
+} from "../types/database.types";
+import {
+  DatabaseException,
+  handleDatabaseOperation,
+} from "../exceptions/database.exception";
 
 @Service()
-export abstract class BaseRepository<T extends BaseEntity> {
-  protected supabase: SupabaseClient<Database>;
+export abstract class BaseRepository<T extends IBaseEntity> {
+  protected supabase: SupabaseClient<IDatabase>;
   protected abstract tableName: string;
 
   constructor() {
@@ -14,14 +24,14 @@ export abstract class BaseRepository<T extends BaseEntity> {
   }
 
   // Create a new record
-  async create(data: Omit<T, 'id' | 'created_at' | 'updated_at'>): Promise<T> {
+  async create(data: Omit<T, "id" | "created_at" | "updated_at">): Promise<T> {
     return handleDatabaseOperation(async () => {
       const { data: result, error } = await this.supabase
         .from(this.tableName)
         .insert({
           ...data,
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -36,12 +46,12 @@ export abstract class BaseRepository<T extends BaseEntity> {
       const { data, error } = await this.supabase
         .from(this.tableName)
         .select()
-        .eq('id', id)
-        .eq('deleted_at', null)
+        .eq("id", id)
+        .eq("deleted_at", null)
         .single();
 
       // Handle "not found" as null, not an error
-      if (error && error.code === 'PGRST116') {
+      if (error && error.code === "PGRST116") {
         return { data: null, error: null };
       }
 
@@ -51,15 +61,15 @@ export abstract class BaseRepository<T extends BaseEntity> {
 
   // Find multiple records with optional filters
   async findMany(options?: {
-    filters?: FilterOptions;
-    orderBy?: OrderByOptions;
-    pagination?: PaginationOptions;
+    filters?: IFilterOptions;
+    orderBy?: IOrderByOptions;
+    pagination?: IPaginationOptions;
   }): Promise<T[]> {
     return handleDatabaseOperation(async () => {
       let query = this.supabase
         .from(this.tableName)
         .select()
-        .eq('deleted_at', null);
+        .eq("deleted_at", null);
 
       // Apply filters
       if (options?.filters) {
@@ -73,7 +83,7 @@ export abstract class BaseRepository<T extends BaseEntity> {
       // Apply ordering
       if (options?.orderBy) {
         query = query.order(options.orderBy.column, {
-          ascending: options.orderBy.ascending ?? true
+          ascending: options.orderBy.ascending ?? true,
         });
       }
 
@@ -91,17 +101,17 @@ export abstract class BaseRepository<T extends BaseEntity> {
 
   // Find with pagination
   async findWithPagination(options?: {
-    filters?: FilterOptions;
-    orderBy?: OrderByOptions;
-    pagination?: PaginationOptions;
-  }): Promise<PaginatedResult<T>> {
+    filters?: IFilterOptions;
+    orderBy?: IOrderByOptions;
+    pagination?: IPaginationOptions;
+  }): Promise<IPaginatedResult<T>> {
     const { page = 1, limit = 10 } = options?.pagination || {};
     const offset = (page - 1) * limit;
 
     let query = this.supabase
       .from(this.tableName)
-      .select('*', { count: 'exact' })
-      .eq('deleted_at', null);
+      .select("*", { count: "exact" })
+      .eq("deleted_at", null);
 
     // Apply filters
     if (options?.filters) {
@@ -115,7 +125,7 @@ export abstract class BaseRepository<T extends BaseEntity> {
     // Apply ordering
     if (options?.orderBy) {
       query = query.order(options.orderBy.column, {
-        ascending: options.orderBy.ascending ?? true
+        ascending: options.orderBy.ascending ?? true,
       });
     }
 
@@ -123,7 +133,7 @@ export abstract class BaseRepository<T extends BaseEntity> {
     query = query.range(offset, offset + limit - 1);
 
     const { data, error, count } = await query;
-    
+
     if (error) {
       throw new DatabaseException(error.message);
     }
@@ -136,22 +146,25 @@ export abstract class BaseRepository<T extends BaseEntity> {
         limit,
         total,
         hasNext: offset + limit < total,
-        hasPrevious: page > 1
-      }
+        hasPrevious: page > 1,
+      },
     };
   }
 
   // Update a record
-  async update(id: string, data: Partial<Omit<T, 'id' | 'created_at' | 'updated_at'>>): Promise<T> {
+  async update(
+    id: string,
+    data: Partial<Omit<T, "id" | "created_at" | "updated_at">>,
+  ): Promise<T> {
     return handleDatabaseOperation(async () => {
       const { data: result, error } = await this.supabase
         .from(this.tableName)
         .update({
           ...data,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', id)
-        .eq('deleted_at', null)
+        .eq("id", id)
+        .eq("deleted_at", null)
         .select()
         .single();
 
@@ -166,10 +179,10 @@ export abstract class BaseRepository<T extends BaseEntity> {
         .from(this.tableName)
         .update({
           deleted_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', id)
-        .eq('deleted_at', null);
+        .eq("id", id)
+        .eq("deleted_at", null);
 
       return { data: undefined, error };
     });
@@ -181,19 +194,19 @@ export abstract class BaseRepository<T extends BaseEntity> {
       const { error } = await this.supabase
         .from(this.tableName)
         .delete()
-        .eq('id', id);
+        .eq("id", id);
 
       return { data: undefined, error };
     });
   }
 
   // Count records
-  async count(filters?: FilterOptions): Promise<number> {
+  async count(filters?: IFilterOptions): Promise<number> {
     return handleDatabaseOperation(async () => {
       let query = this.supabase
         .from(this.tableName)
-        .select('*', { count: 'exact', head: true })
-        .eq('deleted_at', null);
+        .select("*", { count: "exact", head: true })
+        .eq("deleted_at", null);
 
       // Apply filters
       if (filters) {
@@ -216,12 +229,12 @@ export abstract class BaseRepository<T extends BaseEntity> {
   }
 
   // Find first record matching filters
-  async findFirst(filters?: FilterOptions): Promise<T | null> {
+  async findFirst(filters?: IFilterOptions): Promise<T | null> {
     return handleDatabaseOperation(async () => {
       let query = this.supabase
         .from(this.tableName)
         .select()
-        .eq('deleted_at', null)
+        .eq("deleted_at", null)
         .limit(1);
 
       // Apply filters
@@ -234,7 +247,7 @@ export abstract class BaseRepository<T extends BaseEntity> {
       }
 
       const { data, error } = await query;
-      
+
       if (error) {
         return { data: null, error };
       }

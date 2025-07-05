@@ -1,44 +1,59 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Container } from 'typedi';
-import { Database } from '../types/database.types';
-import { databaseConfig } from './database';
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { Container } from "typedi";
+import { IDatabase } from "../types/database.types";
+import { databaseConfig } from "./database";
 
 // Singleton pattern for consistent client usage
-let supabaseInstance: SupabaseClient<Database> | null = null;
+let supabaseInstance: SupabaseClient<IDatabase> | null = null;
 
 // Create typed Supabase client for enhanced type safety
-function createSupabaseClient(): SupabaseClient<Database> {
+function createSupabaseClient(): SupabaseClient<IDatabase> {
   const { url, serviceKey, anonKey } = databaseConfig;
   const key = serviceKey || anonKey;
-  
-  if (!url || !key || url.includes('your_supabase_url_here') || key.includes('your_supabase')) {
-    console.warn('⚠️  Supabase configuration not found or using placeholder values. Creating mock client for development.');
-    
+
+  if (
+    !url ||
+    !key ||
+    url.includes("your_supabase_url_here") ||
+    key.includes("your_supabase")
+  ) {
+    console.warn(
+      "⚠️  Supabase configuration not found or using placeholder values. Creating mock client for development.",
+    );
+
     // Create a mock client for development when Supabase is not configured
     return {
       from: () => ({
         select: () => ({
-          limit: () => Promise.resolve({ 
-            data: null, 
-            error: { code: 'SUPABASE_NOT_CONFIGURED', message: 'Supabase not configured' } 
-          }),
-          single: () => Promise.resolve({ 
-            data: null, 
-            error: { code: 'SUPABASE_NOT_CONFIGURED', message: 'Supabase not configured' } 
-          })
-        })
-      })
-    } as any;
+          limit: () =>
+            Promise.resolve({
+              data: null,
+              error: {
+                code: "SUPABASE_NOT_CONFIGURED",
+                message: "Supabase not configured",
+              },
+            }),
+          single: () =>
+            Promise.resolve({
+              data: null,
+              error: {
+                code: "SUPABASE_NOT_CONFIGURED",
+                message: "Supabase not configured",
+              },
+            }),
+        }),
+      }),
+    } as unknown as SupabaseClient<IDatabase>;
   }
-  
-  return createClient<Database>(url, key, {
+
+  return createClient<IDatabase>(url, key, {
     auth: databaseConfig.options.auth,
-    global: databaseConfig.options.global
+    global: databaseConfig.options.global,
   });
 }
 
 // Get singleton Supabase client
-export function getSupabaseClient(): SupabaseClient<Database> {
+export function getSupabaseClient(): SupabaseClient<IDatabase> {
   if (!supabaseInstance) {
     supabaseInstance = createSupabaseClient();
   }
@@ -51,22 +66,25 @@ export const supabase = getSupabaseClient();
 // Health check function
 export async function checkSupabaseConnection(): Promise<boolean> {
   try {
-    const { error } = await supabase.from('health_check').select('count').limit(1);
-    
+    const { error } = await supabase
+      .from("health_check")
+      .select("count")
+      .limit(1);
+
     // If using mock client (not configured), return false
-    if (error && error.code === 'SUPABASE_NOT_CONFIGURED') {
+    if (error && error.code === "SUPABASE_NOT_CONFIGURED") {
       return false;
     }
-    
+
     // PGRST116 means table doesn't exist, but connection is working
-    return !error || error.code === 'PGRST116';
+    return !error || error.code === "PGRST116";
   } catch (error) {
-    console.error('Supabase connection check failed:', error);
+    console.error("Supabase connection check failed:", error);
     return false;
   }
 }
 
 // Set up TypeDI container
-Container.set('supabase', supabase);
+Container.set("supabase", supabase);
 
 export default supabase;

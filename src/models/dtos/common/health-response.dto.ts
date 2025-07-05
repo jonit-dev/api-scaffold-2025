@@ -1,21 +1,22 @@
-export interface ServiceStatusDto {
-  status: 'healthy' | 'unhealthy' | 'degraded';
+export interface IServiceStatusDto {
+  status: "healthy" | "unhealthy" | "degraded";
   responseTime?: number;
   message?: string;
+  setupInstructions?: string;
 }
 
-export interface MemoryUsageDto {
+export interface IMemoryUsageDto {
   used: number;
   total: number;
   external: number;
 }
 
-export interface CpuUsageDto {
+export interface ICpuUsageDto {
   usage: number;
   loadAverage?: number[];
 }
 
-export interface DatabaseHealthDto extends ServiceStatusDto {
+export interface IDatabaseHealthDto extends IServiceStatusDto {
   connectionPool?: {
     active: number;
     idle: number;
@@ -23,18 +24,18 @@ export interface DatabaseHealthDto extends ServiceStatusDto {
   };
 }
 
-export interface HealthResponseDto {
-  status: 'healthy' | 'unhealthy' | 'degraded';
+export interface IHealthResponseDto {
+  status: "healthy" | "unhealthy" | "degraded";
   timestamp: Date;
   uptime: number;
   version: string;
   environment: string;
   services: {
-    database: ServiceStatusDto;
-    cache?: ServiceStatusDto;
+    database: IServiceStatusDto;
+    cache?: IServiceStatusDto;
   };
   system: {
-    memory: MemoryUsageDto;
-    cpu?: CpuUsageDto;
+    memory: IMemoryUsageDto;
+    cpu?: ICpuUsageDto;
   };
 }

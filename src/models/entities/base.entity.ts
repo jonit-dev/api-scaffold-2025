@@ -1,20 +1,20 @@
-import { BaseEntity as IBaseEntity } from '../../types/database.types';
+import { IBaseEntity as IBaseEntityType } from "../../types/database.types";
 
-export interface BaseEntity extends IBaseEntity {
+export interface IBaseEntity extends IBaseEntityType {
   id: string;
   created_at: string;
   updated_at: string;
   deleted_at?: string;
 }
 
-export abstract class BaseEntityModel implements BaseEntity {
+export abstract class BaseEntityModel implements IBaseEntity {
   id: string;
   created_at: string;
   updated_at: string;
   deleted_at?: string;
 
-  constructor(data: Partial<BaseEntity>) {
-    this.id = data.id || '';
+  constructor(data: Partial<IBaseEntity>) {
+    this.id = data.id || "";
     this.created_at = data.created_at || new Date().toISOString();
     this.updated_at = data.updated_at || new Date().toISOString();
     this.deleted_at = data.deleted_at;
@@ -43,14 +43,14 @@ export abstract class BaseEntityModel implements BaseEntity {
   }
 
   // Convert to plain object for database operations
-  toPlainObject(): Record<string, any> {
+  toPlainObject(): Record<string, unknown> {
     return {
       id: this.id,
       created_at: this.created_at,
       updated_at: this.updated_at,
-      deleted_at: this.deleted_at
+      deleted_at: this.deleted_at,
     };
   }
 }
 
-export default BaseEntity;
+export default IBaseEntity;

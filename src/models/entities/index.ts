@@ -1,4 +1,4 @@
-export { BaseEntity, BaseEntityModel } from './base.entity';
+export { IBaseEntity, BaseEntityModel } from "./base.entity";
 
 // Export all entity types here as they are created
 // Example:

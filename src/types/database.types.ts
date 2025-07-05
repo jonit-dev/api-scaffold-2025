@@ -1,7 +1,7 @@
 // Database type definitions will be generated from Supabase schema
 // For now, we'll define a basic structure that can be extended
 
-export interface Database {
+export interface IDatabase {
   public: {
     Tables: {
       health_check: {
@@ -35,7 +35,7 @@ export interface Database {
 }
 
 // Base entity interface
-export interface BaseEntity {
+export interface IBaseEntity {
   id: string;
   created_at: string;
   updated_at: string;
@@ -45,16 +45,16 @@ export interface BaseEntity {
 // Common field types
 export type UUID = string;
 export type Timestamp = string;
-export type Json = Record<string, any>;
+export type Json = Record<string, unknown>;
 
 // Query result types
-export interface QueryResult<T> {
+export interface IQueryResult<T> {
   data: T | null;
-  error: QueryError | null;
+  error: IQueryError | null;
   count?: number;
 }
 
-export interface QueryError {
+export interface IQueryError {
   message: string;
   code: string;
   details?: string;
@@ -62,13 +62,13 @@ export interface QueryError {
 }
 
 // Pagination types
-export interface PaginationOptions {
+export interface IPaginationOptions {
   page?: number;
   limit?: number;
   offset?: number;
 }
 
-export interface PaginatedResult<T> {
+export interface IPaginatedResult<T> {
   data: T[];
   pagination: {
     page: number;
@@ -80,11 +80,11 @@ export interface PaginatedResult<T> {
 }
 
 // Filter types
-export interface FilterOptions {
-  [key: string]: any;
+export interface IFilterOptions {
+  [key: string]: unknown;
 }
 
-export interface OrderByOptions {
+export interface IOrderByOptions {
   column: string;
   ascending?: boolean;
 }

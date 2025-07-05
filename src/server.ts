@@ -3,7 +3,6 @@ import "reflect-metadata";
 import { createExpressServer, useContainer } from "routing-controllers";
 import { Container } from "typedi";
 import { config } from "./config/app";
-import { setupMiddlewares } from "./config/middleware";
 import { GlobalErrorHandler } from "./middlewares/error.middleware";
 import "./config/supabase";
 
@@ -14,35 +13,34 @@ const app = createExpressServer({
   // Use glob patterns to auto-discover controllers and middlewares
   controllers: [__dirname + "/controllers/**/*.ts"],
   middlewares: [__dirname + "/middlewares/**/*.ts"],
-  
+
   // Enable validation with class-validator
   validation: true,
-  
+
   // Enable automatic JSON transformation with class-transformer
   classTransformer: true,
-  
+
   // Disable default error handler to use custom error handling
   defaultErrorHandler: false,
-  
-  
+
   // Enable CORS (can be configured with specific options)
   cors: {
     origin: config.cors.origin,
-    credentials: config.cors.credentials
+    credentials: config.cors.credentials,
   },
-  
+
   // Configure global defaults
   defaults: {
     nullResultCode: 404,
     undefinedResultCode: 204,
     paramOptions: {
-      required: true
-    }
-  }
+      required: true,
+    },
+  },
 });
 
 // Apply additional middleware after routing-controllers setup
-// setupMiddlewares(app);
+// Note: setupMiddlewares can be imported and used here if needed
 
 // Apply global error handler as the last middleware
 app.use(GlobalErrorHandler.handle);
