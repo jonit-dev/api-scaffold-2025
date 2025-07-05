@@ -5,6 +5,7 @@ import { Container } from "typedi";
 import { config } from "./config/app";
 import { setupMiddlewares } from "./config/middleware";
 import { GlobalErrorHandler } from "./middlewares/error.middleware";
+import "./config/supabase";
 
 // Configure TypeDI container integration BEFORE importing any controllers
 useContainer(Container);
@@ -23,8 +24,6 @@ const app = createExpressServer({
   // Disable default error handler to use custom error handling
   defaultErrorHandler: false,
   
-  // Set global API prefix
-  routePrefix: "/api",
   
   // Enable CORS (can be configured with specific options)
   cors: {

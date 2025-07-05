@@ -8,6 +8,13 @@ export const config = {
     port: parseInt(process.env.PORT || '3000', 10),
     environment: process.env.NODE_ENV || 'development'
   },
+  database: {
+    url: process.env.SUPABASE_URL || '',
+    anonKey: process.env.SUPABASE_ANON_KEY || '',
+    serviceKey: process.env.SUPABASE_SERVICE_KEY || '',
+    poolSize: parseInt(process.env.DB_POOL_SIZE || '20', 10),
+    connectionTimeout: parseInt(process.env.DB_CONNECTION_TIMEOUT || '30000', 10)
+  },
   cors: {
     origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
     credentials: true

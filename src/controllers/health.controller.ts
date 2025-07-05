@@ -1,15 +1,20 @@
 import { Get, JsonController } from 'routing-controllers';
 import { Service } from 'typedi';
+import { HealthService } from '../services/health.service';
+import { HealthResponseDto, DatabaseHealthDto } from '../models/dtos/common/health-response.dto';
 
+@JsonController('/health')
 @Service()
-@JsonController()
 export class HealthController {
-  @Get('/health')
-  health() {
-    return {
-      status: 'OK',
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development',
-    };
+  constructor(private healthService: HealthService) {}
+
+  @Get('/')
+  async getHealth(): Promise<HealthResponseDto> {
+    return this.healthService.getSystemHealth();
+  }
+
+  @Get('/database')
+  async getDatabaseHealth(): Promise<DatabaseHealthDto> {
+    return this.healthService.getDatabaseHealth();
   }
 }
