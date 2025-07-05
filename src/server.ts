@@ -1,67 +1,57 @@
-import 'reflect-metadata';
-import { createExpressServer, useContainer } from 'routing-controllers';
-import { Container } from 'typedi';
-import express, { Request, Response } from 'express';
-import helmet from 'helmet';
-import cors from 'cors';
-import rateLimit from 'express-rate-limit';
-import compression from 'compression';
-import morgan from 'morgan';
-import dotenv from 'dotenv';
+// CRITICAL: reflect-metadata must be imported FIRST
+import "reflect-metadata";
+import { createExpressServer, useContainer } from "routing-controllers";
+import { Container } from "typedi";
+import { config } from "./config/app";
+import { setupMiddlewares } from "./config/middleware";
+import { GlobalErrorHandler } from "./middlewares/error.middleware";
 
-// Load environment variables
-dotenv.config();
-
-// Configure TypeDI container
+// Configure TypeDI container integration BEFORE importing any controllers
 useContainer(Container);
 
-// Create Express server with routing-controllers
 const app = createExpressServer({
-  cors: true,
-  controllers: [__dirname + '/controllers/*.ts'],
-  middlewares: [__dirname + '/middlewares/*.ts'],
-  interceptors: [__dirname + '/interceptors/*.ts'],
+  // Use glob patterns to auto-discover controllers and middlewares
+  controllers: [__dirname + "/controllers/**/*.ts"],
+  middlewares: [__dirname + "/middlewares/**/*.ts"],
+  
+  // Enable validation with class-validator
   validation: true,
+  
+  // Enable automatic JSON transformation with class-transformer
   classTransformer: true,
+  
+  // Disable default error handler to use custom error handling
   defaultErrorHandler: false,
+  
+  // Set global API prefix
+  routePrefix: "/api",
+  
+  // Enable CORS (can be configured with specific options)
+  cors: {
+    origin: config.cors.origin,
+    credentials: config.cors.credentials
+  },
+  
+  // Configure global defaults
+  defaults: {
+    nullResultCode: 404,
+    undefinedResultCode: 204,
+    paramOptions: {
+      required: true
+    }
+  }
 });
 
-// Security middleware
-app.use(helmet());
+// Apply additional middleware after routing-controllers setup
+// setupMiddlewares(app);
 
-// CORS configuration
-const corsOptions = {
-  origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
-  credentials: true,
-};
-app.use(cors(corsOptions));
+// Apply global error handler as the last middleware
+app.use(GlobalErrorHandler.handle);
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'),
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use(limiter);
-
-// Compression
-app.use(compression());
-
-// Logging
-app.use(morgan('combined'));
-
-// Basic health check endpoint
-app.get('/health', (req: Request, res: Response) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📋 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🏥 Health check: http://localhost:${PORT}/health`);
+app.listen(config.server.port, () => {
+  console.log(`🚀 Server running on port ${config.server.port}`);
+  console.log(`📋 Environment: ${config.server.environment}`);
+  console.log(`🏥 Health check: http://localhost:${config.server.port}/health`);
 });
 
 export default app;

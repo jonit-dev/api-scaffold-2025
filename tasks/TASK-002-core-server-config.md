@@ -15,35 +15,35 @@ Configure the Express server with routing-controllers, set up essential middlewa
 ## Acceptance Criteria
 
 ### ✅ Server Bootstrap
-- [ ] Create `src/server.ts` with routing-controllers setup
-- [ ] Import `reflect-metadata` at the top
-- [ ] Configure `useContainer(Container)` for TypeDI integration
-- [ ] Set up `createExpressServer` with proper options
-- [ ] Configure controllers directory scanning
-- [ ] Enable validation and class transformation
+- [x] Create `src/server.ts` with routing-controllers setup
+- [x] Import `reflect-metadata` at the top
+- [x] Configure `useContainer(Container)` for TypeDI integration
+- [x] Set up `createExpressServer` with proper options
+- [x] Configure controllers directory scanning
+- [x] Enable validation and class transformation
 
 ### ✅ Middleware Configuration
-- [ ] Create `src/config/middleware.ts` for middleware setup
-- [ ] Implement security middleware (helmet)
-- [ ] Configure CORS with environment-based origins
-- [ ] Set up rate limiting with configurable limits
-- [ ] Add compression middleware
-- [ ] Configure request logging with morgan
-- [ ] Set up body parsing middleware
+- [x] Create `src/config/middleware.ts` for middleware setup
+- [x] Implement security middleware (helmet)
+- [x] Configure CORS with environment-based origins
+- [x] Set up rate limiting with configurable limits
+- [x] Add compression middleware
+- [x] Configure request logging with morgan
+- [x] Set up body parsing middleware
 
 ### ✅ Application Configuration
-- [ ] Create `src/config/app.ts` for app configuration
-- [ ] Set up environment variable validation
-- [ ] Configure server port and environment detection
-- [ ] Create configuration objects for different environments
-- [ ] Implement configuration validation
+- [x] Create `src/config/app.ts` for app configuration
+- [x] Set up environment variable validation
+- [x] Configure server port and environment detection
+- [x] Create configuration objects for different environments
+- [x] Implement configuration validation
 
 ### ✅ Error Handling
-- [ ] Create `src/middlewares/error.middleware.ts`
-- [ ] Implement global error handler
-- [ ] Set up structured error responses
-- [ ] Configure error logging
-- [ ] Handle different error types (validation, auth, database)
+- [x] Create `src/middlewares/error.middleware.ts`
+- [x] Implement global error handler
+- [x] Set up structured error responses
+- [x] Configure error logging
+- [x] Handle different error types (validation, auth, database)
 
 ## Technical Requirements
 
@@ -136,14 +136,14 @@ export const config = {
 ```
 
 ## Definition of Done
-- [ ] Server starts successfully on configured port
-- [ ] All middleware properly configured and functional
-- [ ] CORS works with environment-based origins
-- [ ] Rate limiting responds correctly to excessive requests
-- [ ] Error handling returns structured responses
-- [ ] Configuration loads from environment variables
-- [ ] Request logging shows in console during development
-- [ ] Security headers present in responses
+- [x] Server starts successfully on configured port
+- [x] All middleware properly configured and functional
+- [x] CORS works with environment-based origins
+- [x] Rate limiting responds correctly to excessive requests
+- [x] Error handling returns structured responses
+- [x] Configuration loads from environment variables
+- [x] Request logging shows in console during development
+- [x] Security headers present in responses
 
 ## Testing Strategy
 - [ ] Start server and verify it responds on correct port
