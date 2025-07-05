@@ -18,10 +18,11 @@
       "@repositories/*": ["src/repositories/*"],
       "@models/*": ["src/models/*"],
       "@middlewares/*": ["src/middlewares/*"],
+      "@decorators/*": ["src/decorators/*"],
       "@config/*": ["src/config/*"],
       "@utils/*": ["src/utils/*"],
       "@exceptions/*": ["src/exceptions/*"],
-      "@types/*": ["src/types/*"],
+      "@common-types/*": ["src/types/*"],
       "@tests/*": ["tests/*"]
     }
   },

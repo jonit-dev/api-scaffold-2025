@@ -4,11 +4,9 @@ import {
   NotFoundException,
   ValidationException,
 } from "../exceptions/http-exceptions";
-import {
-  CreateUserDto,
-  UpdateUserDto,
-  UserResponseDto,
-} from "../models/dtos/user";
+import { CreateUserDto } from "../models/dtos/user/create-user.dto";
+import { UpdateUserDto } from "../models/dtos/user/update-user.dto";
+import { UserResponseDto } from "../models/dtos/user/user-response.dto";
 import { IUserEntity } from "../models/entities/user.entity";
 import { UserRole } from "../models/enums/user-roles.enum";
 import { UserStatus } from "../models/enums/user-status.enum";

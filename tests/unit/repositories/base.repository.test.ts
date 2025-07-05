@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { BaseRepository } from "@/repositories/base.repository";
-import { IBaseEntity } from "@/models/entities/base.entity";
+import { BaseRepository } from "@repositories/base.repository";
+import { IBaseEntity } from "@models/entities/base.entity";
 import { BaseFactory } from "../../factories/base.factory";
 import { DatabaseFactory } from "../../factories/database.factory";
 import { TestHelpers } from "../../utils/test.helpers";

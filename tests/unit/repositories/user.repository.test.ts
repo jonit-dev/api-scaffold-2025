@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Container } from "typedi";
 import { UserRepository } from "../../../src/repositories/user.repository";
-import { UserRole, UserStatus } from "../../../src/models/enums";
+import { UserRole } from "@models/enums/user-roles.enum";
+import { UserStatus } from "@models/enums/user-status.enum";
 import { IUserEntity } from "../../../src/models/entities/user.entity";
-import { DatabaseException } from "../../../src/exceptions/database.exception";
+import { DatabaseException } from "@exceptions/database.exception";
 import { TestHelpers } from "../../utils/test.helpers";
 import { AuthFactory } from "../../factories/auth.factory";
 

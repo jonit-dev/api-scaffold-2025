@@ -6,7 +6,8 @@ import { useExpressServer } from "routing-controllers";
 import { AuthService } from "@services/auth.service";
 import { UserRepository } from "@repositories/user.repository";
 import { AuthMiddleware } from "@middlewares/auth.middleware";
-import { UserRole, UserStatus } from "@models/enums";
+import { UserRole } from "@models/enums/user-roles.enum";
+import { UserStatus } from "@models/enums/user-status.enum";
 import { TestHelpers } from "../utils/test.helpers";
 import { AuthFactory } from "../factories/auth.factory";
 

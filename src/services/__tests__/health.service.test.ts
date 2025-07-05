@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { HealthService } from "@/services/health.service";
+import { HealthService } from "@services/health.service";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { HealthFactory } from "../../../tests/factories/health.factory";
-import { TestHelpers } from "../../../tests/utils/test.helpers";
+import { HealthFactory } from "@tests/factories/health.factory";
+import { TestHelpers } from "@tests/utils/test.helpers";
 
 describe("HealthService", () => {
   let healthService: HealthService;

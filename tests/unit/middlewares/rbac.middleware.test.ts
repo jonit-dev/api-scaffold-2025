@@ -3,11 +3,11 @@ import {
   RbacMiddleware,
   createRoleMiddleware,
 } from "../../../src/middlewares/rbac.middleware";
-import { UserRole } from "../../../src/models/enums";
+import { UserRole } from "@models/enums/user-roles.enum";
 import {
   UnauthorizedException,
   ForbiddenException,
-} from "../../../src/exceptions/http-exceptions";
+} from "@exceptions/http-exceptions";
 import { AuthFactory } from "../../factories/auth.factory";
 
 describe("RbacMiddleware", () => {

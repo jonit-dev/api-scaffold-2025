@@ -1,12 +1,11 @@
-import { UserRole, UserStatus } from "../../src/models/enums";
-import { IUserEntity } from "../../src/models/entities/user.entity";
-import {
-  LoginDto,
-  RegisterDto,
-  AuthResponseDto,
-} from "../../src/models/dtos/auth";
+import { UserRole } from "@models/enums/user-roles.enum";
+import { UserStatus } from "@models/enums/user-status.enum";
+import { IUserEntity } from "@models/entities/user.entity";
+import { LoginDto } from "@models/dtos/auth/login.dto";
+import { RegisterDto } from "@models/dtos/auth/register.dto";
+import { AuthResponseDto } from "@models/dtos/auth/auth-response.dto";
 import { User, Session } from "@supabase/supabase-js";
-import { IAuthenticatedUser } from "../../src/types/express";
+import { IAuthenticatedUser } from "@common-types/express";
 import { vi } from "vitest";
 
 export class AuthFactory {

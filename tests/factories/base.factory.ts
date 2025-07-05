@@ -1,4 +1,4 @@
-import { IBaseEntity } from "@/models/entities/base.entity";
+import { IBaseEntity } from "@models/entities/base.entity";
 
 export class BaseFactory {
   static createBaseEntity(overrides: Partial<IBaseEntity> = {}): IBaseEntity {

@@ -1,14 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Container } from "typedi";
-import { AuthService } from "../../../src/services/auth.service";
+import { AuthService } from "@services/auth.service";
 import { UserRepository } from "../../../src/repositories/user.repository";
-import { UserRole, UserStatus } from "../../../src/models/enums";
+import { UserRole } from "../../../src/models/enums/user-roles.enum";
+import { UserStatus } from "../../../src/models/enums/user-status.enum";
 import {
   AuthException,
   InvalidCredentialsException,
   AccountSuspendedException,
   UserNotFoundException,
-} from "../../../src/exceptions/auth.exception";
+} from "@exceptions/auth.exception";
 import { TestHelpers } from "../../utils/test.helpers";
 import { AuthFactory } from "../../factories/auth.factory";
 

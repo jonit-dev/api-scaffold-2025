@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Container } from "typedi";
 import { AuthMiddleware } from "../../../src/middlewares/auth.middleware";
-import { AuthService } from "../../../src/services/auth.service";
-import { UnauthorizedException } from "../../../src/exceptions/http-exceptions";
+import { AuthService } from "@services/auth.service";
+import { UnauthorizedException } from "@exceptions/http-exceptions";
 import { TestHelpers } from "../../utils/test.helpers";
 import { AuthFactory } from "../../factories/auth.factory";
 
@@ -207,67 +207,6 @@ describe("AuthMiddleware", () => {
     });
   });
 
-  describe("extractTokenFromHeader", () => {
-    it("should extract valid Bearer token", () => {
-      const token = AuthFactory.createValidJwtToken();
-      mockRequest.headers.authorization = `Bearer ${token}`;
-
-      const extractedToken = (authMiddleware as any).extractTokenFromHeader(
-        mockRequest,
-      );
-
-      expect(extractedToken).toBe(token);
-    });
-
-    it("should return null when no authorization header", () => {
-      mockRequest.headers.authorization = undefined;
-
-      const extractedToken = (authMiddleware as any).extractTokenFromHeader(
-        mockRequest,
-      );
-
-      expect(extractedToken).toBeNull();
-    });
-
-    it("should return null when authorization header is empty", () => {
-      mockRequest.headers.authorization = "";
-
-      const extractedToken = (authMiddleware as any).extractTokenFromHeader(
-        mockRequest,
-      );
-
-      expect(extractedToken).toBeNull();
-    });
-
-    it("should return null when token type is not Bearer", () => {
-      const token = AuthFactory.createValidJwtToken();
-      mockRequest.headers.authorization = `Basic ${token}`;
-
-      const extractedToken = (authMiddleware as any).extractTokenFromHeader(
-        mockRequest,
-      );
-
-      expect(extractedToken).toBeNull();
-    });
-
-    it("should return null when no token after Bearer", () => {
-      mockRequest.headers.authorization = "Bearer";
-
-      const extractedToken = (authMiddleware as any).extractTokenFromHeader(
-        mockRequest,
-      );
-
-      expect(extractedToken).toBeNull();
-    });
-
-    it("should return null when token is empty", () => {
-      mockRequest.headers.authorization = "Bearer ";
-
-      const extractedToken = (authMiddleware as any).extractTokenFromHeader(
-        mockRequest,
-      );
-
-      expect(extractedToken).toBeNull();
-    });
-  });
+  // Note: extractTokenFromHeader functionality is tested through the auth.utils module
+  // The AuthMiddleware uses the extractBearerToken utility function from auth.utils
 });

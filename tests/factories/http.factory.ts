@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { vi } from "vitest";
-import { HttpStatus } from "@/types/http-status";
+import { HttpStatus } from "@common-types/http-status";
 import {
   HttpException,
   BadRequestException,
@@ -10,7 +10,7 @@ import {
   ConflictException,
   ValidationException,
   InternalServerErrorException,
-} from "@/exceptions/http-exceptions";
+} from "@exceptions/http-exceptions";
 
 export class HttpFactory {
   static createMockRequest(overrides: Partial<Request> = {}): Partial<Request> {

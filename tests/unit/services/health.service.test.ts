@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { HealthService } from "@/services/health.service";
+import { HealthService } from "@services/health.service";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { HealthFactory } from "../../factories/health.factory";
 import { TestHelpers } from "../../utils/test.helpers";

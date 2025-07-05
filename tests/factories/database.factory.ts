@@ -3,8 +3,8 @@ import {
   IPaginatedResult,
   IFilterOptions,
   IOrderByOptions,
-} from "@/types/database.types";
-import { IBaseEntity } from "@/models/entities/base.entity";
+} from "@common-types/database.types";
+import { IBaseEntity } from "@models/entities/base.entity";
 import { BaseFactory } from "./base.factory";
 
 export class DatabaseFactory {

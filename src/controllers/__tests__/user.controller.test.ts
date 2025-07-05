@@ -6,20 +6,18 @@ import {
   vi,
   type MockedFunction,
 } from "vitest";
-import { UserController } from "../user.controller";
-import { UserService } from "../../services/user.service";
-import {
-  CreateUserDto,
-  UpdateUserDto,
-  UpdateUserStatusDto,
-  UpdateProfileDto,
-} from "../../models/dtos/user";
-import { ForbiddenException } from "../../exceptions/http-exceptions";
-import { UserRole } from "../../models/enums/user-roles.enum";
-import { UserStatus } from "../../models/enums/user-status.enum";
-import { IAuthenticatedUser } from "../../types/express";
+import { UserController } from "@controllers/user.controller";
+import { UserService } from "@services/user.service";
+import { CreateUserDto } from "@models/dtos/user/create-user.dto";
+import { UpdateUserDto } from "@models/dtos/user/update-user.dto";
+import { UpdateUserStatusDto } from "@models/dtos/user/update-user-status.dto";
+import { UpdateProfileDto } from "@models/dtos/user/update-profile.dto";
+import { ForbiddenException } from "@exceptions/http-exceptions";
+import { UserRole } from "@models/enums/user-roles.enum";
+import { UserStatus } from "@models/enums/user-status.enum";
+import { IAuthenticatedUser } from "@common-types/express";
 
-vi.mock("../../services/user.service");
+vi.mock("@services/user.service");
 
 describe("UserController", () => {
   let userController: UserController;

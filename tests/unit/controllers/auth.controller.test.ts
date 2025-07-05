@@ -1,14 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { AuthController } from "../../../src/controllers/auth.controller";
-import { AuthService } from "../../../src/services/auth.service";
-import { UserRole, UserStatus } from "../../../src/models/enums";
-import { AuthFactory } from "../../factories/auth.factory";
-import { TestHelpers } from "../../utils/test.helpers";
+import { AuthController } from "@controllers/auth.controller";
+import { AuthService } from "@services/auth.service";
+import { UserRole } from "@models/enums/user-roles.enum";
+import { UserStatus } from "@models/enums/user-status.enum";
+import { AuthFactory } from "@tests/factories/auth.factory";
+import { TestHelpers } from "@tests/utils/test.helpers";
 import {
   AuthException,
   InvalidCredentialsException,
   UserNotFoundException,
-} from "../../../src/exceptions/auth.exception";
+} from "@exceptions/auth.exception";
 
 describe("AuthController", () => {
   let authController: AuthController;

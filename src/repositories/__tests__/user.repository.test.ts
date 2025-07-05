@@ -1,10 +1,11 @@
 import { Container } from "typedi";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { DatabaseException } from "@/exceptions";
-import { UserRole, UserStatus } from "@/models";
-import { AuthFactory } from "../../../tests/factories/auth.factory";
-import { TestHelpers } from "../../../tests/utils/test.helpers";
+import { DatabaseException } from "@exceptions/database.exception";
+import { UserRole } from "@models/enums/user-roles.enum";
+import { UserStatus } from "@models/enums/user-status.enum";
+import { AuthFactory } from "@tests/factories/auth.factory";
+import { TestHelpers } from "@tests/utils/test.helpers";
 import { UserRepository } from "../user.repository";
 
 describe("UserRepository", () => {

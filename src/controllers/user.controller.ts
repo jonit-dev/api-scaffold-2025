@@ -11,13 +11,11 @@ import {
 } from "routing-controllers";
 import { Service } from "typedi";
 import { UserService } from "../services/user.service";
-import {
-  CreateUserDto,
-  UpdateUserDto,
-  UserResponseDto,
-  UpdateUserStatusDto,
-  UpdateProfileDto,
-} from "../models/dtos/user";
+import { CreateUserDto } from "../models/dtos/user/create-user.dto";
+import { UpdateUserDto } from "../models/dtos/user/update-user.dto";
+import { UserResponseDto } from "../models/dtos/user/user-response.dto";
+import { UpdateUserStatusDto } from "../models/dtos/user/update-user-status.dto";
+import { UpdateProfileDto } from "../models/dtos/user/update-profile.dto";
 import { IApiResponse } from "../models/dtos/common/api-response.dto";
 import { IPaginatedResult } from "../types/database.types";
 import { UserRole } from "../models/enums/user-roles.enum";

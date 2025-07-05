@@ -2,9 +2,10 @@ import {
   AuthException,
   InvalidCredentialsException,
   UserNotFoundException,
-} from "@/exceptions";
-import { UserRole, UserStatus } from "@/models";
-import { AuthService } from "@/services/auth.service";
+} from "@exceptions/auth.exception";
+import { UserRole } from "@models/enums/user-roles.enum";
+import { UserStatus } from "@models/enums/user-status.enum";
+import { AuthService } from "@services/auth.service";
 import { AuthFactory } from "tests/factories/auth.factory";
 import { TestHelpers } from "tests/utils/test.helpers";
 import { beforeEach, describe, expect, it, vi } from "vitest";

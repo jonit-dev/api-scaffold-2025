@@ -3,8 +3,8 @@ import { AuthController } from "../../controllers/auth.controller";
 import { AuthService } from "../../services/auth.service";
 import { UserRole } from "../../models/enums/user-roles.enum";
 import { UserStatus } from "../../models/enums/user-status.enum";
-import { TestHelpers } from "../../../tests/utils/test.helpers";
-import { AuthFactory } from "../../../tests/factories/auth.factory";
+import { TestHelpers } from "@tests/utils/test.helpers";
+import { AuthFactory } from "@tests/factories/auth.factory";
 import {
   AuthException,
   InvalidCredentialsException,
@@ -115,7 +115,7 @@ describe("AuthController Simple Integration Tests", () => {
 
       await expect(
         authController.logout(requestWithoutAuth as never),
-      ).rejects.toThrow("No authorization header found");
+      ).rejects.toThrow("Missing or invalid authorization token");
     });
   });
 

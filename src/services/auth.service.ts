@@ -9,15 +9,13 @@ import {
   PasswordResetException,
   UserNotFoundException,
 } from "../exceptions/auth.exception";
-import {
-  AuthResponseDto,
-  ChangePasswordDto,
-  LoginDto,
-  RefreshTokenDto,
-  RegisterDto,
-  SessionResponseDto,
-} from "../models/dtos/auth";
-import { UserResponseDto } from "../models/dtos/user";
+import { AuthResponseDto } from "../models/dtos/auth/auth-response.dto";
+import { ChangePasswordDto } from "../models/dtos/auth/change-password.dto";
+import { LoginDto } from "../models/dtos/auth/login.dto";
+import { RefreshTokenDto } from "../models/dtos/auth/refresh-token.dto";
+import { RegisterDto } from "../models/dtos/auth/register.dto";
+import { SessionResponseDto } from "../models/dtos/auth/auth-response.dto";
+import { UserResponseDto } from "../models/dtos/user/user-response.dto";
 import { IUserEntity } from "../models/entities/user.entity";
 import { UserRole } from "../models/enums/user-roles.enum";
 import { UserStatus } from "../models/enums/user-status.enum";

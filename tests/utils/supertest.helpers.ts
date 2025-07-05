@@ -1,6 +1,6 @@
 import request from "supertest";
 import { Express } from "express";
-import { HttpStatus } from "@/types/http-status";
+import { HttpStatus } from "@common-types/http-status";
 import { expect } from "vitest";
 
 export class SupertestHelpers {

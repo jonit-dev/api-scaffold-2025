@@ -9,15 +9,13 @@ import {
 import { Service } from "typedi";
 import { Request } from "express";
 import { AuthService } from "../services/auth.service";
-import {
-  LoginDto,
-  RegisterDto,
-  ChangePasswordDto,
-  AuthResponseDto,
-  RefreshTokenDto,
-  VerifyEmailDto,
-  ResendVerificationDto,
-} from "../models/dtos/auth";
+import { LoginDto } from "../models/dtos/auth/login.dto";
+import { RegisterDto } from "../models/dtos/auth/register.dto";
+import { ChangePasswordDto } from "../models/dtos/auth/change-password.dto";
+import { AuthResponseDto } from "../models/dtos/auth/auth-response.dto";
+import { RefreshTokenDto } from "../models/dtos/auth/refresh-token.dto";
+import { VerifyEmailDto } from "../models/dtos/auth/verify-email.dto";
+import { ResendVerificationDto } from "../models/dtos/auth/resend-verification.dto";
 import { ForgotPasswordDto } from "../models/dtos/auth/forgot-password.dto";
 import { UserResponseDto } from "../models/dtos/user/user-response.dto";
 import { Authenticated } from "../decorators/auth.decorator";

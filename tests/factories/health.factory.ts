@@ -1,7 +1,7 @@
 import {
   IHealthResponseDto,
   IServiceStatusDto,
-} from "@/models/dtos/common/health-response.dto";
+} from "@models/dtos/common/health-response.dto";
 
 export class HealthFactory {
   static createHealthResponse(

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { Container } from "typedi";
 import Redis from "ioredis";
-import { RedisService } from "../../../src/services/redis.service";
+import { RedisService } from "@services/redis.service";
 import { RedisConfig } from "../../../src/config/redis";
 
 // Mock Redis

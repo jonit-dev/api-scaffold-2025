@@ -6,18 +6,19 @@ import {
   vi,
   type MockedFunction,
 } from "vitest";
-import { UserService } from "../user.service";
-import { UserRepository } from "../../repositories/user.repository";
-import { CreateUserDto, UpdateUserDto } from "../../models/dtos/user";
+import { UserService } from "@services/user.service";
+import { UserRepository } from "@repositories/user.repository";
+import { CreateUserDto } from "@models/dtos/user/create-user.dto";
+import { UpdateUserDto } from "@models/dtos/user/update-user.dto";
 import {
   ValidationException,
   NotFoundException,
-} from "../../exceptions/http-exceptions";
-import { UserRole } from "../../models/enums/user-roles.enum";
-import { UserStatus } from "../../models/enums/user-status.enum";
-import { IUserEntity } from "../../models/entities/user.entity";
+} from "@exceptions/http-exceptions";
+import { UserRole } from "@models/enums/user-roles.enum";
+import { UserStatus } from "@models/enums/user-status.enum";
+import { IUserEntity } from "@models/entities/user.entity";
 
-vi.mock("../../repositories/user.repository");
+vi.mock("@repositories/user.repository");
 
 describe("UserService", () => {
   let userService: UserService;

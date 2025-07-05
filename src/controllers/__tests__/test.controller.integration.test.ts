@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { app } from "@/app";
-import { SupertestHelpers } from "../../../tests/utils/supertest.helpers";
-import { HttpStatus } from "@/types/http-status";
+import { SupertestHelpers } from "@tests/utils/supertest.helpers";
+import { HttpStatus } from "@common-types/http-status";
 
 describe("Test Controller", () => {
   describe("GET /test/400", () => {

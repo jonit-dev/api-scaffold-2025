@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { ForbiddenException, UnauthorizedException } from "@/exceptions";
-import { UserRole } from "@/models";
-import { AuthFactory } from "../../../tests/factories/auth.factory";
+import {
+  ForbiddenException,
+  UnauthorizedException,
+} from "@exceptions/http-exceptions";
+import { UserRole } from "@models/enums/user-roles.enum";
+import { AuthFactory } from "@tests/factories/auth.factory";
 import { RbacMiddleware, createRoleMiddleware } from "../rbac.middleware";
 
 describe("RbacMiddleware", () => {

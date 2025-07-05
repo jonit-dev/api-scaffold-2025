@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { BaseRepository } from "@/repositories/base.repository";
-import { IBaseEntity } from "@/models/entities/base.entity";
-import { BaseFactory } from "../../../tests/factories/base.factory";
-import { DatabaseFactory } from "../../../tests/factories/database.factory";
-import { TestHelpers } from "../../../tests/utils/test.helpers";
+import { BaseRepository } from "@repositories/base.repository";
+import { IBaseEntity } from "@models/entities/base.entity";
+import { BaseFactory } from "@tests/factories/base.factory";
+import { DatabaseFactory } from "@tests/factories/database.factory";
+import { TestHelpers } from "@tests/utils/test.helpers";
 
 interface ITestEntity extends IBaseEntity {
   name: string;

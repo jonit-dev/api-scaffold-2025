@@ -1,4 +1,4 @@
-import { IBaseEntity as IBaseEntityType } from "../../types/database.types";
+import { IBaseEntity as IBaseEntityType } from "@common-types/database.types";
 
 export interface IBaseEntity extends IBaseEntityType {
   id: string;
