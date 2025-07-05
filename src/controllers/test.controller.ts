@@ -1,15 +1,15 @@
 import { Get, JsonController, Param } from "routing-controllers";
 import { Service } from "typedi";
 import {
-  BadRequest,
-  NotFound,
-  Unauthorized,
-  Forbidden,
-  InternalServerError,
-  Conflict,
-  UnprocessableEntity,
-  HttpStatus,
-} from "../exceptions";
+  BadRequestException as BadRequest,
+  NotFoundException as NotFound,
+  UnauthorizedException as Unauthorized,
+  ForbiddenException as Forbidden,
+  InternalServerErrorException as InternalServerError,
+  ConflictException as Conflict,
+  UnprocessableEntityException as UnprocessableEntity,
+} from "@exceptions/http-exceptions";
+import { HttpStatus } from "@common-types/http-status";
 
 @Service()
 @JsonController("/test")

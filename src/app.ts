@@ -3,7 +3,7 @@ import "reflect-metadata";
 
 import { createExpressServer, useContainer } from "routing-controllers";
 import { Container } from "typedi";
-import { config } from "./config/app";
+import { config } from "./config/env";
 import "./config/supabase";
 import { HealthController } from "./controllers/health.controller";
 import { TestController } from "./controllers/test.controller";

@@ -1,14 +1,7 @@
-interface IEnvironment {
-  SUPABASE_URL: string;
-  SUPABASE_ANON_KEY: string;
-  SUPABASE_SERVICE_KEY: string;
-  FRONTEND_URL: string;
-  NODE_ENV: "development" | "production" | "test";
-  REDIS_URL: string;
-  REDIS_HOST: string;
-  REDIS_PORT: number;
-  REDIS_PASSWORD?: string;
-}
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 function getEnvVar(name: string, defaultValue?: string): string {
   const value = process.env[name] || defaultValue;
@@ -18,20 +11,68 @@ function getEnvVar(name: string, defaultValue?: string): string {
   return value;
 }
 
-export const env: IEnvironment = {
-  SUPABASE_URL: getEnvVar("SUPABASE_URL", "https://your_supabase_url_here"),
-  SUPABASE_ANON_KEY: getEnvVar(
-    "SUPABASE_ANON_KEY",
-    "your_supabase_anon_key_here",
-  ),
-  SUPABASE_SERVICE_KEY: getEnvVar(
-    "SUPABASE_SERVICE_KEY",
-    "your_supabase_service_key_here",
-  ),
-  FRONTEND_URL: getEnvVar("FRONTEND_URL", "http://localhost:3000"),
-  NODE_ENV: (process.env.NODE_ENV as IEnvironment["NODE_ENV"]) || "development",
-  REDIS_URL: getEnvVar("REDIS_URL", "redis://localhost:6379"),
-  REDIS_HOST: getEnvVar("REDIS_HOST", "localhost"),
-  REDIS_PORT: parseInt(getEnvVar("REDIS_PORT", "6379")),
-  REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+export const config = {
+  server: {
+    port: parseInt(process.env.PORT || "3000", 10),
+    environment: process.env.NODE_ENV || "development",
+  },
+  database: {
+    url: getEnvVar("SUPABASE_URL", "https://your_supabase_url_here"),
+    anonKey: getEnvVar("SUPABASE_ANON_KEY", "your_supabase_anon_key_here"),
+    serviceKey: getEnvVar(
+      "SUPABASE_SERVICE_KEY",
+      "your_supabase_service_key_here",
+    ),
+    poolSize: parseInt(process.env.DB_POOL_SIZE || "20", 10),
+    connectionTimeout: parseInt(
+      process.env.DB_CONNECTION_TIMEOUT || "30000",
+      10,
+    ),
+  },
+  cors: {
+    origin: process.env.ALLOWED_ORIGINS?.split(",") || [
+      "http://localhost:3000",
+    ],
+    credentials: true,
+  },
+  rateLimit: {
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000", 10), // 15 minutes
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "100", 10),
+  },
+  logging: {
+    level: process.env.LOG_LEVEL || "combined",
+  },
+  redis: {
+    url: getEnvVar("REDIS_URL", "redis://localhost:6379"),
+    host: getEnvVar("REDIS_HOST", "localhost"),
+    port: parseInt(getEnvVar("REDIS_PORT", "6379")),
+    password: process.env.REDIS_PASSWORD,
+  },
+  env: {
+    supabaseUrl: getEnvVar("SUPABASE_URL", "https://your_supabase_url_here"),
+    supabaseAnonKey: getEnvVar(
+      "SUPABASE_ANON_KEY",
+      "your_supabase_anon_key_here",
+    ),
+    supabaseServiceKey: getEnvVar(
+      "SUPABASE_SERVICE_KEY",
+      "your_supabase_service_key_here",
+    ),
+    frontendUrl: getEnvVar("FRONTEND_URL", "http://localhost:3000"),
+    nodeEnv:
+      (process.env.NODE_ENV as "development" | "production" | "test") ||
+      "development",
+  },
 };
+
+// Environment validation
+const requiredEnvVars = ["NODE_ENV"];
+const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  console.warn(
+    `⚠️  Missing optional environment variables: ${missingEnvVars.join(", ")}`,
+  );
+}
+
+export default config;

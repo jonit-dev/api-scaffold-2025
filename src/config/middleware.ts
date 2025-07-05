@@ -5,7 +5,7 @@ import rateLimit from "express-rate-limit";
 import compression from "compression";
 import morgan from "morgan";
 import bodyParser from "body-parser";
-import { config } from "./app";
+import { config } from "./env";
 
 export function setupMiddlewares(app: Express): void {
   // Security headers - should be first

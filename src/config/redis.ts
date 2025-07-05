@@ -1,6 +1,6 @@
 import Redis from "ioredis";
 import { Service } from "typedi";
-import { env } from "./env";
+import { config } from "./env";
 
 @Service()
 export class RedisConfig {
@@ -15,9 +15,9 @@ export class RedisConfig {
 
   private static createClient(): Redis {
     const redisOptions = {
-      host: env.REDIS_HOST,
-      port: env.REDIS_PORT,
-      password: env.REDIS_PASSWORD,
+      host: config.redis.host,
+      port: config.redis.port,
+      password: config.redis.password,
       retryStrategy: (times: number): number => {
         const delay = Math.min(times * 50, 2000);
         return delay;

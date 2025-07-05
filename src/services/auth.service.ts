@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { plainToInstance } from "class-transformer";
 import { Inject, Service } from "typedi";
-import { env } from "../config/env";
+import { config } from "../config/env";
 import {
   AccountSuspendedException,
   AuthException,
@@ -207,7 +207,7 @@ export class AuthService {
       const { error } = await this.supabaseAuth.auth.resetPasswordForEmail(
         email,
         {
-          redirectTo: `${env.FRONTEND_URL}/reset-password`,
+          redirectTo: `${config.env.frontendUrl}/reset-password`,
         },
       );
 

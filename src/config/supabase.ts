@@ -2,7 +2,7 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { Container } from "typedi";
 import { IDatabase } from "../types/database.types";
 import { databaseConfig } from "./database";
-import { env } from "./env";
+import { config } from "./env";
 
 // Singleton pattern for consistent client usage
 let supabaseInstance: SupabaseClient<IDatabase> | null = null;
@@ -67,10 +67,10 @@ export const supabase = getSupabaseClient();
 // Authentication-specific client with proper config
 export const supabaseAuth = ((): SupabaseClient => {
   if (
-    !env.SUPABASE_URL ||
-    !env.SUPABASE_ANON_KEY ||
-    env.SUPABASE_URL.includes("your_supabase_url_here") ||
-    env.SUPABASE_ANON_KEY.includes("your_supabase")
+    !config.env.supabaseUrl ||
+    !config.env.supabaseAnonKey ||
+    config.env.supabaseUrl.includes("your_supabase_url_here") ||
+    config.env.supabaseAnonKey.includes("your_supabase")
   ) {
     return {
       auth: {
@@ -129,7 +129,7 @@ export const supabaseAuth = ((): SupabaseClient => {
     } as unknown as SupabaseClient;
   }
 
-  return createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+  return createClient(config.env.supabaseUrl, config.env.supabaseAnonKey, {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
@@ -141,10 +141,10 @@ export const supabaseAuth = ((): SupabaseClient => {
 // Service client for admin operations
 export const supabaseAdmin = ((): SupabaseClient => {
   if (
-    !env.SUPABASE_URL ||
-    !env.SUPABASE_SERVICE_KEY ||
-    env.SUPABASE_URL.includes("your_supabase_url_here") ||
-    env.SUPABASE_SERVICE_KEY.includes("your_supabase")
+    !config.env.supabaseUrl ||
+    !config.env.supabaseServiceKey ||
+    config.env.supabaseUrl.includes("your_supabase_url_here") ||
+    config.env.supabaseServiceKey.includes("your_supabase")
   ) {
     return {
       auth: {
@@ -169,7 +169,7 @@ export const supabaseAdmin = ((): SupabaseClient => {
     } as unknown as SupabaseClient;
   }
 
-  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY, {
+  return createClient(config.env.supabaseUrl, config.env.supabaseServiceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
