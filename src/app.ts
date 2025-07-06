@@ -1,7 +1,8 @@
 // CRITICAL: reflect-metadata must be imported FIRST
 import "reflect-metadata";
 
-import { createExpressServer, useContainer } from "routing-controllers";
+import express from "express";
+import { useContainer, useExpressServer } from "routing-controllers";
 import { Container } from "typedi";
 import { config } from "./config/env";
 import { AuthController } from "./controllers/auth.controller";
@@ -27,7 +28,44 @@ if (config.database.provider === "supabase") {
 // Configure TypeDI container integration BEFORE importing any controllers
 useContainer(Container);
 
-export const app = createExpressServer({
+// Create Express app manually to configure custom body parsing
+export const app = express();
+
+// Apply middleware based on environment configuration
+// Skip middleware during tests to avoid conflicts
+const isTestEnvironment = config.server.environment === "test";
+
+if (!isTestEnvironment) {
+  // 1. Compression (first, to compress all responses)
+  if (config.middleware.enableCompression) {
+    app.use(CompressionMiddleware.create());
+    app.use(CompressionMiddleware.log());
+  }
+
+  // 2. Security headers (before any route processing)
+  if (config.middleware.enableSecurity) {
+    app.use(SecurityMiddleware.create());
+    app.use(SecurityMiddleware.apiHeaders());
+    app.use(SecurityMiddleware.validateHeaders());
+    app.use(SecurityMiddleware.webhookHeaders());
+  }
+
+  // 3. Auto-correct JSON syntax issues (handles trailing commas automatically)
+  app.use(JSONParserMiddleware.createAutoCorrector());
+
+  // 4. HTTP access logging (after security and JSON parsing, before routes)
+  if (config.middleware.enableMorganLogging) {
+    app.use(MorganMiddleware.create());
+    app.use(MorganMiddleware.webhookLogger());
+    app.use(MorganMiddleware.errorLogger());
+  }
+}
+
+// Application-specific middleware (always needed)
+app.use(RequestLoggerMiddleware.create());
+
+// Configure routing-controllers to use our Express app
+useExpressServer(app, {
   // Import controllers explicitly to avoid glob pattern issues
   controllers: [
     HealthController,
@@ -68,38 +106,6 @@ export const app = createExpressServer({
     },
   },
 });
-
-// Apply middleware based on environment configuration
-// Skip middleware during tests to avoid conflicts
-const isTestEnvironment = config.server.environment === "test";
-
-if (!isTestEnvironment) {
-  // 1. Compression (first, to compress all responses)
-  if (config.middleware.enableCompression) {
-    app.use(CompressionMiddleware.create());
-    app.use(CompressionMiddleware.log());
-  }
-
-  // 2. Security headers (before any route processing)
-  if (config.middleware.enableSecurity) {
-    app.use(SecurityMiddleware.create());
-    app.use(SecurityMiddleware.apiHeaders());
-    app.use(SecurityMiddleware.validateHeaders());
-    app.use(SecurityMiddleware.webhookHeaders());
-  }
-
-  // 3. JSON parsing error handler is added later in the middleware stack
-
-  // 4. HTTP access logging (after security and JSON parsing, before routes)
-  if (config.middleware.enableMorganLogging) {
-    app.use(MorganMiddleware.create());
-    app.use(MorganMiddleware.webhookLogger());
-    app.use(MorganMiddleware.errorLogger());
-  }
-}
-
-// Application-specific middleware (always needed)
-app.use(RequestLoggerMiddleware.create());
 
 // Add JSON parsing error handler
 app.use(JSONParserMiddleware.createErrorHandler());

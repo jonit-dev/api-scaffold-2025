@@ -1,10 +1,91 @@
 import { NextFunction, Request, Response } from "express";
+import { jsonrepair } from "jsonrepair";
 import { HttpStatus } from "../types/http-status";
 
 export class JSONParserMiddleware {
   /**
-   * Global error handler for JSON parsing errors
-   * This catches JSON syntax errors and provides helpful feedback
+   * Middleware that automatically fixes common JSON syntax issues using jsonrepair library
+   * This runs before the built-in JSON parser and corrects problems like trailing commas
+   */
+  static createAutoCorrector() {
+    return (req: Request, res: Response, next: NextFunction): void => {
+      // Only process requests with JSON content type
+      if (!req.is("application/json")) {
+        return next();
+      }
+
+      let rawBody = "";
+      const chunks: Buffer[] = [];
+
+      // Intercept the raw body data
+      req.on("data", (chunk: Buffer) => {
+        chunks.push(chunk);
+      });
+
+      req.on("end", () => {
+        try {
+          // Reconstruct the raw body
+          rawBody = Buffer.concat(chunks).toString("utf8");
+
+          if (rawBody.trim()) {
+            // Use jsonrepair to automatically fix common JSON issues
+            const repairedJson = jsonrepair(rawBody);
+
+            // Parse the repaired JSON
+            const parsedBody = JSON.parse(repairedJson);
+
+            // Set the parsed body on the request
+            req.body = parsedBody;
+
+            // Mark that we've already parsed the body
+            (req as Request & { _body?: boolean })._body = true;
+
+            // Log successful auto-correction if the JSON was modified
+            if (repairedJson !== rawBody) {
+              console.log(`🔧 Auto-corrected JSON for ${req.path}`);
+            }
+          }
+
+          next();
+        } catch (error) {
+          // If jsonrepair couldn't fix it, provide helpful error message
+          res.status(HttpStatus.BadRequest).json({
+            success: false,
+            error: {
+              status: HttpStatus.BadRequest,
+              message: "Invalid JSON format in request body",
+              details:
+                error instanceof Error
+                  ? error.message
+                  : "Unknown JSON parsing error",
+              hint: "The JSON syntax is too malformed to auto-correct. Please check your request body format.",
+              originalBody:
+                rawBody.substring(0, 200) + (rawBody.length > 200 ? "..." : ""),
+              timestamp: new Date().toISOString(),
+              path: req.path,
+            },
+          });
+        }
+      });
+
+      req.on("error", (error) => {
+        res.status(HttpStatus.BadRequest).json({
+          success: false,
+          error: {
+            status: HttpStatus.BadRequest,
+            message: "Error reading request body",
+            details: error.message,
+            timestamp: new Date().toISOString(),
+            path: req.path,
+          },
+        });
+      });
+    };
+  }
+
+  /**
+   * Global error handler for any remaining JSON parsing errors
+   * This is a fallback in case the auto-corrector doesn't catch everything
    */
   static createErrorHandler() {
     return (
@@ -21,26 +102,13 @@ export class JSONParserMiddleware {
           error.message.includes("Unexpected token") ||
           error.message.includes("Expected double-quoted property name"))
       ) {
-        // Clean up the error message to make it more user-friendly
-        let cleanMessage = error.message;
-        let hint = "Check your JSON syntax";
-
-        // Provide specific hints for common issues
-        if (error.message.includes("Expected double-quoted property name")) {
-          hint =
-            "You likely have a trailing comma in your JSON. Remove any commas after the last property.";
-        } else if (error.message.includes("Unexpected token")) {
-          hint =
-            "Common issues: trailing commas, unquoted keys, or invalid escape sequences";
-        }
-
         res.status(HttpStatus.BadRequest).json({
           success: false,
           error: {
             status: HttpStatus.BadRequest,
-            message: "Invalid JSON format in request body",
-            details: cleanMessage,
-            hint: hint,
+            message: "JSON parsing error (fallback handler)",
+            details: error.message,
+            hint: "This error occurred despite auto-correction attempts. Please check your JSON syntax.",
             timestamp: new Date().toISOString(),
             path: req.path,
           },
@@ -48,29 +116,15 @@ export class JSONParserMiddleware {
         return;
       }
 
-      // Pass other errors to the next error handler
+      // Not a JSON parsing error, pass to next error handler
       next(error);
     };
   }
 
   /**
-   * Helper method to clean common JSON syntax issues
-   * This can be used if you want to preprocess JSON strings
+   * Helper method to clean JSON syntax issues using jsonrepair library
    */
   static cleanJSON(jsonString: string): string {
-    return (
-      jsonString
-        // Remove trailing commas before closing braces
-        .replace(/,(\s*})/g, "$1")
-        // Remove trailing commas before closing brackets
-        .replace(/,(\s*])/g, "$1")
-        // Remove multiple consecutive commas
-        .replace(/,+/g, ",")
-        // Remove commas at the start of objects/arrays
-        .replace(/{\s*,/g, "{")
-        .replace(/\[\s*,/g, "[")
-        // Remove trailing commas at the end of the string
-        .replace(/,(\s*)$/, "$1")
-    );
+    return jsonrepair(jsonString);
   }
 }
