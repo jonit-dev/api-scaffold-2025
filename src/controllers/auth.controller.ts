@@ -5,6 +5,7 @@ import {
   Body,
   HttpCode,
   Req,
+  UseBefore,
 } from "routing-controllers";
 import { Service } from "typedi";
 import { Request } from "express";
@@ -19,7 +20,7 @@ import { VerifyEmailDto } from "@models/dtos/auth/verify-email.dto";
 import { ResendVerificationDto } from "@models/dtos/auth/resend-verification.dto";
 import { ForgotPasswordDto } from "@models/dtos/auth/forgot-password.dto";
 import { UserResponseDto } from "@models/dtos/user/user-response.dto";
-import { Authenticated } from "../decorators/auth.decorator";
+import { AuthMiddleware } from "../middlewares/auth.middleware";
 import { RateLimit } from "../decorators/rate-limit.decorator";
 import { authRateLimits } from "../middlewares/rate-limit.middleware";
 import { IAuthenticatedUser } from "../types/express";
@@ -46,7 +47,7 @@ export class AuthController {
 
   @Post("/logout")
   @HttpCode(HttpStatus.NoContent)
-  @Authenticated()
+  @UseBefore(AuthMiddleware)
   async logout(): Promise<void> {
     await this.authService.logout();
   }
@@ -72,7 +73,7 @@ export class AuthController {
 
   @Post("/change-password")
   @HttpCode(HttpStatus.Ok)
-  @Authenticated()
+  @UseBefore(AuthMiddleware)
   async changePassword(
     @Body() changePasswordDto: ChangePasswordDto,
     @Req() req: Request & { user: IAuthenticatedUser },
@@ -103,7 +104,7 @@ export class AuthController {
 
   @Get("/me")
   @HttpCode(HttpStatus.Ok)
-  @Authenticated()
+  @UseBefore(AuthMiddleware)
   async getCurrentUser(
     @Req() req: Request & { user: IAuthenticatedUser },
   ): Promise<UserResponseDto> {

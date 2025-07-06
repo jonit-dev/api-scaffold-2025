@@ -4,7 +4,7 @@ import { config } from "./env";
 
 @Service()
 export class RedisConfig {
-  private static instance: Redis;
+  private static instance: Redis | undefined;
 
   public static getClient(): Redis {
     if (!RedisConfig.instance) {
@@ -23,13 +23,12 @@ export class RedisConfig {
         return delay;
       },
       maxRetriesPerRequest: 3,
-      lazyConnect: true,
     };
 
     const client = new Redis(redisOptions);
 
     client.on("connect", () => {
-      console.log("Redis connected successfully");
+      // Silent connection - logged by CacheService
     });
 
     client.on("error", (error) => {
@@ -37,15 +36,16 @@ export class RedisConfig {
     });
 
     client.on("close", () => {
-      console.log("Redis connection closed");
+      // Connection closed silently
     });
 
     return client;
   }
 
   public static async disconnect(): Promise<void> {
-    if (RedisConfig.instance) {
+    if (RedisConfig.instance && RedisConfig.instance.status === "ready") {
       await RedisConfig.instance.disconnect();
+      RedisConfig.instance = undefined;
     }
   }
 }

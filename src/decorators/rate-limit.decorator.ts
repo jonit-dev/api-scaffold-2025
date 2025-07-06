@@ -1,8 +1,8 @@
-import { Container } from "typedi";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
+import { UseBefore } from "routing-controllers";
 import {
-  createRateLimitMiddleware,
   IRateLimitOptions,
+  RateLimitMiddleware,
 } from "../middlewares/rate-limit.middleware";
 
 export function RateLimit(options: IRateLimitOptions): MethodDecorator {
@@ -11,38 +11,18 @@ export function RateLimit(options: IRateLimitOptions): MethodDecorator {
     propertyKey: string | symbol,
     descriptor: PropertyDescriptor,
   ): void {
-    const originalMethod = descriptor.value;
-
-    descriptor.value = async function (...args: unknown[]): Promise<unknown> {
-      // Extract request and response from arguments
-      const req = args.find(
-        (arg) => arg && typeof arg === "object" && "headers" in arg,
-      ) as Request;
-      const res = args.find(
-        (arg) => arg && typeof arg === "object" && "json" in arg,
-      ) as Response;
-
-      if (req && res) {
-        const RateLimitMiddlewareClass = createRateLimitMiddleware(options);
-        const rateLimitMiddleware = Container.get(RateLimitMiddlewareClass);
-
-        // Create a promise to handle next function
-        let nextCalled = false;
-        const next = (error?: unknown): void => {
-          nextCalled = true;
-          if (error) {
-            throw error;
-          }
-        };
-
-        await rateLimitMiddleware.use(req, res, next);
-
-        if (nextCalled) {
-          return originalMethod.apply(this, args);
-        }
-      }
-
-      return originalMethod.apply(this, args);
+    // Create middleware function that routing-controllers can use
+    const rateLimitMiddleware = (
+      req: Request,
+      res: Response,
+      next: NextFunction,
+    ): void => {
+      // Create the middleware instance directly
+      const rateLimitMiddlewareInstance = new RateLimitMiddleware(options);
+      // Call the middleware and ensure it properly handles the next callback
+      rateLimitMiddlewareInstance.use(req, res, next).catch(next);
     };
+
+    return UseBefore(rateLimitMiddleware)(target, propertyKey, descriptor);
   };
 }

@@ -1,11 +1,11 @@
+import { User } from "@supabase/supabase-js";
+import { NextFunction, Request, Response } from "express";
+import { UseBefore, createParamDecorator } from "routing-controllers";
 import { Container } from "typedi";
-import { Request, Response } from "express";
 import { AuthMiddleware } from "../middlewares/auth.middleware";
 import { createRoleMiddleware } from "../middlewares/rbac.middleware";
 import { UserRole } from "../models/enums/user-roles.enum";
 import { IAuthenticatedUser } from "../types/express";
-import { AuthService } from "../services/auth.service";
-import { User } from "@supabase/supabase-js";
 import { extractBearerToken } from "../utils/auth.utils";
 
 // Authentication decorator - requires valid JWT token
@@ -15,38 +15,18 @@ export function Authenticated(): MethodDecorator {
     propertyKey: string | symbol,
     descriptor: PropertyDescriptor,
   ): void {
-    const originalMethod = descriptor.value;
-
-    descriptor.value = async function (...args: unknown[]): Promise<unknown> {
-      // Extract request, response, and next from arguments
-      const req = args.find(
-        (arg) => arg && typeof arg === "object" && "headers" in arg,
-      );
-      const res = args.find(
-        (arg) => arg && typeof arg === "object" && "json" in arg,
-      );
-
-      if (req && res) {
-        const authMiddleware = Container.get(AuthMiddleware);
-
-        // Create a promise to handle next function
-        let nextCalled = false;
-        const next = (error?: unknown): void => {
-          nextCalled = true;
-          if (error) {
-            throw error;
-          }
-        };
-
-        await authMiddleware.use(req as Request, res as Response, next);
-
-        if (nextCalled) {
-          return originalMethod.apply(this, args);
-        }
-      }
-
-      return originalMethod.apply(this, args);
+    // Create middleware function that routing-controllers can use
+    const authMiddleware = (
+      req: Request,
+      res: Response,
+      next: NextFunction,
+    ): void => {
+      const authMiddlewareInstance = Container.get(AuthMiddleware);
+      // Call the middleware and ensure it properly handles the next callback
+      authMiddlewareInstance.use(req, res, next).catch(next);
     };
+
+    return UseBefore(authMiddleware)(target, propertyKey, descriptor);
   };
 }
 
@@ -57,43 +37,30 @@ export function RequireRole(...roles: UserRole[]): MethodDecorator {
     propertyKey: string | symbol,
     descriptor: PropertyDescriptor,
   ): void {
-    const originalMethod = descriptor.value;
-
-    descriptor.value = async function (...args: unknown[]): Promise<unknown> {
-      // Extract request, response, and next from arguments
-      const req = args.find(
-        (arg) => arg && typeof arg === "object" && "headers" in arg,
-      );
-      const res = args.find(
-        (arg) => arg && typeof arg === "object" && "json" in arg,
-      );
-
-      if (req && res) {
-        const authMiddleware = Container.get(AuthMiddleware);
-        const roleMiddleware = createRoleMiddleware(...roles);
-
-        // Create a promise to handle next function
-        let nextCalled = false;
-        const next = (error?: unknown): void => {
-          nextCalled = true;
-          if (error) {
-            throw error;
-          }
-        };
-
-        await authMiddleware.use(req as Request, res as Response, next);
-        if (nextCalled) {
-          nextCalled = false;
-          await roleMiddleware.use(req as Request, res as Response, next);
-        }
-
-        if (nextCalled) {
-          return originalMethod.apply(this, args);
-        }
-      }
-
-      return originalMethod.apply(this, args);
+    // Create middleware functions that routing-controllers can use
+    const authMiddleware = (
+      req: Request,
+      res: Response,
+      next: NextFunction,
+    ): void => {
+      const authMiddlewareInstance = Container.get(AuthMiddleware);
+      authMiddlewareInstance.use(req, res, next).catch(next);
     };
+
+    const roleMiddleware = (
+      req: Request,
+      res: Response,
+      next: NextFunction,
+    ): void => {
+      const roleMiddlewareInstance = createRoleMiddleware(...roles);
+      roleMiddlewareInstance.use(req, res, next);
+    };
+
+    return UseBefore(authMiddleware, roleMiddleware)(
+      target,
+      propertyKey,
+      descriptor,
+    );
   };
 }
 
@@ -104,98 +71,70 @@ export function OptionalAuth(): MethodDecorator {
     propertyKey: string | symbol,
     descriptor: PropertyDescriptor,
   ): void {
-    const originalMethod = descriptor.value;
+    // Create middleware function that routing-controllers can use
+    const optionalAuthMiddleware = (
+      req: Request,
+      res: Response,
+      next: NextFunction,
+    ): void => {
+      try {
+        const token = extractBearerToken(req);
 
-    descriptor.value = async function (...args: unknown[]): Promise<unknown> {
-      const request = args.find(
-        (arg) => arg && typeof arg === "object" && "headers" in arg,
-      ) as Request;
-
-      if (request) {
-        try {
-          const token = extractBearerToken(request);
-
-          if (token) {
-            const supabaseAuth = Container.get("supabaseAuth") as {
-              auth: {
-                getUser: (
-                  token: string,
-                ) => Promise<{ data: { user: User | null }; error: unknown }>;
-              };
+        if (token) {
+          const supabaseAuth = Container.get("supabaseAuth") as {
+            auth: {
+              getUser: (
+                token: string,
+              ) => Promise<{ data: { user: User | null }; error: unknown }>;
             };
-            const {
-              data: { user },
-              error,
-            } = await supabaseAuth.auth.getUser(token);
+          };
 
-            if (!error && user) {
-              const authService = Container.get(AuthService);
-              const userProfile = await authService.getUserProfile(user.id);
+          supabaseAuth.auth
+            .getUser(token)
+            .then(({ data, error }) => {
+              if (error || !data.user) {
+                // Token is invalid, but we don't throw - just continue without user
+                next();
+                return;
+              }
 
-              const authenticatedUser: IAuthenticatedUser = {
-                id: user.id,
-                email: user.email!,
-                role: userProfile.role,
-                supabaseUser: user,
+              // Add user to request for use in route handler
+              (req as Request & { user: IAuthenticatedUser }).user = {
+                id: data.user.id,
+                email: data.user.email!,
+                role:
+                  (data.user.user_metadata?.role as UserRole) || UserRole.User,
               };
 
-              (request as { user: IAuthenticatedUser }).user =
-                authenticatedUser;
-            }
-          }
-        } catch {
-          // Ignore authentication errors for optional auth
+              next();
+            })
+            .catch(() => {
+              // If auth fails, continue without user
+              next();
+            });
+        } else {
+          // No token provided, continue without user
+          next();
         }
+      } catch {
+        // If anything fails, continue without user
+        next();
       }
-
-      return originalMethod.apply(this, args);
     };
+
+    return UseBefore(optionalAuthMiddleware)(target, propertyKey, descriptor);
   };
 }
 
 // Current user parameter decorator - injects authenticated user into method parameter
-export function CurrentUser(): ParameterDecorator {
-  return function (
-    target: object,
-    propertyKey: string | symbol | undefined,
-    parameterIndex: number,
-  ): void {
-    if (!propertyKey) return;
-
-    // Store metadata about which parameter should receive the current user
-    const existingMetadata =
-      Reflect.getMetadata("custom:currentUser", target, propertyKey) || [];
-    existingMetadata.push(parameterIndex);
-    Reflect.defineMetadata(
-      "custom:currentUser",
-      existingMetadata,
-      target,
-      propertyKey,
-    );
-
-    // Get the original method
-    const originalMethod = (target as Record<string | symbol, unknown>)[
-      propertyKey
-    ];
-
-    // Override the method to inject user
-    (target as Record<string | symbol, unknown>)[propertyKey] = function (
-      ...args: unknown[]
-    ): unknown {
-      // Find the request object
-      const request = args.find(
-        (arg) => arg && typeof arg === "object" && "user" in arg,
-      ) as { user: IAuthenticatedUser };
-
-      if (request && request.user) {
-        // Inject the user at the specified parameter index
-        args[parameterIndex] = request.user;
-      }
-
-      return (originalMethod as (...args: unknown[]) => unknown).apply(
-        this,
-        args,
-      );
-    };
-  };
+export function CurrentUser(options?: {
+  required?: boolean;
+}): (object: object, method: string, index: number) => void {
+  return createParamDecorator({
+    required: options?.required ?? false,
+    value: (action) => {
+      const req = action.request as Request & { user?: IAuthenticatedUser };
+      return req.user;
+    },
+  });
 }

@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 import { HttpStatus } from "../types/http-status";
 import {
   ErrorHandlerRegistry,
-  logError,
   IErrorObject,
+  logError,
 } from "../utils/error.utils";
 
 export interface IErrorResponse {
@@ -15,6 +15,7 @@ export interface IErrorResponse {
     path: string;
     details?: unknown;
   };
+  errors?: unknown;
 }
 
 export class GlobalErrorHandler {
@@ -25,25 +26,34 @@ export class GlobalErrorHandler {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _next: NextFunction,
   ): void {
+    if (res.headersSent) {
+      logError(error as IErrorObject, req.path, new Date().toISOString());
+      return;
+    }
+
     const timestamp = new Date().toISOString();
     const path = req.path;
 
-    // Use the error handler registry to get error info
     const errorInfo = ErrorHandlerRegistry.handle(error);
 
-    // Create error response in expected format
     const errorResponse: IErrorResponse = {
       success: false,
       error: {
         status: errorInfo.statusCode,
-        message: errorInfo.message,
+        message:
+          errorInfo.statusCode === HttpStatus.BadRequest && errorInfo.details
+            ? "Invalid body, check 'errors' property for more info."
+            : errorInfo.message,
         timestamp,
         path,
         ...(errorInfo.details !== undefined && { details: errorInfo.details }),
       },
     };
 
-    // Log error details for debugging
+    if (errorInfo.statusCode === HttpStatus.BadRequest && errorInfo.details) {
+      errorResponse.errors = errorInfo.details;
+    }
+
     logError(error as IErrorObject, path, timestamp);
 
     res.status(errorInfo.statusCode).json(errorResponse);

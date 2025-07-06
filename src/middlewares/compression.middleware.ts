@@ -1,11 +1,11 @@
-import { Request, Response, NextFunction } from "express";
 import compression from "compression";
+import { NextFunction, Request, Response } from "express";
 import { Container } from "typedi";
 import { LoggerService } from "../services/logger.service";
 
 export class CompressionMiddleware {
-  static create(): ReturnType<typeof compression> {
-    return compression({
+  static create(): (req: Request, res: Response, next: NextFunction) => void {
+    const compressionMiddleware = compression({
       // Only compress responses that are larger than this threshold
       threshold: 1024,
 
@@ -37,6 +37,29 @@ export class CompressionMiddleware {
       // Window bits (9-15, where 15 is default)
       windowBits: 15,
     });
+
+    // Wrap compression with header check to prevent "headers already sent" errors
+    return (req: Request, res: Response, next: NextFunction) => {
+      if (res.headersSent) {
+        return next();
+      }
+
+      try {
+        compressionMiddleware(req, res, next);
+      } catch (error) {
+        // If compression fails (likely due to headers already sent), continue
+        const logger = Container.get(LoggerService);
+        logger.debug(
+          "Compression middleware failed (likely headers already sent)",
+          {
+            path: req.path,
+            method: req.method,
+            error: error instanceof Error ? error.message : "Unknown error",
+          },
+        );
+        next();
+      }
+    };
   }
 
   static log(): (req: Request, res: Response, next: NextFunction) => void {

@@ -1,12 +1,12 @@
+import { NextFunction, Request, Response } from "express";
 import helmet from "helmet";
-import { Request, Response, NextFunction } from "express";
-import { config } from "../config/env";
 import { Container } from "typedi";
+import { config } from "../config/env";
 import { LoggerService } from "../services/logger.service";
 
 export class SecurityMiddleware {
-  static create(): ReturnType<typeof helmet> {
-    return helmet({
+  static create(): (req: Request, res: Response, next: NextFunction) => void {
+    const helmetMiddleware = helmet({
       // Content Security Policy
       contentSecurityPolicy: {
         directives: {
@@ -67,6 +67,26 @@ export class SecurityMiddleware {
       // X-XSS-Protection
       xssFilter: true,
     });
+
+    // Wrap helmet with header check to prevent "headers already sent" errors
+    return (req: Request, res: Response, next: NextFunction) => {
+      if (res.headersSent) {
+        return next();
+      }
+
+      try {
+        helmetMiddleware(req, res, next);
+      } catch (error) {
+        // If helmet fails (likely due to headers already sent), continue
+        const logger = Container.get(LoggerService);
+        logger.debug("Helmet middleware failed (likely headers already sent)", {
+          path: req.path,
+          method: req.method,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+        next();
+      }
+    };
   }
 
   static apiHeaders(): (
@@ -75,26 +95,42 @@ export class SecurityMiddleware {
     next: NextFunction,
   ) => void {
     return (req: Request, res: Response, next: NextFunction) => {
-      // API-specific security headers
-      res.setHeader("X-API-Version", "1.0.0");
-      res.setHeader("X-Request-ID", req.headers["x-request-id"] || "unknown");
-      res.setHeader(
-        "Cache-Control",
-        "no-store, no-cache, must-revalidate, private",
-      );
-      res.setHeader("Pragma", "no-cache");
-      res.setHeader("Expires", "0");
+      // Check if headers have already been sent
+      if (res.headersSent) {
+        return next();
+      }
 
-      // Remove server identification
-      res.removeHeader("X-Powered-By");
-      res.removeHeader("Server");
+      try {
+        // API-specific security headers
+        res.setHeader("X-API-Version", "1.0.0");
+        res.setHeader("X-Request-ID", req.headers["x-request-id"] || "unknown");
+        res.setHeader(
+          "Cache-Control",
+          "no-store, no-cache, must-revalidate, private",
+        );
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
 
-      const logger = Container.get(LoggerService);
-      logger.debug("Applied API security headers", {
-        path: req.path,
-        method: req.method,
-        userAgent: req.headers["user-agent"],
-      });
+        // Remove server identification
+        res.removeHeader("X-Powered-By");
+        res.removeHeader("Server");
+
+        const logger = Container.get(LoggerService);
+        if (config.server.environment === "development") {
+          logger.debug("Applied API security headers", {
+            path: req.path,
+            method: req.method,
+            userAgent: req.headers["user-agent"],
+          });
+        }
+      } catch {
+        // Silently continue if headers can't be set
+        const logger = Container.get(LoggerService);
+        logger.debug("Could not set API headers (response already sent)", {
+          path: req.path,
+          method: req.method,
+        });
+      }
 
       next();
     };
@@ -106,16 +142,30 @@ export class SecurityMiddleware {
     next: NextFunction,
   ) => void {
     return (req: Request, res: Response, next: NextFunction) => {
-      // Less restrictive for webhooks (like Stripe)
-      if (req.path.includes("/webhooks/")) {
-        res.removeHeader("X-Frame-Options");
-        res.removeHeader("Content-Security-Policy");
+      // Check if headers have already been sent
+      if (res.headersSent) {
+        return next();
+      }
 
+      try {
+        // Less restrictive for webhooks (like Stripe)
+        if (req.path.includes("/webhooks/")) {
+          res.removeHeader("X-Frame-Options");
+          res.removeHeader("Content-Security-Policy");
+
+          const logger = Container.get(LoggerService);
+          logger.debug("Applied webhook security headers", {
+            path: req.path,
+            method: req.method,
+            signature: req.headers["stripe-signature"] ? "present" : "missing",
+          });
+        }
+      } catch {
+        // Silently continue if headers can't be set
         const logger = Container.get(LoggerService);
-        logger.debug("Applied webhook security headers", {
+        logger.debug("Could not set webhook headers (response already sent)", {
           path: req.path,
           method: req.method,
-          signature: req.headers["stripe-signature"] ? "present" : "missing",
         });
       }
 

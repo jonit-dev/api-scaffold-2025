@@ -12,6 +12,80 @@ function createSupabaseClient(): SupabaseClient<IDatabase> {
   const { url, serviceKey, anonKey } = databaseConfig;
   const key = serviceKey || anonKey;
 
+  // Check if we're actually using Supabase as the database provider
+  if (config.database.provider !== "supabase") {
+    // Don't show warning if not using Supabase - just return mock client silently
+    const mockError = {
+      code: "SUPABASE_NOT_CONFIGURED",
+      message: "Supabase not configured",
+    };
+
+    type MockQueryChain = {
+      select: () => MockQueryChain;
+      eq: () => MockQueryChain;
+      neq: () => MockQueryChain;
+      gt: () => MockQueryChain;
+      gte: () => MockQueryChain;
+      lt: () => MockQueryChain;
+      lte: () => MockQueryChain;
+      like: () => MockQueryChain;
+      ilike: () => MockQueryChain;
+      in: () => MockQueryChain;
+      contains: () => MockQueryChain;
+      containedBy: () => MockQueryChain;
+      range: () => MockQueryChain;
+      order: () => MockQueryChain;
+      limit: () => MockQueryChain;
+      offset: () => MockQueryChain;
+      or: () => MockQueryChain;
+      and: () => MockQueryChain;
+      not: () => MockQueryChain;
+      is: () => MockQueryChain;
+      single: () => Promise<{ data: null; error: typeof mockError }>;
+      insert: () => MockQueryChain;
+      update: () => MockQueryChain;
+      delete: () => MockQueryChain;
+      then: (
+        resolve: (value: { data: null; error: typeof mockError }) => unknown,
+      ) => unknown;
+    };
+
+    const createMockQueryChain = (): MockQueryChain => ({
+      select: (): MockQueryChain => createMockQueryChain(),
+      eq: (): MockQueryChain => createMockQueryChain(),
+      neq: (): MockQueryChain => createMockQueryChain(),
+      gt: (): MockQueryChain => createMockQueryChain(),
+      gte: (): MockQueryChain => createMockQueryChain(),
+      lt: (): MockQueryChain => createMockQueryChain(),
+      lte: (): MockQueryChain => createMockQueryChain(),
+      like: (): MockQueryChain => createMockQueryChain(),
+      ilike: (): MockQueryChain => createMockQueryChain(),
+      in: (): MockQueryChain => createMockQueryChain(),
+      contains: (): MockQueryChain => createMockQueryChain(),
+      containedBy: (): MockQueryChain => createMockQueryChain(),
+      range: (): MockQueryChain => createMockQueryChain(),
+      order: (): MockQueryChain => createMockQueryChain(),
+      limit: (): MockQueryChain => createMockQueryChain(),
+      offset: (): MockQueryChain => createMockQueryChain(),
+      or: (): MockQueryChain => createMockQueryChain(),
+      and: (): MockQueryChain => createMockQueryChain(),
+      not: (): MockQueryChain => createMockQueryChain(),
+      is: (): MockQueryChain => createMockQueryChain(),
+      single: (): Promise<{ data: null; error: typeof mockError }> =>
+        Promise.resolve({ data: null, error: mockError }),
+      insert: (): MockQueryChain => createMockQueryChain(),
+      update: (): MockQueryChain => createMockQueryChain(),
+      delete: (): MockQueryChain => createMockQueryChain(),
+      then: (
+        resolve: (value: { data: null; error: typeof mockError }) => unknown,
+      ): unknown => resolve({ data: null, error: mockError }),
+    });
+
+    return {
+      from: (): MockQueryChain => createMockQueryChain(),
+    } as unknown as SupabaseClient<IDatabase>;
+  }
+
   if (
     !url ||
     !key ||
@@ -113,7 +187,9 @@ export const supabase = getSupabaseClient();
 
 // Authentication-specific client with proper config
 export const supabaseAuth = ((): SupabaseClient => {
+  // Don't create real client if not using Supabase as database provider
   if (
+    config.database.provider !== "supabase" ||
     !config.env.supabaseUrl ||
     !config.env.supabaseAnonKey ||
     config.env.supabaseUrl.includes("your_supabase_url_here") ||
@@ -187,7 +263,9 @@ export const supabaseAuth = ((): SupabaseClient => {
 
 // Service client for admin operations
 export const supabaseAdmin = ((): SupabaseClient => {
+  // Don't create real client if not using Supabase as database provider
   if (
+    config.database.provider !== "supabase" ||
     !config.env.supabaseUrl ||
     !config.env.supabaseServiceKey ||
     config.env.supabaseUrl.includes("your_supabase_url_here") ||

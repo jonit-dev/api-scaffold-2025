@@ -1,13 +1,13 @@
 import { ValidationError } from "class-validator";
 import { HttpError } from "routing-controllers";
-import { HttpStatus } from "../types/http-status";
 import {
-  HttpException,
-  UnauthorizedException,
-  ServiceUnavailableException,
-  NotFoundException,
   BadRequestException,
+  HttpException,
+  NotFoundException,
+  ServiceUnavailableException,
+  UnauthorizedException,
 } from "../exceptions/http-exceptions";
+import { HttpStatus } from "../types/http-status";
 
 export interface IErrorInfo {
   statusCode: HttpStatus;
@@ -23,6 +23,8 @@ export interface IErrorObject {
   code?: string;
   details?: unknown;
   stack?: string;
+  httpCode?: number;
+  errors?: ValidationError[];
 }
 
 /**
@@ -55,7 +57,21 @@ export class ErrorHandlerRegistry {
   }
 }
 
-// Register default error handlers
+// Register routing-controllers HttpError handler (must be first)
+ErrorHandlerRegistry.register(
+  (error): error is HttpError => error instanceof HttpError,
+  (error) => {
+    const httpError = error as HttpError;
+    return {
+      statusCode: httpError.httpCode as HttpStatus,
+      message: httpError.message,
+      // Include validation errors if available
+      details: (httpError as IErrorObject).errors || undefined,
+    };
+  },
+);
+
+// Register custom HttpException handler
 ErrorHandlerRegistry.register(
   (error): error is HttpException => error instanceof HttpException,
   (error) => {
@@ -68,17 +84,7 @@ ErrorHandlerRegistry.register(
   },
 );
 
-ErrorHandlerRegistry.register(
-  (error): error is HttpError => error instanceof HttpError,
-  (error) => {
-    const httpError = error as HttpError;
-    return {
-      statusCode: httpError.httpCode as HttpStatus,
-      message: httpError.message,
-    };
-  },
-);
-
+// Register validation error handlers
 ErrorHandlerRegistry.register(
   (error): error is ValidationError[] =>
     Array.isArray(error) && error[0] instanceof ValidationError,
@@ -108,6 +114,26 @@ ErrorHandlerRegistry.register(
         value: validationError.value,
         constraints: validationError.constraints,
       },
+    };
+  },
+);
+
+// Handle errors with validation errors property (routing-controllers format)
+ErrorHandlerRegistry.register(
+  (error) => {
+    const errorObj = error as IErrorObject;
+    return !!(errorObj.errors && Array.isArray(errorObj.errors));
+  },
+  (error) => {
+    const errorObj = error as IErrorObject;
+    return {
+      statusCode: HttpStatus.BadRequest,
+      message: "Validation failed",
+      details: errorObj.errors?.map((err) => ({
+        property: err.property,
+        value: err.value,
+        constraints: err.constraints,
+      })),
     };
   },
 );
@@ -176,12 +202,14 @@ ErrorHandlerRegistry.register(
 ErrorHandlerRegistry.register(
   (error) => {
     const errorObj = error as IErrorObject;
-    return !!(errorObj.statusCode || errorObj.status);
+    return !!(errorObj.statusCode || errorObj.status || errorObj.httpCode);
   },
   (error) => {
     const errorObj = error as IErrorObject;
     return {
-      statusCode: (errorObj.statusCode || errorObj.status) as HttpStatus,
+      statusCode: (errorObj.statusCode ||
+        errorObj.status ||
+        errorObj.httpCode) as HttpStatus,
       message: errorObj.message || "Internal Server Error",
     };
   },
@@ -192,15 +220,26 @@ export function logError(
   path: string,
   timestamp: string,
 ): void {
+  const statusCode =
+    error.statusCode ||
+    error.status ||
+    error.httpCode ||
+    HttpStatus.InternalServerError;
+
   // Use console here since this utility is called before logger might be initialized
-  if (
-    (error.statusCode || error.status || HttpStatus.InternalServerError) >=
-    HttpStatus.InternalServerError
-  ) {
+  if (statusCode >= HttpStatus.InternalServerError) {
     console.error("🔥 Internal Server Error:", {
       error: error.name,
       message: error.message,
       stack: error.stack,
+      path,
+      timestamp,
+    });
+  } else if (statusCode === HttpStatus.BadRequest) {
+    // Don't log validation errors as warnings - they're expected client errors
+    console.debug("🔍 Validation Error:", {
+      error: error.name,
+      message: error.message,
       path,
       timestamp,
     });

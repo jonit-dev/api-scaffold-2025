@@ -4,20 +4,25 @@ import "reflect-metadata";
 import { createExpressServer, useContainer } from "routing-controllers";
 import { Container } from "typedi";
 import { config } from "./config/env";
-import "./config/supabase";
-import { HealthController } from "./controllers/health.controller";
-import { TestController } from "./controllers/test.controller";
 import { AuthController } from "./controllers/auth.controller";
-import { TestAuthController } from "./controllers/test-auth.controller";
 import { CacheDemoController } from "./controllers/cache-demo.controller";
-import { UserController } from "./controllers/user.controller";
+import { HealthController } from "./controllers/health.controller";
 import { StripeController } from "./controllers/stripe.controller";
-import { GlobalErrorHandler } from "./middlewares/error.middleware";
-import { RequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
+import { TestAuthController } from "./controllers/test-auth.controller";
+import { TestController } from "./controllers/test.controller";
+import { UserController } from "./controllers/user.controller";
 import { CacheInterceptor } from "./interceptors/cache.interceptor";
 import { CompressionMiddleware } from "./middlewares/compression.middleware";
-import { SecurityMiddleware } from "./middlewares/security.middleware";
+import { GlobalErrorHandler } from "./middlewares/error.middleware";
+import { JSONParserMiddleware } from "./middlewares/json-parser.middleware";
 import { MorganMiddleware } from "./middlewares/morgan.middleware";
+import { RequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
+import { SecurityMiddleware } from "./middlewares/security.middleware";
+
+// Only initialize Supabase if it's the configured database provider
+if (config.database.provider === "supabase") {
+  import("./config/supabase");
+}
 
 // Configure TypeDI container integration BEFORE importing any controllers
 useContainer(Container);
@@ -69,7 +74,13 @@ export const app = createExpressServer({
 const isTestEnvironment = config.server.environment === "test";
 
 if (!isTestEnvironment) {
-  // 1. Security headers (production/development only)
+  // 1. Compression (first, to compress all responses)
+  if (config.middleware.enableCompression) {
+    app.use(CompressionMiddleware.create());
+    app.use(CompressionMiddleware.log());
+  }
+
+  // 2. Security headers (before any route processing)
   if (config.middleware.enableSecurity) {
     app.use(SecurityMiddleware.create());
     app.use(SecurityMiddleware.apiHeaders());
@@ -77,22 +88,22 @@ if (!isTestEnvironment) {
     app.use(SecurityMiddleware.webhookHeaders());
   }
 
-  // 2. HTTP access logging (production/development only)
+  // 3. JSON parsing error handler is added later in the middleware stack
+
+  // 4. HTTP access logging (after security and JSON parsing, before routes)
   if (config.middleware.enableMorganLogging) {
     app.use(MorganMiddleware.create());
     app.use(MorganMiddleware.webhookLogger());
     app.use(MorganMiddleware.errorLogger());
-  }
-
-  // 3. Compression (production/development only)
-  if (config.middleware.enableCompression) {
-    app.use(CompressionMiddleware.create());
-    app.use(CompressionMiddleware.log());
   }
 }
 
 // Application-specific middleware (always needed)
 app.use(RequestLoggerMiddleware.create());
 
-// Global error handler (must be last)
+// Add JSON parsing error handler
+app.use(JSONParserMiddleware.createErrorHandler());
+
+// CRITICAL: Add the error handler as the last middleware to catch all errors
+// This ensures JSON responses for all errors, including validation errors
 app.use(GlobalErrorHandler.handle);

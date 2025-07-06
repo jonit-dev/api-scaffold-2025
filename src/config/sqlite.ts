@@ -1,8 +1,8 @@
 import Database from "better-sqlite3";
+import fs from "fs";
+import path from "path";
 import { Service } from "typedi";
 import { config } from "./env";
-import path from "path";
-import fs from "fs";
 
 export interface ISQLiteConfig {
   path: string;
@@ -32,8 +32,7 @@ export class SQLiteConfig {
     fs.mkdirSync(dir, { recursive: true });
 
     const db = new Database(dbPath, {
-      verbose:
-        config.server.environment === "development" ? console.log : undefined,
+      verbose: undefined,
       timeout: config.sqlite.timeout,
     });
 

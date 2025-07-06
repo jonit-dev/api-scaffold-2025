@@ -1,8 +1,8 @@
-import { Service } from "typedi";
-import { createCache } from "cache-manager";
-import { Keyv } from "keyv";
 import { createKeyv } from "@keyv/redis";
+import { createCache } from "cache-manager";
 import { Redis } from "ioredis";
+import { Keyv } from "keyv";
+import { Service } from "typedi";
 import { config } from "../config/env";
 import { RedisConfig } from "../config/redis";
 export interface ICacheOptions {
@@ -63,24 +63,15 @@ export class CacheService implements ICacheService {
       ttl: this.defaultTTL * 1000,
     });
 
-    // Set up basic cache manager with memory only
+    // Set up basic cache manager with memory only initially
     this.cacheManager = createCache({
       stores: [this.memoryStore],
       ttl: this.defaultTTL * 1000,
     });
 
-    // Try to connect to Redis asynchronously
-    this.setupRedisStore()
-      .then(() => {
-        if (this.isRedisAvailable) {
-          this.setupCacheManager();
-        }
-        this.initialized = true;
-      })
-      .catch((error) => {
-        console.error("Failed to setup Redis store:", error);
-        this.initialized = true;
-      });
+    // Try to setup Redis synchronously
+    this.setupRedisStore();
+    this.initialized = true;
   }
 
   private async ensureInitialized(): Promise<void> {
@@ -90,17 +81,17 @@ export class CacheService implements ICacheService {
     }
   }
 
-  private async setupRedisStore(): Promise<void> {
+  private setupRedisStore(): void {
     try {
       // Set up both keyv store and raw Redis client
       this.redisStore = createKeyv(config.redis.url);
       this.redisClient = RedisConfig.getClient();
-
-      await this.redisStore.get("__health_check__");
       this.isRedisAvailable = true;
-      console.log(
-        "✅ Redis connected successfully - using Redis + Memory cache",
-      );
+
+      // Update cache manager to include Redis
+      this.setupCacheManager();
+
+      console.log("✅ Cache service initialized (Redis + Memory)");
     } catch (error) {
       this.isRedisAvailable = false;
       this.redisClient = null;
