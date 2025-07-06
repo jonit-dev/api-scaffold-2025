@@ -46,11 +46,8 @@ export class AuthController {
   @Post("/logout")
   @HttpCode(204)
   @Authenticated()
-  async logout(
-    @Req() req: Request & { user: IAuthenticatedUser },
-  ): Promise<void> {
-    const token = extractBearerTokenOrThrow(req);
-    await this.authService.logout(token);
+  async logout(): Promise<void> {
+    await this.authService.logout();
   }
 
   @Post("/refresh")

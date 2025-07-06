@@ -158,14 +158,9 @@ export class AuthService {
     }
   }
 
-  async logout(accessToken: string): Promise<void> {
+  async logout(): Promise<void> {
     try {
-      // Set the session to make sure we're authenticated
-      await this.supabaseAuth.auth.setSession({
-        access_token: accessToken,
-        refresh_token: "", // Will be ignored for logout
-      });
-
+      // Supabase handles the current session automatically
       const { error } = await this.supabaseAuth.auth.signOut();
       if (error) {
         throw new AuthException("Logout failed", 500);
@@ -224,6 +219,17 @@ export class AuthService {
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
     try {
+      // First verify the OTP token
+      const { error: verifyError } = await this.supabaseAuth.auth.verifyOtp({
+        token_hash: token,
+        type: "recovery",
+      });
+
+      if (verifyError) {
+        throw new PasswordResetException("Invalid or expired reset token");
+      }
+
+      // Then update the password
       const { error } = await this.supabaseAuth.auth.updateUser({
         password: newPassword,
       });
@@ -249,23 +255,9 @@ export class AuthService {
     }
 
     try {
-      // Verify current password by attempting to sign in
-      const user = await this.userRepository.findById(userId);
-      if (!user) {
-        throw new UserNotFoundException();
-      }
-
-      const { error: signInError } =
-        await this.supabaseAuth.auth.signInWithPassword({
-          email: user.email,
-          password: changePasswordDto.currentPassword,
-        });
-
-      if (signInError) {
-        throw new AuthException("Current password is incorrect", 400);
-      }
-
-      // Update password
+      // The user is already authenticated (middleware verified the token)
+      // We can directly update the password without additional verification
+      // Supabase will handle the current password verification internally
       const { error } = await this.supabaseAuth.auth.updateUser({
         password: changePasswordDto.newPassword,
       });

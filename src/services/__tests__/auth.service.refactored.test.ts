@@ -138,31 +138,21 @@ describe("AuthService (Refactored with Test Utils)", () => {
 
   describe("logout", () => {
     it("should logout user successfully", async () => {
-      const accessToken = testData.auth.validToken;
-
       MockHelpers.setupSupabaseAuthResponses(mockSupabaseAuth, "success");
-      mockSupabaseAuth.auth.setSession.mockResolvedValue({ error: null });
       mockSupabaseAuth.auth.signOut.mockResolvedValue({ error: null });
 
-      await authService.logout(accessToken);
+      await authService.logout();
 
-      expect(mockSupabaseAuth.auth.setSession).toHaveBeenCalledWith({
-        access_token: accessToken,
-        refresh_token: "",
-      });
       expect(mockSupabaseAuth.auth.signOut).toHaveBeenCalled();
     });
 
     it("should throw AuthException when logout fails", async () => {
-      const accessToken = testData.auth.validToken;
-
-      mockSupabaseAuth.auth.setSession.mockResolvedValue({ error: null });
       mockSupabaseAuth.auth.signOut.mockResolvedValue({
         error: { message: "Logout failed" },
       });
 
       await AssertionHelpers.expectAsyncError(
-        () => authService.logout(accessToken),
+        () => authService.logout(),
         AuthException,
         "Logout failed",
       );

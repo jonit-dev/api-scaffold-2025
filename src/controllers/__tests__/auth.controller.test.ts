@@ -136,28 +136,17 @@ describe("AuthController", () => {
     it("should logout user successfully", async () => {
       (mockAuthService.logout as any).mockResolvedValue(undefined);
 
-      await authController.logout(mockRequest);
+      await authController.logout();
 
-      expect(mockAuthService.logout).toHaveBeenCalledWith("valid-token-123");
+      expect(mockAuthService.logout).toHaveBeenCalledWith();
     });
 
-    it("should throw error when no authorization header", async () => {
-      const requestWithoutAuth = { headers: {}, user: mockRequest.user };
+    it("should logout successfully without token validation", async () => {
+      (mockAuthService.logout as any).mockResolvedValue(undefined);
 
-      await expect(
-        authController.logout(requestWithoutAuth as any),
-      ).rejects.toThrow("Missing or invalid authorization token");
-    });
+      await authController.logout();
 
-    it("should throw error when invalid authorization format", async () => {
-      const requestWithInvalidAuth = {
-        headers: { authorization: "InvalidFormat" },
-        user: mockRequest.user,
-      };
-
-      await expect(
-        authController.logout(requestWithInvalidAuth as any),
-      ).rejects.toThrow("Missing or invalid authorization token");
+      expect(mockAuthService.logout).toHaveBeenCalledWith();
     });
   });
 

@@ -102,20 +102,17 @@ describe("AuthController Simple Integration Tests", () => {
 
       (mockAuthService.logout as unknown as any).mockResolvedValue(undefined);
 
-      await authController.logout(mockRequest as never);
+      await authController.logout();
 
-      expect(mockAuthService.logout).toHaveBeenCalledWith("valid-token-123");
+      expect(mockAuthService.logout).toHaveBeenCalledWith();
     });
 
-    it("should throw error when no authorization header", async () => {
-      const requestWithoutAuth = {
-        headers: {},
-        user: AuthFactory.createAuthenticatedUser(),
-      };
+    it("should logout successfully even without explicit token extraction", async () => {
+      (mockAuthService.logout as unknown as any).mockResolvedValue(undefined);
 
-      await expect(
-        authController.logout(requestWithoutAuth as never),
-      ).rejects.toThrow("Missing or invalid authorization token");
+      await authController.logout();
+
+      expect(mockAuthService.logout).toHaveBeenCalledWith();
     });
   });
 

@@ -269,29 +269,19 @@ describe("AuthService", () => {
 
   describe("logout", () => {
     it("should logout user successfully", async () => {
-      const accessToken = AuthFactory.createValidJwtToken();
-
-      mockSupabaseAuth.auth.setSession.mockResolvedValue({ error: null });
       mockSupabaseAuth.auth.signOut.mockResolvedValue({ error: null });
 
-      await authService.logout(accessToken);
+      await authService.logout();
 
-      expect(mockSupabaseAuth.auth.setSession).toHaveBeenCalledWith({
-        access_token: accessToken,
-        refresh_token: "",
-      });
       expect(mockSupabaseAuth.auth.signOut).toHaveBeenCalled();
     });
 
     it("should throw AuthException when logout fails", async () => {
-      const accessToken = AuthFactory.createValidJwtToken();
-
-      mockSupabaseAuth.auth.setSession.mockResolvedValue({ error: null });
       mockSupabaseAuth.auth.signOut.mockResolvedValue({
         error: { message: "Logout failed" },
       });
 
-      await expect(authService.logout(accessToken)).rejects.toThrow(
+      await expect(authService.logout()).rejects.toThrow(
         new AuthException("Logout failed", 500),
       );
     });
@@ -368,25 +358,11 @@ describe("AuthService", () => {
         newPassword: "NewPassword123!",
         confirmPassword: "NewPassword123!",
       };
-      const user = AuthFactory.createTestUser({ id: userId });
 
-      (mockUserRepository.findById as any).mockResolvedValue(user);
-      mockSupabaseAuth.auth.signInWithPassword.mockResolvedValue({
-        data: {
-          user: AuthFactory.createSupabaseUser(),
-          session: AuthFactory.createSupabaseSession(),
-        },
-        error: null,
-      });
       mockSupabaseAuth.auth.updateUser.mockResolvedValue({ error: null });
 
       await authService.changePassword(userId, changePasswordDto);
 
-      expect(mockUserRepository.findById).toHaveBeenCalledWith(userId);
-      expect(mockSupabaseAuth.auth.signInWithPassword).toHaveBeenCalledWith({
-        email: user.email,
-        password: changePasswordDto.currentPassword,
-      });
       expect(mockSupabaseAuth.auth.updateUser).toHaveBeenCalledWith({
         password: changePasswordDto.newPassword,
       });
@@ -405,26 +381,21 @@ describe("AuthService", () => {
       ).rejects.toThrow(new AuthException("Passwords do not match", 400));
     });
 
-    it("should throw error when current password is incorrect", async () => {
+    it("should throw error when password update fails", async () => {
       const userId = "user-id-123";
       const changePasswordDto = {
         currentPassword: "WrongPassword123!",
         newPassword: "NewPassword123!",
         confirmPassword: "NewPassword123!",
       };
-      const user = AuthFactory.createTestUser({ id: userId });
 
-      (mockUserRepository.findById as any).mockResolvedValue(user);
-      mockSupabaseAuth.auth.signInWithPassword.mockResolvedValue({
-        data: { user: null, session: null },
-        error: { message: "Invalid credentials" },
+      mockSupabaseAuth.auth.updateUser.mockResolvedValue({
+        error: { message: "Password update failed" },
       });
 
       await expect(
         authService.changePassword(userId, changePasswordDto),
-      ).rejects.toThrow(
-        new AuthException("Current password is incorrect", 400),
-      );
+      ).rejects.toThrow(AuthException);
     });
   });
 
