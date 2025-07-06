@@ -230,58 +230,6 @@ describe("CacheService", () => {
 
       expect(result).toEqual(value);
     });
-
-    it.skip("should get all hash fields", async () => {
-      // Skip this test as hgetall is not fully implemented in the current architecture
-      const key = "hash-key";
-      const data1 = { data: "test1" };
-      const data2 = { data: "test2" };
-
-      await cacheService.hset(key, "field1", data1);
-      await cacheService.hset(key, "field2", data2);
-
-      const result = await cacheService.hgetall(key);
-
-      expect(result).toEqual({});
-    });
-  });
-
-  describe("List operations", () => {
-    it.skip("should push to left of list", async () => {
-      // Skip this test as list operations are not fully implemented in the current architecture
-      const key = "list-key";
-      const values = [{ data: "test1" }, { data: "test2" }];
-
-      const result = await cacheService.lpush(key, ...values);
-
-      expect(result).toBe(0);
-
-      // Verify list length
-      const length = await cacheService.llen(key);
-      expect(length).toBe(0);
-    });
-
-    it.skip("should pop from left of list", async () => {
-      // Skip this test as list operations are not fully implemented in the current architecture
-      const key = "list-key";
-      const value = { data: "test" };
-
-      await cacheService.lpush(key, value);
-      const result = await cacheService.lpop(key);
-
-      expect(result).toBe(null);
-    });
-
-    it.skip("should get list length", async () => {
-      // Skip this test as list operations are not fully implemented in the current architecture
-      const key = "list-key";
-      const values = [{ data: "test1" }, { data: "test2" }, { data: "test3" }];
-
-      await cacheService.lpush(key, ...values);
-      const result = await cacheService.llen(key);
-
-      expect(result).toBe(0);
-    });
   });
 
   describe("Utility methods", () => {

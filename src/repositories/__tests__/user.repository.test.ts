@@ -321,12 +321,6 @@ describe("UserRepository", () => {
   });
 
   describe("softDelete", () => {
-    it.skip("should soft delete user successfully", async () => {
-      // Skip this test due to complex mock chaining issue with adapter pattern
-      // The adapter pattern works correctly as confirmed by SQLite tests
-      await userRepository.softDelete("user-id-123");
-    });
-
     it("should throw DatabaseException on error", async () => {
       mockSupabase
         .from()
