@@ -50,8 +50,6 @@ export class SQLiteConfig {
     db.pragma("cache_size = 1000");
     db.pragma("temp_store = memory");
 
-    console.log(`✅ SQLite database connected at: ${dbPath}`);
-
     return db;
   }
 

@@ -2,11 +2,22 @@ import { Container } from "typedi";
 import { app } from "./app";
 import { config } from "./config/env";
 import { RedisConfig } from "./config/redis";
+import { SQLiteConfig } from "./config/sqlite";
 import { CacheService } from "./services/cache.service";
 import { logger } from "./services/logger.service";
 
 async function startServer(): Promise<void> {
   try {
+    // Initialize database connection at startup
+    if (config.database.provider === "sqlite") {
+      // Initialize SQLite database and log connection
+      SQLiteConfig.getClient();
+      logger.info(`✅ SQLite database connected at: ${config.sqlite.path}`);
+    } else {
+      // For Supabase, we can test the connection here if needed
+      logger.info("✅ Supabase database configured");
+    }
+
     // Initialize Redis connection at startup
     const redisClient = RedisConfig.getClient();
 
@@ -36,6 +47,10 @@ async function startServer(): Promise<void> {
 const gracefulShutdown = async (signal: string): Promise<void> => {
   console.log(`\n🔄 Shutting down gracefully (${signal})...`);
   try {
+    // Close database connections
+    if (config.database.provider === "sqlite") {
+      SQLiteConfig.close();
+    }
     await RedisConfig.disconnect();
     process.exit(0);
   } catch (error) {

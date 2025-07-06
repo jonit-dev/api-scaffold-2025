@@ -1,11 +1,11 @@
 ### User Management Endpoints
-@baseUrl = http://localhost:3000
-@token = {{login.response.body.token}}
+@baseUrl = {{baseUrl}}
+@accessToken = {{login.response.body.accessToken}}
 @userId = 123
 
 ### Create User
 POST {{baseUrl}}/users
-Authorization: Bearer {{token}}
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
@@ -19,19 +19,19 @@ Content-Type: application/json
 
 ### Get All Users with Pagination
 GET {{baseUrl}}/users?page=1&limit=10
-Authorization: Bearer {{token}}
+Authorization: Bearer {{accessToken}}
 
 ### Get All Users with Filters
 GET {{baseUrl}}/users?status=ACTIVE&role=USER&emailVerified=true&search=john
-Authorization: Bearer {{token}}
+Authorization: Bearer {{accessToken}}
 
 ### Get User by ID
 GET {{baseUrl}}/users/{{userId}}
-Authorization: Bearer {{token}}
+Authorization: Bearer {{accessToken}}
 
 ### Update User
 PUT {{baseUrl}}/users/{{userId}}
-Authorization: Bearer {{token}}
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
@@ -43,11 +43,11 @@ Content-Type: application/json
 
 ### Delete User
 DELETE {{baseUrl}}/users/{{userId}}
-Authorization: Bearer {{token}}
+Authorization: Bearer {{accessToken}}
 
 ### Update User Status
 PUT {{baseUrl}}/users/{{userId}}/status
-Authorization: Bearer {{token}}
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
@@ -56,15 +56,15 @@ Content-Type: application/json
 
 ### Search Users
 GET {{baseUrl}}/users/search?q=john&page=1&limit=10
-Authorization: Bearer {{token}}
+Authorization: Bearer {{accessToken}}
 
 ### Get Current User Profile
 GET {{baseUrl}}/users/me
-Authorization: Bearer {{token}}
+Authorization: Bearer {{accessToken}}
 
 ### Update Current User Profile
 PUT {{baseUrl}}/users/me
-Authorization: Bearer {{token}}
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {

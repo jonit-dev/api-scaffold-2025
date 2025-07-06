@@ -1,6 +1,10 @@
 ### Authentication Endpoints
-@baseUrl = http://localhost:3000
-@token = {{login.response.body.token}}
+@baseUrl = {{baseUrl}}
+# Dynamic token capture from login response
+@accessToken = {{login.response.body.accessToken}}
+@refreshToken = {{login.response.body.refreshToken}}
+# Updated token from refresh endpoint
+@newAccessToken = {{refreshToken.response.body.accessToken}}
 
 ### User Registration
 POST {{baseUrl}}/auth/register
@@ -20,24 +24,25 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "test@example.com",
-  "password": "SecurePass123!"
+  "email": "joaopaulofurtado1233@live.com",
+  "password": "MyPass123!"
 }
 
 ### Get Current User Profile
 GET {{baseUrl}}/auth/me
-Authorization: Bearer {{token}}
+Authorization: Bearer {{accessToken}}
 
 ### User Logout
 POST {{baseUrl}}/auth/logout
-Authorization: Bearer {{token}}
+Authorization: Bearer {{accessToken}}
 
 ### Refresh JWT Token
+# @name refreshToken
 POST {{baseUrl}}/auth/refresh
 Content-Type: application/json
 
 {
-  "refreshToken": "your-refresh-token-here"
+  "refreshToken": "{{refreshToken}}"
 }
 
 ### Forgot Password
@@ -50,7 +55,7 @@ Content-Type: application/json
 
 ### Change Password
 POST {{baseUrl}}/auth/change-password
-Authorization: Bearer {{token}}
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
@@ -79,7 +84,7 @@ POST {{baseUrl}}/auth/verify-token
 Content-Type: application/json
 
 {
-  "token": "{{token}}"
+  "token": "{{accessToken}}"
 }
 
 ### Auth Service Health Check
