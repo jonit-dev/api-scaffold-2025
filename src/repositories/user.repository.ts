@@ -658,4 +658,52 @@ export class UserRepository extends BaseRepository<IUserEntity> {
       throw new DatabaseException(error.message);
     }
   }
+
+  async updateEmailVerified(id: string, emailVerified: boolean): Promise<void> {
+    if (config.database.provider === "sqlite") {
+      return this.updateEmailVerifiedSQLite(id, emailVerified);
+    } else {
+      return this.updateEmailVerifiedSupabase(id, emailVerified);
+    }
+  }
+
+  private async updateEmailVerifiedSQLite(
+    id: string,
+    emailVerified: boolean,
+  ): Promise<void> {
+    const db = SQLiteConfig.getClient();
+    const stmt = db.prepare(
+      `UPDATE ${this.tableName} SET email_verified = ?, updated_at = ? WHERE id = ?`,
+    );
+
+    const result = stmt.run(
+      emailVerified ? 1 : 0,
+      new Date().toISOString(),
+      id,
+    );
+
+    if (result.changes === 0) {
+      throw new DatabaseException(`User with id ${id} not found`);
+    }
+  }
+
+  private async updateEmailVerifiedSupabase(
+    id: string,
+    emailVerified: boolean,
+  ): Promise<void> {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase
+      .from(this.tableName)
+      .update({
+        email_verified: emailVerified,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (error) {
+      throw new DatabaseException(
+        `Error updating email verification: ${error.message}`,
+      );
+    }
+  }
 }

@@ -25,6 +25,8 @@ describe("AuthService - Change Password", () => {
   let mockUserRepository: UserRepository;
   let mockSupabaseAuth: any;
   let mockSupabaseAdmin: any;
+  let mockEmailService: any;
+  let mockLogger: any;
 
   beforeEach(() => {
     // Create mock repositories
@@ -32,6 +34,19 @@ describe("AuthService - Change Password", () => {
       "findById",
       "updatePassword",
     ]);
+
+    // Create mock email service and logger
+    mockEmailService = {
+      send: vi.fn().mockResolvedValue({ success: true }),
+      sendWithTemplate: vi.fn().mockResolvedValue({ success: true }),
+    };
+
+    mockLogger = {
+      info: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+      warn: vi.fn(),
+    };
 
     // Create mock Supabase clients
     mockSupabaseAuth = {
@@ -53,6 +68,8 @@ describe("AuthService - Change Password", () => {
 
     authService = new AuthService(
       mockUserRepository,
+      mockEmailService,
+      mockLogger,
       mockSupabaseAuth,
       mockSupabaseAdmin,
     );
@@ -211,8 +228,17 @@ describe("AuthService - Change Password", () => {
       };
 
       // Create service without Supabase client
+      const mockEmailService = {
+        sendWithTemplate: vi.fn().mockResolvedValue({ success: true }),
+      } as any;
+      const mockLogger = {
+        info: vi.fn(),
+        error: vi.fn(),
+      } as any;
       const authServiceNoSupabase = new AuthService(
         mockUserRepository,
+        mockEmailService,
+        mockLogger,
         undefined,
         undefined,
       );

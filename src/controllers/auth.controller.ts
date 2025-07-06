@@ -19,6 +19,7 @@ import { RefreshTokenDto } from "@models/dtos/auth/refresh-token.dto";
 import { VerifyEmailDto } from "@models/dtos/auth/verify-email.dto";
 import { ResendVerificationDto } from "@models/dtos/auth/resend-verification.dto";
 import { ForgotPasswordDto } from "@models/dtos/auth/forgot-password.dto";
+import { ResetPasswordDto } from "@models/dtos/auth/reset-password.dto";
 import { UserResponseDto } from "@models/dtos/user/user-response.dto";
 import { AuthMiddleware } from "../middlewares/auth.middleware";
 import { RateLimit } from "../decorators/rate-limit.decorator";
@@ -69,6 +70,22 @@ export class AuthController {
   ): Promise<{ message: string }> {
     await this.authService.forgotPassword(forgotPasswordDto.email);
     return { message: "Password reset email sent successfully" };
+  }
+
+  @Post("/reset-password")
+  @HttpCode(HttpStatus.Ok)
+  @RateLimit(authRateLimits.forgotPassword)
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<{ message: string }> {
+    if (resetPasswordDto.newPassword !== resetPasswordDto.confirmPassword) {
+      throw new Error("Passwords do not match");
+    }
+    await this.authService.resetPassword(
+      resetPasswordDto.token,
+      resetPasswordDto.newPassword,
+    );
+    return { message: "Password reset successfully" };
   }
 
   @Post("/change-password")

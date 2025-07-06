@@ -23,11 +23,15 @@ import { IUserEntity } from "../models/entities/user.entity";
 import { UserRole } from "../models/enums/user-roles.enum";
 import { UserStatus } from "../models/enums/user-status.enum";
 import { UserRepository } from "../repositories/user.repository";
+import { EmailService } from "./email.service";
+import { LoggerService } from "./logger.service";
 
 @Service()
 export class AuthService {
   constructor(
     private userRepository: UserRepository,
+    private emailService: EmailService,
+    private logger: LoggerService,
     @Inject("supabaseAuth") private supabaseAuth?: SupabaseClient,
     @Inject("supabaseAdmin") private supabaseAdmin?: SupabaseClient,
   ) {}
@@ -68,6 +72,39 @@ export class AuthService {
     return jwt.sign({ id: user.id, type: "refresh" }, config.auth.jwtSecret, {
       expiresIn: "7d",
     });
+  }
+
+  private generateVerificationToken(email: string): string {
+    return jwt.sign({ email, type: "verification" }, config.auth.jwtSecret, {
+      expiresIn: "24h",
+    });
+  }
+
+  private generatePasswordResetToken(email: string): string {
+    return jwt.sign({ email, type: "password_reset" }, config.auth.jwtSecret, {
+      expiresIn: "1h",
+    });
+  }
+
+  private verifyToken(
+    token: string,
+    expectedType: string,
+  ): { email: string; type: string } {
+    try {
+      const decoded = jwt.verify(token, config.auth.jwtSecret) as {
+        email: string;
+        type: string;
+      };
+      if (decoded.type !== expectedType) {
+        throw new AuthException("Invalid token type", HttpStatus.BadRequest);
+      }
+      return decoded;
+    } catch {
+      throw new AuthException(
+        "Invalid or expired token",
+        HttpStatus.BadRequest,
+      );
+    }
   }
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
@@ -199,6 +236,26 @@ export class AuthService {
     const user = await this.userRepository.create(
       userEntityData as Omit<IUserEntity, "createdAt" | "updatedAt">,
     );
+
+    // Send verification email
+    const verificationToken = this.generateVerificationToken(user.email);
+    const emailResult = await this.emailService.sendWithTemplate(
+      "welcome",
+      {
+        name: user.fullName,
+        verificationUrl: `${config.env.frontendUrl}/verify-email?token=${verificationToken}`,
+        appName: config.email.fromName,
+        currentYear: new Date().getFullYear(),
+      },
+      {
+        to: user.email,
+        subject: "Welcome! Please verify your email address",
+      },
+    );
+
+    if (!emailResult.success) {
+      this.logger.error(`Failed to send welcome email to: ${user.email}`);
+    }
 
     // Generate JWT tokens
     const accessToken = this.generateJWT(user);
@@ -411,21 +468,10 @@ export class AuthService {
 
   async forgotPassword(email: string): Promise<void> {
     try {
-      if (!this.supabaseAuth) {
-        throw new AuthException(
-          "Authentication service not configured",
-          HttpStatus.InternalServerError,
-        );
-      }
-      const { error } = await this.supabaseAuth.auth.resetPasswordForEmail(
-        email,
-        {
-          redirectTo: `${config.env.frontendUrl}/reset-password`,
-        },
-      );
-
-      if (error) {
-        throw new PasswordResetException("Password reset request failed");
+      if (this.isUsingSupabase) {
+        return await this.forgotPasswordWithSupabase(email);
+      } else {
+        return await this.forgotPasswordWithSQLite(email);
       }
     } catch (error) {
       if (error instanceof AuthException) {
@@ -435,31 +481,69 @@ export class AuthService {
     }
   }
 
+  private async forgotPasswordWithSupabase(email: string): Promise<void> {
+    if (!this.supabaseAuth) {
+      throw new AuthException(
+        "Authentication service not configured",
+        HttpStatus.InternalServerError,
+      );
+    }
+    const { error } = await this.supabaseAuth.auth.resetPasswordForEmail(
+      email,
+      {
+        redirectTo: `${config.env.frontendUrl}/reset-password`,
+      },
+    );
+
+    if (error) {
+      throw new PasswordResetException("Password reset request failed");
+    }
+  }
+
+  private async forgotPasswordWithSQLite(email: string): Promise<void> {
+    // Check if user exists
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) {
+      // Don't reveal if email exists or not for security
+      this.logger.info(
+        `Password reset requested for non-existent email: ${email}`,
+      );
+      return;
+    }
+
+    // Generate reset token
+    const resetToken = this.generatePasswordResetToken(email);
+
+    // Send password reset email
+    const emailResult = await this.emailService.sendWithTemplate(
+      "password-reset",
+      {
+        name: user.fullName,
+        resetUrl: `${config.env.frontendUrl}/reset-password?token=${resetToken}`,
+        expiresIn: "1 hour",
+        appName: config.email.fromName,
+        currentYear: new Date().getFullYear(),
+      },
+      {
+        to: email,
+        subject: "Password Reset Request",
+      },
+    );
+
+    if (!emailResult.success) {
+      this.logger.error("Email sending failed", { emailResult });
+      throw new PasswordResetException("Failed to send password reset email");
+    }
+
+    this.logger.info(`Password reset email sent to: ${email}`);
+  }
+
   async resetPassword(token: string, newPassword: string): Promise<void> {
     try {
-      if (!this.supabaseAuth) {
-        throw new AuthException(
-          "Authentication service not configured",
-          HttpStatus.InternalServerError,
-        );
-      }
-      // First verify the OTP token
-      const { error: verifyError } = await this.supabaseAuth.auth.verifyOtp({
-        token_hash: token,
-        type: "recovery",
-      });
-
-      if (verifyError) {
-        throw new PasswordResetException("Invalid or expired reset token");
-      }
-
-      // Then update the password
-      const { error } = await this.supabaseAuth.auth.updateUser({
-        password: newPassword,
-      });
-
-      if (error) {
-        throw new PasswordResetException("Password reset failed");
+      if (this.isUsingSupabase) {
+        return await this.resetPasswordWithSupabase(token, newPassword);
+      } else {
+        return await this.resetPasswordWithSQLite(token, newPassword);
       }
     } catch (error) {
       if (error instanceof AuthException) {
@@ -467,6 +551,58 @@ export class AuthService {
       }
       throw new PasswordResetException("Password reset failed");
     }
+  }
+
+  private async resetPasswordWithSupabase(
+    token: string,
+    newPassword: string,
+  ): Promise<void> {
+    if (!this.supabaseAuth) {
+      throw new AuthException(
+        "Authentication service not configured",
+        HttpStatus.InternalServerError,
+      );
+    }
+    // First verify the OTP token
+    const { error: verifyError } = await this.supabaseAuth.auth.verifyOtp({
+      token_hash: token,
+      type: "recovery",
+    });
+
+    if (verifyError) {
+      throw new PasswordResetException("Invalid or expired reset token");
+    }
+
+    // Then update the password
+    const { error } = await this.supabaseAuth.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      throw new PasswordResetException("Password reset failed");
+    }
+  }
+
+  private async resetPasswordWithSQLite(
+    token: string,
+    newPassword: string,
+  ): Promise<void> {
+    // Verify the reset token
+    const decoded = this.verifyToken(token, "password_reset");
+
+    // Find user by email
+    const user = await this.userRepository.findByEmail(decoded.email);
+    if (!user) {
+      throw new UserNotFoundException("User not found");
+    }
+
+    // Hash the new password
+    const hashedPassword = await this.hashPassword(newPassword);
+
+    // Update user's password
+    await this.userRepository.updatePassword(user.id, hashedPassword);
+
+    this.logger.info(`Password reset successful for user: ${user.email}`);
   }
 
   async changePassword(
@@ -645,22 +781,10 @@ export class AuthService {
 
   async verifyEmail(token: string): Promise<void> {
     try {
-      if (!this.supabaseAuth) {
-        throw new AuthException(
-          "Authentication service not configured",
-          HttpStatus.InternalServerError,
-        );
-      }
-      const { error } = await this.supabaseAuth.auth.verifyOtp({
-        token_hash: token,
-        type: "email",
-      });
-
-      if (error) {
-        throw new AuthException(
-          "Email verification failed",
-          HttpStatus.BadRequest,
-        );
+      if (this.isUsingSupabase) {
+        return await this.verifyEmailWithSupabase(token);
+      } else {
+        return await this.verifyEmailWithSQLite(token);
       }
     } catch (error) {
       if (error instanceof AuthException) {
@@ -673,24 +797,53 @@ export class AuthService {
     }
   }
 
+  private async verifyEmailWithSupabase(token: string): Promise<void> {
+    if (!this.supabaseAuth) {
+      throw new AuthException(
+        "Authentication service not configured",
+        HttpStatus.InternalServerError,
+      );
+    }
+    const { error } = await this.supabaseAuth.auth.verifyOtp({
+      token_hash: token,
+      type: "email",
+    });
+
+    if (error) {
+      throw new AuthException(
+        "Email verification failed",
+        HttpStatus.BadRequest,
+      );
+    }
+  }
+
+  private async verifyEmailWithSQLite(token: string): Promise<void> {
+    // Verify the verification token
+    const decoded = this.verifyToken(token, "verification");
+
+    // Find user by email
+    const user = await this.userRepository.findByEmail(decoded.email);
+    if (!user) {
+      throw new UserNotFoundException("User not found");
+    }
+
+    // Check if already verified
+    if (user.emailVerified) {
+      throw new AuthException("Email already verified", HttpStatus.BadRequest);
+    }
+
+    // Mark email as verified
+    await this.userRepository.updateEmailVerified(user.id, true);
+
+    this.logger.info(`Email verified successfully for user: ${user.email}`);
+  }
+
   async resendVerification(email: string): Promise<void> {
     try {
-      if (!this.supabaseAuth) {
-        throw new AuthException(
-          "Authentication service not configured",
-          HttpStatus.InternalServerError,
-        );
-      }
-      const { error } = await this.supabaseAuth.auth.resend({
-        type: "signup",
-        email,
-      });
-
-      if (error) {
-        throw new AuthException(
-          "Verification email resend failed",
-          HttpStatus.BadRequest,
-        );
+      if (this.isUsingSupabase) {
+        return await this.resendVerificationWithSupabase(email);
+      } else {
+        return await this.resendVerificationWithSQLite(email);
       }
     } catch (error) {
       if (error instanceof AuthException) {
@@ -701,6 +854,66 @@ export class AuthService {
         HttpStatus.InternalServerError,
       );
     }
+  }
+
+  private async resendVerificationWithSupabase(email: string): Promise<void> {
+    if (!this.supabaseAuth) {
+      throw new AuthException(
+        "Authentication service not configured",
+        HttpStatus.InternalServerError,
+      );
+    }
+    const { error } = await this.supabaseAuth.auth.resend({
+      type: "signup",
+      email,
+    });
+
+    if (error) {
+      throw new AuthException(
+        "Verification email resend failed",
+        HttpStatus.BadRequest,
+      );
+    }
+  }
+
+  private async resendVerificationWithSQLite(email: string): Promise<void> {
+    // Check if user exists
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) {
+      throw new UserNotFoundException("User not found");
+    }
+
+    // Check if already verified
+    if (user.emailVerified) {
+      throw new AuthException("Email already verified", HttpStatus.BadRequest);
+    }
+
+    // Generate new verification token
+    const verificationToken = this.generateVerificationToken(email);
+
+    // Send verification email
+    const emailResult = await this.emailService.sendWithTemplate(
+      "welcome",
+      {
+        name: user.fullName,
+        verificationUrl: `${config.env.frontendUrl}/verify-email?token=${verificationToken}`,
+        appName: config.email.fromName,
+        currentYear: new Date().getFullYear(),
+      },
+      {
+        to: email,
+        subject: "Verify Your Email Address",
+      },
+    );
+
+    if (!emailResult.success) {
+      throw new AuthException(
+        "Failed to send verification email",
+        HttpStatus.InternalServerError,
+      );
+    }
+
+    this.logger.info(`Verification email resent to: ${email}`);
   }
 
   private mapToUserResponse(user: IUserEntity): UserResponseDto {

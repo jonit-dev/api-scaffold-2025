@@ -19,6 +19,8 @@ describe("AuthService (Refactored with Test Utils)", () => {
   let mockUserRepository: any;
   let mockSupabaseAuth: any;
   let mockSupabaseAdmin: any;
+  let mockEmailService: any;
+  let mockLogger: any;
   let testData: any;
 
   beforeEach(() => {
@@ -31,8 +33,23 @@ describe("AuthService (Refactored with Test Utils)", () => {
     mockSupabaseAdmin = setup.mockSupabaseAdmin;
     testData = MockHelpers.createTestDataSets();
 
+    // Create mock email service and logger
+    mockEmailService = {
+      send: vi.fn().mockResolvedValue({ success: true }),
+      sendWithTemplate: vi.fn().mockResolvedValue({ success: true }),
+    };
+
+    mockLogger = {
+      info: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+      warn: vi.fn(),
+    };
+
     authService = new AuthService(
       mockUserRepository,
+      mockEmailService,
+      mockLogger,
       mockSupabaseAuth,
       mockSupabaseAdmin,
     );

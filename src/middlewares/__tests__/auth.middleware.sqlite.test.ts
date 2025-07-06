@@ -48,7 +48,14 @@ describe("AuthMiddleware - SQLite Integration", () => {
 
     // Initialize services
     userRepository = new UserRepository();
-    authService = new AuthService(userRepository);
+    const mockEmailService = {
+      sendWithTemplate: vi.fn().mockResolvedValue({ success: true }),
+    } as any;
+    const mockLogger = {
+      info: vi.fn(),
+      error: vi.fn(),
+    } as any;
+    authService = new AuthService(userRepository, mockEmailService, mockLogger);
     authMiddleware = new AuthMiddleware(authService, {} as any);
 
     // Initialize the users table

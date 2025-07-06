@@ -25,6 +25,16 @@ vi.mock("../../config/env.js", () => ({
     env: {
       nodeEnv: "test",
     },
+    logging: {
+      level: "info",
+      format: "combined",
+      enableConsole: true,
+      enableFile: false,
+      dir: "logs",
+      maxSize: "20m",
+      maxFiles: 14,
+      enableRotation: true,
+    },
   },
 }));
 
@@ -40,9 +50,6 @@ describe("EmailService", () => {
 
     // Setup mock implementations
     mockResendSend = vi.fn();
-    (EmailService as any).prototype.resend = {
-      emails: { send: mockResendSend },
-    };
 
     mockTemplateService = {
       render: vi.fn(),
@@ -61,6 +68,11 @@ describe("EmailService", () => {
     vi.mocked(LoggerService).mockImplementation(() => mockLogger);
 
     emailService = new EmailService(mockLogger, mockTemplateService);
+
+    // Mock the resend instance on the created service
+    (emailService as any).resend = {
+      emails: { send: mockResendSend },
+    };
   });
 
   afterEach(() => {
@@ -98,7 +110,7 @@ describe("EmailService", () => {
         text: "Test text",
         cc: undefined,
         bcc: undefined,
-        reply_to: undefined,
+        replyTo: undefined,
         attachments: undefined,
         tags: undefined,
       });
@@ -116,6 +128,12 @@ describe("EmailService", () => {
       const originalNodeEnv = config.env.nodeEnv;
       (config.env as any).nodeEnv = "development";
 
+      // Create a new service instance with development mode
+      const devEmailService = new EmailService(mockLogger, mockTemplateService);
+      (devEmailService as any).resend = {
+        emails: { send: mockResendSend },
+      };
+
       const emailData = {
         to: ["recipient1@example.com", "recipient2@example.com"],
         subject: "Test Subject",
@@ -131,7 +149,7 @@ describe("EmailService", () => {
       };
 
       // Act
-      const result = await emailService.send(emailData);
+      const result = await devEmailService.send(emailData);
 
       // Assert
       expect(result.success).toBe(true);
@@ -164,19 +182,29 @@ describe("EmailService", () => {
       const originalNodeEnv = config.env.nodeEnv;
       (config.env as any).nodeEnv = "production";
 
+      // Create a new service instance with production mode
+      const prodEmailService = new EmailService(
+        mockLogger,
+        mockTemplateService,
+      );
+      const prodMockResendSend = vi.fn();
+      (prodEmailService as any).resend = {
+        emails: { send: prodMockResendSend },
+      };
+
       const emailData = {
         to: "recipient@example.com",
         subject: "Test Subject",
         html: "<p>Test HTML</p>",
       };
 
-      mockResendSend.mockResolvedValue({
+      prodMockResendSend.mockResolvedValue({
         data: null,
         error: { message: "Invalid API key" },
       });
 
       // Act
-      const result = await emailService.send(emailData);
+      const result = await prodEmailService.send(emailData);
 
       // Assert
       expect(result).toEqual({ success: false });

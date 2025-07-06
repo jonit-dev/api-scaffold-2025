@@ -20,6 +20,8 @@ describe("AuthService", () => {
   let mockUserRepository: UserRepository;
   let mockSupabaseAuth: any;
   let mockSupabaseAdmin: any;
+  let mockEmailService: any;
+  let mockLogger: any;
 
   beforeEach(() => {
     // Force AuthService to use Supabase for these tests
@@ -32,6 +34,20 @@ describe("AuthService", () => {
       "create",
       "updateLastLogin",
     ]);
+
+    // Create mock email service
+    mockEmailService = {
+      send: vi.fn().mockResolvedValue({ success: true }),
+      sendWithTemplate: vi.fn().mockResolvedValue({ success: true }),
+    };
+
+    // Create mock logger
+    mockLogger = {
+      info: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+      warn: vi.fn(),
+    };
 
     // Create mock Supabase clients
     mockSupabaseAuth = {
@@ -66,6 +82,8 @@ describe("AuthService", () => {
 
     authService = new AuthService(
       mockUserRepository,
+      mockEmailService,
+      mockLogger,
       mockSupabaseAuth,
       mockSupabaseAdmin,
     );

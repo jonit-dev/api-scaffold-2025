@@ -10,7 +10,7 @@ POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {
-  "email": "joaopaulofurtado1233@live.com",
+  "email": "jfurtado141@gmail.com",
   "firstName": "John",
   "lastName": "Doe",
   "password": "MyPass123!",
@@ -49,7 +49,7 @@ POST {{baseUrl}}/auth/forgot-password
 Content-Type: application/json
 
 {
-  "email": "test@example.com"
+  "email": "jfurtado141@gmail.com"
 }
 
 ### Change Password
