@@ -96,8 +96,8 @@ describe("AuthService", () => {
         password: registerDto.password,
         options: {
           data: {
-            first_name: registerDto.first_name,
-            last_name: registerDto.last_name,
+            first_name: registerDto.firstName,
+            last_name: registerDto.lastName,
           },
         },
       });
@@ -105,10 +105,10 @@ describe("AuthService", () => {
         expect.objectContaining({
           id: supabaseUser.id,
           email: registerDto.email,
-          first_name: registerDto.first_name,
-          last_name: registerDto.last_name,
-          role: UserRole.USER,
-          status: UserStatus.ACTIVE,
+          firstName: registerDto.firstName,
+          lastName: registerDto.lastName,
+          role: UserRole.User,
+          status: UserStatus.Active,
         }),
       );
     });
@@ -169,8 +169,8 @@ describe("AuthService", () => {
 
       expect(mockUserRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          status: UserStatus.PENDING_VERIFICATION,
-          email_verified: false,
+          status: UserStatus.PendingVerification,
+          emailVerified: false,
         }),
       );
     });
@@ -252,7 +252,7 @@ describe("AuthService", () => {
       const supabaseUser = AuthFactory.createSupabaseUser();
       const session = AuthFactory.createSupabaseSession();
       const inactiveUser = AuthFactory.createTestUser({
-        status: UserStatus.INACTIVE,
+        status: UserStatus.Inactive,
       });
 
       mockSupabaseAuth.auth.signInWithPassword.mockResolvedValue({
@@ -289,7 +289,7 @@ describe("AuthService", () => {
 
   describe("refreshToken", () => {
     it("should refresh token successfully", async () => {
-      const refreshTokenDto = { refresh_token: "refresh-token-123" };
+      const refreshTokenDto = { refreshToken: "refresh-token-123" };
       const session = AuthFactory.createSupabaseSession();
 
       mockSupabaseAuth.auth.refreshSession.mockResolvedValue({
@@ -301,12 +301,12 @@ describe("AuthService", () => {
 
       expect(result.session).toEqual(session);
       expect(mockSupabaseAuth.auth.refreshSession).toHaveBeenCalledWith({
-        refresh_token: refreshTokenDto.refresh_token,
+        refresh_token: refreshTokenDto.refreshToken,
       });
     });
 
     it("should throw AuthException when refresh fails", async () => {
-      const refreshTokenDto = { refresh_token: "invalid-token" };
+      const refreshTokenDto = { refreshToken: "invalid-token" };
 
       mockSupabaseAuth.auth.refreshSession.mockResolvedValue({
         data: { session: null },

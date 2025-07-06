@@ -14,28 +14,28 @@ export class AuthFactory {
     return {
       id: "test-user-id-123",
       email: "test@example.com",
-      first_name: "Test",
-      last_name: "User",
-      password_hash: "hashed_password_123",
-      role: UserRole.USER,
-      status: UserStatus.ACTIVE,
-      email_verified: true,
+      firstName: "Test",
+      lastName: "User",
+      passwordHash: "hashed_password_123",
+      role: UserRole.User,
+      status: UserStatus.Active,
+      emailVerified: true,
       phone: "+1234567890",
-      avatar_url: "https://example.com/avatar.jpg",
-      last_login: now,
-      created_at: now,
-      updated_at: now,
-      get full_name() {
-        return `${this.first_name} ${this.last_name}`;
+      avatarUrl: "https://example.com/avatar.jpg",
+      lastLogin: now,
+      createdAt: now,
+      updatedAt: now,
+      get fullName() {
+        return `${this.firstName} ${this.lastName}`;
       },
       isActive() {
-        return this.status === UserStatus.ACTIVE;
+        return this.status === UserStatus.Active;
       },
       isAdmin() {
-        return this.role === UserRole.ADMIN;
+        return this.role === UserRole.Admin;
       },
       isModerator() {
-        return this.role === UserRole.MODERATOR;
+        return this.role === UserRole.Moderator;
       },
       hasRole(role: UserRole) {
         return this.role === role;
@@ -51,9 +51,9 @@ export class AuthFactory {
     return this.createTestUser({
       id: "admin-user-id-123",
       email: "admin@example.com",
-      first_name: "Admin",
-      last_name: "User",
-      role: UserRole.ADMIN,
+      firstName: "Admin",
+      lastName: "User",
+      role: UserRole.Admin,
       ...overrides,
     });
   }
@@ -62,9 +62,9 @@ export class AuthFactory {
     return this.createTestUser({
       id: "moderator-user-id-123",
       email: "moderator@example.com",
-      first_name: "Moderator",
-      last_name: "User",
-      role: UserRole.MODERATOR,
+      firstName: "Moderator",
+      lastName: "User",
+      role: UserRole.Moderator,
       ...overrides,
     });
   }
@@ -73,7 +73,7 @@ export class AuthFactory {
     return this.createTestUser({
       id: "suspended-user-id-123",
       email: "suspended@example.com",
-      status: UserStatus.SUSPENDED,
+      status: UserStatus.Suspended,
       ...overrides,
     });
   }
@@ -82,8 +82,8 @@ export class AuthFactory {
     return this.createTestUser({
       id: "unverified-user-id-123",
       email: "unverified@example.com",
-      status: UserStatus.PENDING_VERIFICATION,
-      email_verified: false,
+      status: UserStatus.PendingVerification,
+      emailVerified: false,
       ...overrides,
     });
   }
@@ -99,8 +99,8 @@ export class AuthFactory {
   static createRegisterDto(overrides?: Partial<RegisterDto>): RegisterDto {
     return {
       email: "newuser@example.com",
-      first_name: "New",
-      last_name: "User",
+      firstName: "New",
+      lastName: "User",
       password: "Password123!",
       confirmPassword: "Password123!",
       ...overrides,
@@ -119,8 +119,8 @@ export class AuthFactory {
       last_sign_in_at: new Date().toISOString(),
       app_metadata: {},
       user_metadata: {
-        first_name: "Test",
-        last_name: "User",
+        firstName: "Test",
+        lastName: "User",
       },
       identities: [],
       created_at: new Date().toISOString(),
@@ -148,7 +148,7 @@ export class AuthFactory {
     return {
       id: "test-user-id-123",
       email: "test@example.com",
-      role: UserRole.USER,
+      role: UserRole.User,
       supabaseUser: this.createSupabaseUser(),
       ...overrides,
     };
@@ -161,18 +161,18 @@ export class AuthFactory {
       user: {
         id: "test-user-id-123",
         email: "test@example.com",
-        first_name: "Test",
-        last_name: "User",
-        role: UserRole.USER,
-        status: UserStatus.ACTIVE,
-        email_verified: true,
+        firstName: "Test",
+        lastName: "User",
+        role: UserRole.User,
+        status: UserStatus.Active,
+        emailVerified: true,
         phone: "+1234567890",
-        avatar_url: "https://example.com/avatar.jpg",
-        last_login: new Date(),
-        created_at: new Date(),
-        updated_at: new Date(),
-        full_name: "Test User",
-        password_hash: "hashed_password_123",
+        avatarUrl: "https://example.com/avatar.jpg",
+        lastLogin: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        fullName: "Test User",
+        passwordHash: "hashed_password_123",
       },
       session: this.createSupabaseSession(),
       ...overrides,
@@ -231,17 +231,17 @@ export class AuthFactory {
     return {
       id: "test-user-id-123",
       email: "test@example.com",
-      first_name: "Test",
-      last_name: "User",
-      role: UserRole.USER,
-      status: UserStatus.ACTIVE,
-      email_verified: true,
+      firstName: "Test",
+      lastName: "User",
+      role: UserRole.User,
+      status: UserStatus.Active,
+      emailVerified: true,
       phone: "+1234567890",
-      avatar_url: "https://example.com/avatar.jpg",
-      last_login: now,
-      created_at: now,
-      updated_at: now,
-      full_name: "Test User",
+      avatarUrl: "https://example.com/avatar.jpg",
+      lastLogin: now,
+      createdAt: now,
+      updatedAt: now,
+      fullName: "Test User",
       ...overrides,
     };
   }

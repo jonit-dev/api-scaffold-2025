@@ -134,14 +134,14 @@ export class StripeCustomerService {
       }
 
       // Check if user already has a Stripe customer ID
-      if (user.stripe_customer_id) {
+      if (user.stripeCustomerId) {
         try {
-          return await this.getCustomer(user.stripe_customer_id);
+          return await this.getCustomer(user.stripeCustomerId);
         } catch {
           // If customer doesn't exist in Stripe, create a new one
           // Note: This console.warn is preserved for debugging critical user state issues
           console.warn(
-            `Stripe customer ${user.stripe_customer_id} not found, creating new one`,
+            `Stripe customer ${user.stripeCustomerId} not found, creating new one`,
           );
         }
       }
@@ -149,7 +149,7 @@ export class StripeCustomerService {
       // Create new customer
       const customer = await this.createCustomer({
         email: user.email,
-        name: user.full_name || user.email,
+        name: user.fullName || user.email,
         metadata: {
           user_id: userId,
         },
@@ -157,7 +157,7 @@ export class StripeCustomerService {
 
       // Update user with Stripe customer ID
       await this.userService.update(userId, {
-        stripe_customer_id: customer.id,
+        stripeCustomerId: customer.id,
       });
 
       return customer;

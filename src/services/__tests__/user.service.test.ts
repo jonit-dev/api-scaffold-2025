@@ -30,10 +30,10 @@ describe("UserService", () => {
     it("should create a new user successfully", async () => {
       const createUserDto: CreateUserDto = {
         email: "test@example.com",
-        first_name: "Test",
-        last_name: "User",
+        firstName: "Test",
+        lastName: "User",
         password: "Password123!",
-        role: UserRole.USER,
+        role: UserRole.User,
         phone: "+1234567890",
       };
 
@@ -56,8 +56,8 @@ describe("UserService", () => {
     it("should throw ValidationException when email already exists", async () => {
       const createUserDto: CreateUserDto = {
         email: "existing@example.com",
-        first_name: "Test",
-        last_name: "User",
+        firstName: "Test",
+        lastName: "User",
         password: "Password123!",
       };
 
@@ -107,8 +107,8 @@ describe("UserService", () => {
   describe("update", () => {
     it("should update user successfully", async () => {
       const updateUserDto: UpdateUserDto = {
-        first_name: "Updated",
-        last_name: "Name",
+        firstName: "Updated",
+        lastName: "Name",
       };
 
       mockUserRepository.findById!.mockResolvedValue(testData.users.regular);
@@ -163,7 +163,7 @@ describe("UserService", () => {
 
     it("should throw NotFoundException when user not found", async () => {
       const updateUserDto: UpdateUserDto = {
-        first_name: "Updated",
+        firstName: "Updated",
       };
 
       mockUserRepository.findById!.mockResolvedValue(null);
@@ -199,18 +199,18 @@ describe("UserService", () => {
       mockUserRepository.findById!.mockResolvedValue(testData.users.regular);
       mockUserRepository.update!.mockResolvedValue({
         ...testData.users.regular,
-        status: UserStatus.SUSPENDED,
+        status: UserStatus.Suspended,
       });
 
       const result = await userService.updateStatus(
         "user-123",
-        UserStatus.SUSPENDED,
+        UserStatus.Suspended,
       );
 
       expect(result).toBeDefined();
       expect(mockUserRepository.findById).toHaveBeenCalledWith("user-123");
       expect(mockUserRepository.update).toHaveBeenCalledWith("user-123", {
-        status: UserStatus.SUSPENDED,
+        status: UserStatus.Suspended,
       });
     });
 
@@ -218,7 +218,7 @@ describe("UserService", () => {
       mockUserRepository.findById!.mockResolvedValue(null);
 
       await expect(
-        userService.updateStatus("non-existent", UserStatus.SUSPENDED),
+        userService.updateStatus("non-existent", UserStatus.Suspended),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -266,7 +266,7 @@ describe("UserService", () => {
     });
 
     it("should apply filters when provided", async () => {
-      const filters = { role: UserRole.ADMIN, status: UserStatus.ACTIVE };
+      const filters = { role: UserRole.Admin, status: UserStatus.Active };
       MockHelpers.setupRepositoryResponses(mockUserRepository, {
         findUsersPaginated: testData.pagination.firstPage,
       });

@@ -1,6 +1,8 @@
 import { Service, Inject } from "typedi";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseClient } from "../config/supabase";
+import { SQLiteConfig } from "../config/sqlite";
+import { config } from "../config/env";
 import {
   IDatabase,
   IBaseEntity,
@@ -9,54 +11,43 @@ import {
   IFilterOptions,
   IOrderByOptions,
 } from "../types/database.types";
-import {
-  DatabaseException,
-  handleDatabaseOperation,
-} from "../exceptions/database.exception";
+import { SupabaseAdapter, IDatabaseAdapter } from "./adapters/supabase.adapter";
+import { SQLiteAdapter } from "./adapters/sqlite.adapter";
 
 @Service()
 export abstract class BaseRepository<T extends IBaseEntity> {
-  protected supabase: SupabaseClient<IDatabase>;
   protected abstract tableName: string;
+  private adapter: IDatabaseAdapter<T>;
+  private supabaseClient?: SupabaseClient<IDatabase>;
 
   constructor(@Inject("supabase") supabase?: SupabaseClient<IDatabase>) {
-    this.supabase = supabase || getSupabaseClient();
+    if (config.database.provider === "sqlite") {
+      this.adapter = new SQLiteAdapter<T>(SQLiteConfig.getClient());
+      this.initializeTable();
+    } else {
+      this.supabaseClient = supabase || getSupabaseClient();
+      this.adapter = new SupabaseAdapter<T>(this.supabaseClient);
+    }
   }
 
-  // Create a new record
-  async create(data: Omit<T, "id" | "created_at" | "updated_at">): Promise<T> {
-    return handleDatabaseOperation(async () => {
-      const { data: result, error } = await this.supabase
-        .from(this.tableName)
-        .insert({
-          ...data,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
+  // Backward compatibility for repositories that still use direct Supabase access
+  protected get supabase(): SupabaseClient<IDatabase> {
+    if (!this.supabaseClient) {
+      throw new Error("Supabase client not available in SQLite mode");
+    }
+    return this.supabaseClient;
+  }
 
-      return { data: result, error };
-    });
+  protected abstract initializeTable(): void;
+
+  // Create a new record
+  async create(data: Omit<T, "id" | "createdAt" | "updatedAt">): Promise<T> {
+    return this.adapter.create(data, this.tableName);
   }
 
   // Find a record by ID
   async findById(id: string): Promise<T | null> {
-    return handleDatabaseOperation(async () => {
-      const { data, error } = await this.supabase
-        .from(this.tableName)
-        .select()
-        .eq("id", id)
-        .eq("deleted_at", null)
-        .single();
-
-      // Handle "not found" as null, not an error
-      if (error && error.code === "PGRST116") {
-        return { data: null, error: null };
-      }
-
-      return { data, error };
-    });
+    return this.adapter.findById(id, this.tableName);
   }
 
   // Find multiple records with optional filters
@@ -65,38 +56,7 @@ export abstract class BaseRepository<T extends IBaseEntity> {
     orderBy?: IOrderByOptions;
     pagination?: IPaginationOptions;
   }): Promise<T[]> {
-    return handleDatabaseOperation(async () => {
-      let query = this.supabase
-        .from(this.tableName)
-        .select()
-        .eq("deleted_at", null);
-
-      // Apply filters
-      if (options?.filters) {
-        Object.entries(options.filters).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            query = query.eq(key, value);
-          }
-        });
-      }
-
-      // Apply ordering
-      if (options?.orderBy) {
-        query = query.order(options.orderBy.column, {
-          ascending: options.orderBy.ascending ?? true,
-        });
-      }
-
-      // Apply pagination
-      if (options?.pagination) {
-        const { page = 1, limit = 10 } = options.pagination;
-        const offset = (page - 1) * limit;
-        query = query.range(offset, offset + limit - 1);
-      }
-
-      const { data, error } = await query;
-      return { data: data || [], error };
-    });
+    return this.adapter.findMany(options || {}, this.tableName);
   }
 
   // Find with pagination
@@ -105,121 +65,30 @@ export abstract class BaseRepository<T extends IBaseEntity> {
     orderBy?: IOrderByOptions;
     pagination?: IPaginationOptions;
   }): Promise<IPaginatedResult<T>> {
-    const { page = 1, limit = 10 } = options?.pagination || {};
-    const offset = (page - 1) * limit;
-
-    let query = this.supabase
-      .from(this.tableName)
-      .select("*", { count: "exact" })
-      .eq("deleted_at", null);
-
-    // Apply filters
-    if (options?.filters) {
-      Object.entries(options.filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          query = query.eq(key, value);
-        }
-      });
-    }
-
-    // Apply ordering
-    if (options?.orderBy) {
-      query = query.order(options.orderBy.column, {
-        ascending: options.orderBy.ascending ?? true,
-      });
-    }
-
-    // Apply pagination
-    query = query.range(offset, offset + limit - 1);
-
-    const { data, error, count } = await query;
-
-    if (error) {
-      throw new DatabaseException(error.message);
-    }
-
-    const total = count || 0;
-    return {
-      data: data || [],
-      pagination: {
-        page,
-        limit,
-        total,
-        hasNext: offset + limit < total,
-        hasPrevious: page > 1,
-      },
-    };
+    return this.adapter.findWithPagination(options || {}, this.tableName);
   }
 
   // Update a record
   async update(
     id: string,
-    data: Partial<Omit<T, "id" | "created_at" | "updated_at">>,
+    data: Partial<Omit<T, "id" | "createdAt" | "updatedAt">>,
   ): Promise<T> {
-    return handleDatabaseOperation(async () => {
-      const { data: result, error } = await this.supabase
-        .from(this.tableName)
-        .update({
-          ...data,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id)
-        .eq("deleted_at", null)
-        .select()
-        .single();
-
-      return { data: result, error };
-    });
+    return this.adapter.update(id, data, this.tableName);
   }
 
   // Soft delete a record
   async softDelete(id: string): Promise<void> {
-    return handleDatabaseOperation(async () => {
-      const { error } = await this.supabase
-        .from(this.tableName)
-        .update({
-          deleted_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id)
-        .eq("deleted_at", null);
-
-      return { data: undefined, error };
-    });
+    return this.adapter.softDelete(id, this.tableName);
   }
 
   // Hard delete a record (permanent)
   async hardDelete(id: string): Promise<void> {
-    return handleDatabaseOperation(async () => {
-      const { error } = await this.supabase
-        .from(this.tableName)
-        .delete()
-        .eq("id", id);
-
-      return { data: undefined, error };
-    });
+    return this.adapter.hardDelete(id, this.tableName);
   }
 
   // Count records
   async count(filters?: IFilterOptions): Promise<number> {
-    return handleDatabaseOperation(async () => {
-      let query = this.supabase
-        .from(this.tableName)
-        .select("*", { count: "exact", head: true })
-        .eq("deleted_at", null);
-
-      // Apply filters
-      if (filters) {
-        Object.entries(filters).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            query = query.eq(key, value);
-          }
-        });
-      }
-
-      const { count, error } = await query;
-      return { data: count || 0, error };
-    });
+    return this.adapter.count(filters, this.tableName);
   }
 
   // Check if record exists
@@ -230,29 +99,6 @@ export abstract class BaseRepository<T extends IBaseEntity> {
 
   // Find first record matching filters
   async findFirst(filters?: IFilterOptions): Promise<T | null> {
-    return handleDatabaseOperation(async () => {
-      let query = this.supabase
-        .from(this.tableName)
-        .select()
-        .eq("deleted_at", null)
-        .limit(1);
-
-      // Apply filters
-      if (filters) {
-        Object.entries(filters).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            query = query.eq(key, value);
-          }
-        });
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        return { data: null, error };
-      }
-
-      return { data: data && data.length > 0 ? data[0] : null, error: null };
-    });
+    return this.adapter.findFirst(filters, this.tableName);
   }
 }

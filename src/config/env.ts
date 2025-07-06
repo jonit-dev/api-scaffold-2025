@@ -17,6 +17,9 @@ export const config = {
     environment: process.env.NODE_ENV || "development",
   },
   database: {
+    provider: getEnvVar("DATABASE_PROVIDER", "supabase") as
+      | "supabase"
+      | "sqlite",
     url: getEnvVar("SUPABASE_URL", "https://your_supabase_url_here"),
     anonKey: getEnvVar("SUPABASE_ANON_KEY", "your_supabase_anon_key_here"),
     serviceKey: getEnvVar(
@@ -28,6 +31,21 @@ export const config = {
       process.env.DB_CONNECTION_TIMEOUT || "30000",
       10,
     ),
+  },
+  sqlite: {
+    path: process.env.SQLITE_PATH || "./data/database.sqlite",
+    enableWal: process.env.SQLITE_ENABLE_WAL === "true",
+    enableForeignKeys: process.env.SQLITE_ENABLE_FOREIGN_KEYS !== "false",
+    timeout: parseInt(process.env.SQLITE_TIMEOUT || "5000", 10),
+  },
+  auth: {
+    jwtSecret: getEnvVar("JWT_SECRET", "your-jwt-secret-key-here"),
+    bcryptRounds: getEnvVar("BCRYPT_ROUNDS", "10"),
+  },
+  cache: {
+    provider: (process.env.CACHE_PROVIDER || "redis") as "redis" | "local",
+    maxSize: parseInt(process.env.CACHE_MAX_SIZE || "1000", 10),
+    ttl: parseInt(process.env.CACHE_TTL || "300", 10),
   },
   cors: {
     origin: process.env.ALLOWED_ORIGINS?.split(",") || [

@@ -34,7 +34,7 @@ export class RbacMiddleware {
     requiredRoles: UserRole[],
   ): boolean {
     // Admin has access to everything
-    if (userRole === UserRole.ADMIN) {
+    if (userRole === UserRole.Admin) {
       return true;
     }
 

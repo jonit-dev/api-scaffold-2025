@@ -19,6 +19,11 @@ export class PaymentRepository extends BaseRepository<IPaymentEntity> {
     super();
   }
 
+  protected initializeTable(): void {
+    // Payment table initialization would be implemented here for SQLite
+    // For now, empty implementation since we're primarily using Supabase
+  }
+
   async findByStripePaymentIntentId(
     stripePaymentIntentId: string,
   ): Promise<IPaymentEntity | null> {

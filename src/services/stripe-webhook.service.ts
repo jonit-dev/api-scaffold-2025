@@ -66,51 +66,51 @@ export class StripeWebhookService {
   private async handleEvent(event: StripeEvent): Promise<void> {
     try {
       switch (event.type) {
-        case StripeWebhookEventType.PAYMENT_INTENT_SUCCEEDED:
+        case StripeWebhookEventType.PaymentIntentSucceeded:
           await this.handlePaymentIntentSucceeded(event);
           break;
 
-        case StripeWebhookEventType.PAYMENT_INTENT_FAILED:
+        case StripeWebhookEventType.PaymentIntentFailed:
           await this.handlePaymentIntentFailed(event);
           break;
 
-        case StripeWebhookEventType.CUSTOMER_CREATED:
+        case StripeWebhookEventType.CustomerCreated:
           await this.handleCustomerCreated(event);
           break;
 
-        case StripeWebhookEventType.CUSTOMER_UPDATED:
+        case StripeWebhookEventType.CustomerUpdated:
           await this.handleCustomerUpdated(event);
           break;
 
-        case StripeWebhookEventType.CUSTOMER_DELETED:
+        case StripeWebhookEventType.CustomerDeleted:
           await this.handleCustomerDeleted(event);
           break;
 
-        case StripeWebhookEventType.INVOICE_PAYMENT_SUCCEEDED:
+        case StripeWebhookEventType.InvoicePaymentSucceeded:
           await this.handleInvoicePaymentSucceeded(event);
           break;
 
-        case StripeWebhookEventType.INVOICE_PAYMENT_FAILED:
+        case StripeWebhookEventType.InvoicePaymentFailed:
           await this.handleInvoicePaymentFailed(event);
           break;
 
-        case StripeWebhookEventType.SUBSCRIPTION_CREATED:
+        case StripeWebhookEventType.SubscriptionCreated:
           await this.handleSubscriptionCreated(event);
           break;
 
-        case StripeWebhookEventType.SUBSCRIPTION_UPDATED:
+        case StripeWebhookEventType.SubscriptionUpdated:
           await this.handleSubscriptionUpdated(event);
           break;
 
-        case StripeWebhookEventType.SUBSCRIPTION_DELETED:
+        case StripeWebhookEventType.SubscriptionDeleted:
           await this.handleSubscriptionDeleted(event);
           break;
 
-        case StripeWebhookEventType.SUBSCRIPTION_TRIAL_WILL_END:
+        case StripeWebhookEventType.SubscriptionTrialWillEnd:
           await this.handleSubscriptionTrialWillEnd(event);
           break;
 
-        case StripeWebhookEventType.INVOICE_UPCOMING:
+        case StripeWebhookEventType.InvoiceUpcoming:
           await this.handleInvoiceUpcoming(event);
           break;
 

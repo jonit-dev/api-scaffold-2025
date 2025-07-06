@@ -4,7 +4,7 @@ import {
   IFilterOptions,
   IOrderByOptions,
 } from "@common-types/database.types";
-import { IBaseEntity } from "@models/entities/base.entity";
+import { IBaseEntity } from "@common-types/database.types";
 import { BaseFactory } from "./base.factory";
 
 export class DatabaseFactory {
@@ -89,7 +89,7 @@ export class DatabaseFactory {
   static createPaginatedEntities(
     count: number,
     options: IPaginationOptions,
-    entityFactory: (index: number) => IBaseEntity = index =>
+    entityFactory: (index: number) => IBaseEntity = (index) =>
       BaseFactory.createBaseEntity({ id: `entity-${index}` }),
   ): IPaginatedResult<IBaseEntity> {
     const entities = Array.from({ length: count }, (_, index) =>

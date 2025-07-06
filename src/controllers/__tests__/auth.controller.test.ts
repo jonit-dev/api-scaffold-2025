@@ -152,7 +152,7 @@ describe("AuthController", () => {
 
   describe("refreshToken", () => {
     it("should refresh token successfully", async () => {
-      const refreshTokenDto = { refresh_token: "refresh-token-123" };
+      const refreshTokenDto = { refreshToken: "refresh-token-123" };
       const expectedResponse = AuthFactory.createAuthResponseDto();
 
       (mockAuthService.refreshToken as any).mockResolvedValue(expectedResponse);
@@ -166,7 +166,7 @@ describe("AuthController", () => {
     });
 
     it("should throw AuthException for invalid refresh token", async () => {
-      const refreshTokenDto = { refresh_token: "invalid-token" };
+      const refreshTokenDto = { refreshToken: "invalid-token" };
 
       (mockAuthService.refreshToken as any).mockRejectedValue(
         new AuthException("Token refresh failed", 401),
@@ -309,17 +309,17 @@ describe("AuthController", () => {
       const expectedUser = {
         id: "user-123",
         email: "test@example.com",
-        first_name: "Test",
-        last_name: "User",
-        role: UserRole.USER,
-        status: UserStatus.ACTIVE,
-        email_verified: true,
+        firstName: "Test",
+        lastName: "User",
+        role: UserRole.User,
+        status: UserStatus.Active,
+        emailVerified: true,
         phone: "+1234567890",
-        avatar_url: "https://example.com/avatar.jpg",
-        last_login: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        full_name: "Test User",
+        avatarUrl: "https://example.com/avatar.jpg",
+        lastLogin: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        fullName: "Test User",
       };
 
       (mockAuthService.getCurrentUser as any).mockResolvedValue(expectedUser);
@@ -348,17 +348,17 @@ describe("AuthController", () => {
       const expectedUser = {
         id: "user-123",
         email: "test@example.com",
-        first_name: "Test",
-        last_name: "User",
-        role: UserRole.USER,
-        status: UserStatus.ACTIVE,
-        email_verified: true,
+        firstName: "Test",
+        lastName: "User",
+        role: UserRole.User,
+        status: UserStatus.Active,
+        emailVerified: true,
         phone: "+1234567890",
-        avatar_url: "https://example.com/avatar.jpg",
-        last_login: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        full_name: "Test User",
+        avatarUrl: "https://example.com/avatar.jpg",
+        lastLogin: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        fullName: "Test User",
       };
 
       (mockAuthService.verifyUser as any).mockResolvedValue(expectedUser);

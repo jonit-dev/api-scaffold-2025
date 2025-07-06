@@ -1,6 +1,8 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { plainToInstance } from "class-transformer";
 import { Inject, Service } from "typedi";
+import * as bcrypt from "bcrypt";
+import * as jwt from "jsonwebtoken";
 import { config } from "../config/env";
 import {
   AccountSuspendedException,
@@ -25,9 +27,47 @@ import { UserRepository } from "../repositories/user.repository";
 export class AuthService {
   constructor(
     private userRepository: UserRepository,
-    @Inject("supabaseAuth") private supabaseAuth: SupabaseClient,
-    @Inject("supabaseAdmin") private supabaseAdmin: SupabaseClient,
+    @Inject("supabaseAuth") private supabaseAuth?: SupabaseClient,
+    @Inject("supabaseAdmin") private supabaseAdmin?: SupabaseClient,
   ) {}
+
+  private get isUsingSupabase(): boolean {
+    return config.database.provider === "supabase";
+  }
+
+  private get isUsingSQLite(): boolean {
+    return config.database.provider === "sqlite";
+  }
+
+  private async hashPassword(password: string): Promise<string> {
+    const saltRounds = parseInt(config.auth.bcryptRounds || "10", 10);
+    return bcrypt.hash(password, saltRounds);
+  }
+
+  private async comparePassword(
+    password: string,
+    hash: string,
+  ): Promise<boolean> {
+    return bcrypt.compare(password, hash);
+  }
+
+  private generateJWT(user: IUserEntity): string {
+    return jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      config.auth.jwtSecret,
+      { expiresIn: "24h" },
+    );
+  }
+
+  private generateRefreshToken(user: IUserEntity): string {
+    return jwt.sign({ id: user.id, type: "refresh" }, config.auth.jwtSecret, {
+      expiresIn: "7d",
+    });
+  }
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     // Validate password confirmation
@@ -44,65 +84,11 @@ export class AuthService {
     }
 
     try {
-      // Register user with Supabase Auth
-      const { data: authData, error: authError } =
-        await this.supabaseAuth.auth.signUp({
-          email: registerDto.email,
-          password: registerDto.password,
-          options: {
-            data: {
-              first_name: registerDto.first_name,
-              last_name: registerDto.last_name,
-            },
-          },
-        });
-
-      if (authError) {
-        throw new AuthException(authError.message, 400);
+      if (this.isUsingSQLite) {
+        return await this.registerWithSQLite(registerDto);
+      } else {
+        return await this.registerWithSupabase(registerDto);
       }
-
-      if (!authData.user) {
-        throw new AuthException("User registration failed", 500);
-      }
-
-      // Create user profile in our database
-      const userEntity: Omit<IUserEntity, "created_at" | "updated_at"> = {
-        id: authData.user.id,
-        email: registerDto.email,
-        first_name: registerDto.first_name,
-        last_name: registerDto.last_name,
-        password_hash: "", // Supabase handles password hashing
-        role: UserRole.USER,
-        status: authData.user.email_confirmed_at
-          ? UserStatus.ACTIVE
-          : UserStatus.PENDING_VERIFICATION,
-        email_verified: !!authData.user.email_confirmed_at,
-        get full_name() {
-          return `${this.first_name} ${this.last_name}`;
-        },
-        isActive() {
-          return this.status === UserStatus.ACTIVE;
-        },
-        isAdmin() {
-          return this.role === UserRole.ADMIN;
-        },
-        isModerator() {
-          return this.role === UserRole.MODERATOR;
-        },
-        hasRole(role: UserRole) {
-          return this.role === role;
-        },
-        hasAnyRole(...roles: UserRole[]) {
-          return roles.includes(this.role);
-        },
-      };
-
-      const user = await this.userRepository.create(userEntity);
-
-      return {
-        user: this.mapToUserResponse(user),
-        session: authData.session,
-      };
     } catch (error) {
       if (error instanceof AuthException) {
         throw error;
@@ -111,45 +97,150 @@ export class AuthService {
     }
   }
 
+  private async registerWithSupabase(
+    registerDto: RegisterDto,
+  ): Promise<AuthResponseDto> {
+    if (!this.supabaseAuth) {
+      throw new AuthException("Supabase not configured", 500);
+    }
+
+    // Register user with Supabase Auth
+    const { data: authData, error: authError } =
+      await this.supabaseAuth.auth.signUp({
+        email: registerDto.email,
+        password: registerDto.password,
+        options: {
+          data: {
+            first_name: registerDto.firstName,
+            last_name: registerDto.lastName,
+          },
+        },
+      });
+
+    if (authError) {
+      throw new AuthException(authError.message, 400);
+    }
+
+    if (!authData.user) {
+      throw new AuthException("User registration failed", 500);
+    }
+
+    // Create user profile in our database
+    const userEntity: Omit<IUserEntity, "createdAt" | "updatedAt"> = {
+      id: authData.user.id,
+      email: registerDto.email,
+      firstName: registerDto.firstName,
+      lastName: registerDto.lastName,
+      passwordHash: "", // Supabase handles password hashing
+      role: UserRole.User,
+      status: authData.user.email_confirmed_at
+        ? UserStatus.Active
+        : UserStatus.PendingVerification,
+      emailVerified: !!authData.user.email_confirmed_at,
+      get fullName() {
+        return `${this.firstName} ${this.lastName}`;
+      },
+      isActive() {
+        return this.status === UserStatus.Active;
+      },
+      isAdmin() {
+        return this.role === UserRole.Admin;
+      },
+      isModerator() {
+        return this.role === UserRole.Moderator;
+      },
+      hasRole(role: UserRole) {
+        return this.role === role;
+      },
+      hasAnyRole(...roles: UserRole[]) {
+        return roles.includes(this.role);
+      },
+    };
+
+    const user = await this.userRepository.create(userEntity);
+
+    return {
+      user: this.mapToUserResponse(user),
+      session: authData.session,
+    };
+  }
+
+  private async registerWithSQLite(
+    registerDto: RegisterDto,
+  ): Promise<AuthResponseDto> {
+    // Hash password
+    const passwordHash = await this.hashPassword(registerDto.password);
+
+    // Generate unique ID
+    const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Create user entity
+    const userEntity: Omit<IUserEntity, "createdAt" | "updatedAt"> = {
+      id: userId,
+      email: registerDto.email,
+      firstName: registerDto.firstName,
+      lastName: registerDto.lastName,
+      passwordHash,
+      role: UserRole.User,
+      status: UserStatus.Active, // For SQLite, we'll set to active by default
+      emailVerified: false, // Can be implemented later
+      get fullName() {
+        return `${this.firstName} ${this.lastName}`;
+      },
+      isActive() {
+        return this.status === UserStatus.Active;
+      },
+      isAdmin() {
+        return this.role === UserRole.Admin;
+      },
+      isModerator() {
+        return this.role === UserRole.Moderator;
+      },
+      hasRole(role: UserRole) {
+        return this.role === role;
+      },
+      hasAnyRole(...roles: UserRole[]) {
+        return roles.includes(this.role);
+      },
+    };
+
+    const user = await this.userRepository.create(userEntity);
+
+    // Generate JWT tokens
+    const accessToken = this.generateJWT(user);
+    const refreshToken = this.generateRefreshToken(user);
+
+    return {
+      user: this.mapToUserResponse(user),
+      session: {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        token_type: "bearer",
+        expires_in: 24 * 60 * 60, // 24 hours
+        expires_at: Date.now() + 24 * 60 * 60 * 1000,
+        user: {
+          id: user.id,
+          email: user.email,
+          email_confirmed_at: user.emailVerified
+            ? new Date().toISOString()
+            : undefined,
+          last_sign_in_at: new Date().toISOString(),
+          app_metadata: {},
+          user_metadata: {},
+          aud: "authenticated",
+          created_at: new Date().toISOString(),
+        },
+      },
+    };
+  }
+
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     try {
-      // Login with Supabase Auth
-      const { data: authData, error: authError } =
-        await this.supabaseAuth.auth.signInWithPassword({
-          email: loginDto.email,
-          password: loginDto.password,
-        });
-
-      if (authError) {
-        throw new InvalidCredentialsException("Invalid email or password");
+      if (this.isUsingSQLite) {
+        return await this.loginWithSQLite(loginDto);
+      } else {
+        return await this.loginWithSupabase(loginDto);
       }
-
-      if (!authData.user || !authData.session) {
-        throw new InvalidCredentialsException("Authentication failed");
-      }
-
-      // Get user profile from our database
-      const user = await this.userRepository.findById(authData.user.id);
-      if (!user) {
-        throw new UserNotFoundException("User profile not found");
-      }
-
-      // Check user status
-      if (user.status === UserStatus.SUSPENDED) {
-        throw new AccountSuspendedException("Account is suspended");
-      }
-
-      if (user.status === UserStatus.INACTIVE) {
-        throw new AuthException("Account is inactive", 403);
-      }
-
-      // Update last login
-      await this.userRepository.updateLastLogin(user.id);
-
-      return {
-        user: this.mapToUserResponse(user),
-        session: authData.session,
-      };
     } catch (error) {
       if (error instanceof AuthException) {
         throw error;
@@ -158,8 +249,113 @@ export class AuthService {
     }
   }
 
+  private async loginWithSupabase(
+    loginDto: LoginDto,
+  ): Promise<AuthResponseDto> {
+    if (!this.supabaseAuth) {
+      throw new AuthException("Supabase not configured", 500);
+    }
+
+    // Login with Supabase Auth
+    const { data: authData, error: authError } =
+      await this.supabaseAuth.auth.signInWithPassword({
+        email: loginDto.email,
+        password: loginDto.password,
+      });
+
+    if (authError) {
+      throw new InvalidCredentialsException("Invalid email or password");
+    }
+
+    if (!authData.user || !authData.session) {
+      throw new InvalidCredentialsException("Authentication failed");
+    }
+
+    // Get user profile from our database
+    const user = await this.userRepository.findById(authData.user.id);
+    if (!user) {
+      throw new UserNotFoundException("User profile not found");
+    }
+
+    // Check user status
+    if (user.status === UserStatus.Suspended) {
+      throw new AccountSuspendedException("Account is suspended");
+    }
+
+    if (user.status === UserStatus.Inactive) {
+      throw new AuthException("Account is inactive", 403);
+    }
+
+    // Update last login
+    await this.userRepository.updateLastLogin(user.id);
+
+    return {
+      user: this.mapToUserResponse(user),
+      session: authData.session,
+    };
+  }
+
+  private async loginWithSQLite(loginDto: LoginDto): Promise<AuthResponseDto> {
+    // Find user by email
+    const user = await this.userRepository.findByEmail(loginDto.email);
+    if (!user) {
+      throw new InvalidCredentialsException("Invalid email or password");
+    }
+
+    // Check password
+    const isPasswordValid = await this.comparePassword(
+      loginDto.password,
+      user.passwordHash || "",
+    );
+    if (!isPasswordValid) {
+      throw new InvalidCredentialsException("Invalid email or password");
+    }
+
+    // Check user status
+    if (user.status === UserStatus.Suspended) {
+      throw new AccountSuspendedException("Account is suspended");
+    }
+
+    if (user.status === UserStatus.Inactive) {
+      throw new AuthException("Account is inactive", 403);
+    }
+
+    // Update last login
+    await this.userRepository.updateLastLogin(user.id);
+
+    // Generate JWT tokens
+    const accessToken = this.generateJWT(user);
+    const refreshToken = this.generateRefreshToken(user);
+
+    return {
+      user: this.mapToUserResponse(user),
+      session: {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        token_type: "bearer",
+        expires_in: 24 * 60 * 60, // 24 hours
+        expires_at: Date.now() + 24 * 60 * 60 * 1000,
+        user: {
+          id: user.id,
+          email: user.email,
+          email_confirmed_at: user.emailVerified
+            ? new Date().toISOString()
+            : undefined,
+          last_sign_in_at: new Date().toISOString(),
+          app_metadata: {},
+          user_metadata: {},
+          aud: "authenticated",
+          created_at: new Date().toISOString(),
+        },
+      },
+    };
+  }
+
   async logout(): Promise<void> {
     try {
+      if (!this.supabaseAuth) {
+        throw new AuthException("Authentication service not configured", 500);
+      }
       // Supabase handles the current session automatically
       const { error } = await this.supabaseAuth.auth.signOut();
       if (error) {
@@ -177,9 +373,13 @@ export class AuthService {
     refreshTokenDto: RefreshTokenDto,
   ): Promise<SessionResponseDto> {
     try {
+      if (!this.supabaseAuth) {
+        throw new AuthException("Authentication service not configured", 500);
+      }
+
       const { data: authData, error } =
         await this.supabaseAuth.auth.refreshSession({
-          refresh_token: refreshTokenDto.refresh_token,
+          refresh_token: refreshTokenDto.refreshToken,
         });
 
       if (error) {
@@ -199,6 +399,9 @@ export class AuthService {
 
   async forgotPassword(email: string): Promise<void> {
     try {
+      if (!this.supabaseAuth) {
+        throw new AuthException("Authentication service not configured", 500);
+      }
       const { error } = await this.supabaseAuth.auth.resetPasswordForEmail(
         email,
         {
@@ -219,6 +422,9 @@ export class AuthService {
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
     try {
+      if (!this.supabaseAuth) {
+        throw new AuthException("Authentication service not configured", 500);
+      }
       // First verify the OTP token
       const { error: verifyError } = await this.supabaseAuth.auth.verifyOtp({
         token_hash: token,
@@ -255,6 +461,9 @@ export class AuthService {
     }
 
     try {
+      if (!this.supabaseAuth) {
+        throw new AuthException("Authentication service not configured", 500);
+      }
       // The user is already authenticated (middleware verified the token)
       // We can directly update the password without additional verification
       // Supabase will handle the current password verification internally
@@ -275,6 +484,9 @@ export class AuthService {
 
   async verifyUser(accessToken: string): Promise<IUserEntity> {
     try {
+      if (!this.supabaseAuth) {
+        throw new AuthException("Authentication service not configured", 500);
+      }
       const {
         data: { user },
         error,
@@ -318,6 +530,9 @@ export class AuthService {
 
   async verifyEmail(token: string): Promise<void> {
     try {
+      if (!this.supabaseAuth) {
+        throw new AuthException("Authentication service not configured", 500);
+      }
       const { error } = await this.supabaseAuth.auth.verifyOtp({
         token_hash: token,
         type: "email",
@@ -336,6 +551,9 @@ export class AuthService {
 
   async resendVerification(email: string): Promise<void> {
     try {
+      if (!this.supabaseAuth) {
+        throw new AuthException("Authentication service not configured", 500);
+      }
       const { error } = await this.supabaseAuth.auth.resend({
         type: "signup",
         email,

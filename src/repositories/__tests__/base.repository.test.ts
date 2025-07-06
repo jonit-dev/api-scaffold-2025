@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { BaseRepository } from "@repositories/base.repository";
-import { IBaseEntity } from "@models/entities/base.entity";
+import { IBaseEntity } from "../../types/database.types";
 import { BaseFactory } from "@tests/factories/base.factory";
 import { DatabaseFactory } from "@tests/factories/database.factory";
 import { TestHelpers } from "@tests/utils/test.helpers";
@@ -12,6 +12,10 @@ interface ITestEntity extends IBaseEntity {
 
 class TestRepository extends BaseRepository<ITestEntity> {
   protected tableName = "test_table";
+
+  protected initializeTable(): void {
+    // Test table initialization - empty implementation for test
+  }
 }
 
 describe("BaseRepository", () => {
@@ -62,9 +66,8 @@ describe("BaseRepository", () => {
     };
 
     TestHelpers.setupMockSupabaseClient(mockSupabaseClient);
-    repository = new TestRepository();
-    // Override the supabase client with our mock
-    (repository as any).supabase = mockSupabaseClient;
+    // Create repository with explicit Supabase injection
+    repository = new TestRepository(mockSupabaseClient);
   });
 
   describe("findMany", () => {
@@ -171,7 +174,10 @@ describe("BaseRepository", () => {
 
   describe("create", () => {
     it("should create new entity successfully", async () => {
-      const newEntity = { name: "New Test", email: "newtest@example.com" };
+      const newEntity: Omit<ITestEntity, "id" | "createdAt" | "updatedAt"> = {
+        name: "New Test",
+        email: "newtest@example.com",
+      };
       const createdEntity = { ...BaseFactory.createBaseEntity(), ...newEntity };
 
       mockQueryBuilder.single.mockResolvedValue({
@@ -184,7 +190,8 @@ describe("BaseRepository", () => {
       expect(result).toEqual(createdEntity);
       expect(mockQueryBuilder.insert).toHaveBeenCalledWith(
         expect.objectContaining({
-          ...newEntity,
+          name: newEntity.name,
+          email: newEntity.email,
           created_at: expect.any(String),
           updated_at: expect.any(String),
         }),
@@ -194,7 +201,10 @@ describe("BaseRepository", () => {
     });
 
     it("should handle creation errors", async () => {
-      const newEntity = { name: "New Test", email: "newtest@example.com" };
+      const newEntity: Omit<ITestEntity, "id" | "createdAt" | "updatedAt"> = {
+        name: "New Test",
+        email: "newtest@example.com",
+      };
 
       mockQueryBuilder.single.mockResolvedValue({
         data: null,

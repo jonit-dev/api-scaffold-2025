@@ -91,7 +91,7 @@ describe("Auth Middleware Integration Tests", () => {
             });
           }
 
-          const roleMiddleware = createRoleMiddleware(UserRole.ADMIN);
+          const roleMiddleware = createRoleMiddleware(UserRole.Admin);
           roleMiddleware.use(_req, res, (roleError) => {
             if (roleError) {
               return res.status(roleError.httpCode || 403).json({
@@ -120,8 +120,8 @@ describe("Auth Middleware Integration Tests", () => {
           }
 
           const roleMiddleware = createRoleMiddleware(
-            UserRole.MODERATOR,
-            UserRole.ADMIN,
+            UserRole.Moderator,
+            UserRole.Admin,
           );
           roleMiddleware.use(_req, res, (roleError) => {
             if (roleError) {
@@ -256,7 +256,7 @@ describe("Auth Middleware Integration Tests", () => {
     };
 
     it("should deny regular user access to admin-only endpoint", async () => {
-      const token = setupValidAuth(UserRole.USER);
+      const token = setupValidAuth(UserRole.User);
 
       const response = await request(app)
         .get("/admin-only")
@@ -270,7 +270,7 @@ describe("Auth Middleware Integration Tests", () => {
     });
 
     it("should allow admin access to admin-only endpoint", async () => {
-      const token = setupValidAuth(UserRole.ADMIN);
+      const token = setupValidAuth(UserRole.Admin);
 
       const response = await request(app)
         .get("/admin-only")
@@ -283,7 +283,7 @@ describe("Auth Middleware Integration Tests", () => {
     });
 
     it("should allow moderator access to moderator-or-admin endpoint", async () => {
-      const token = setupValidAuth(UserRole.MODERATOR);
+      const token = setupValidAuth(UserRole.Moderator);
 
       const response = await request(app)
         .get("/moderator-or-admin")
@@ -296,7 +296,7 @@ describe("Auth Middleware Integration Tests", () => {
     });
 
     it("should allow admin access to moderator-or-admin endpoint", async () => {
-      const token = setupValidAuth(UserRole.ADMIN);
+      const token = setupValidAuth(UserRole.Admin);
 
       const response = await request(app)
         .get("/moderator-or-admin")
@@ -309,7 +309,7 @@ describe("Auth Middleware Integration Tests", () => {
     });
 
     it("should deny regular user access to moderator-or-admin endpoint", async () => {
-      const token = setupValidAuth(UserRole.USER);
+      const token = setupValidAuth(UserRole.User);
 
       const response = await request(app)
         .get("/moderator-or-admin")

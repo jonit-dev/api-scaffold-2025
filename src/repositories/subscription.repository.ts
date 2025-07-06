@@ -8,6 +8,11 @@ import { DatabaseException } from "../exceptions/database.exception";
 export class SubscriptionRepository extends BaseRepository<ISubscriptionEntity> {
   protected tableName = "subscriptions";
 
+  protected initializeTable(): void {
+    // Subscription table initialization would be implemented here for SQLite
+    // For now, empty implementation since we're primarily using Supabase
+  }
+
   async findByStripeSubscriptionId(
     stripeSubscriptionId: string,
   ): Promise<ISubscriptionEntity | null> {
@@ -47,7 +52,7 @@ export class SubscriptionRepository extends BaseRepository<ISubscriptionEntity> 
       .from(this.tableName)
       .select("*")
       .eq("user_id", userId)
-      .eq("status", SubscriptionStatus.ACTIVE)
+      .eq("status", SubscriptionStatus.Active)
       .eq("deleted_at", null)
       .order("created_at", { ascending: false })
       .single();
@@ -85,10 +90,10 @@ export class SubscriptionRepository extends BaseRepository<ISubscriptionEntity> 
   ): Promise<ISubscriptionEntity> {
     const updateData: Partial<ISubscriptionEntity> = {
       status,
-      updated_at: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
-    if (canceledAt && status === SubscriptionStatus.CANCELED) {
+    if (canceledAt && status === SubscriptionStatus.Canceled) {
       updateData.canceled_at = canceledAt.toISOString();
     }
 
@@ -119,7 +124,7 @@ export class SubscriptionRepository extends BaseRepository<ISubscriptionEntity> 
     const { data, error } = await this.supabase
       .from(this.tableName)
       .select("*")
-      .eq("status", SubscriptionStatus.TRIALING)
+      .eq("status", SubscriptionStatus.Trialing)
       .lte("trial_end", expiryDate.toISOString())
       .gt("trial_end", new Date().toISOString())
       .eq("deleted_at", null)
@@ -139,7 +144,7 @@ export class SubscriptionRepository extends BaseRepository<ISubscriptionEntity> 
     const { data, error } = await this.supabase
       .from(this.tableName)
       .select("*")
-      .eq("status", SubscriptionStatus.ACTIVE)
+      .eq("status", SubscriptionStatus.Active)
       .lte("current_period_end", renewalDate.toISOString())
       .gt("current_period_end", new Date().toISOString())
       .eq("cancel_at_period_end", false)

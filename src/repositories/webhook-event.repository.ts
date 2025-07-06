@@ -7,6 +7,11 @@ import { DatabaseException } from "../exceptions/database.exception";
 export class WebhookEventRepository extends BaseRepository<IWebhookEventEntity> {
   protected tableName = "webhook_events";
 
+  protected initializeTable(): void {
+    // Webhook event table initialization would be implemented here for SQLite
+    // For now, empty implementation since we're primarily using Supabase
+  }
+
   async findByStripeEventId(
     stripeEventId: string,
   ): Promise<IWebhookEventEntity | null> {

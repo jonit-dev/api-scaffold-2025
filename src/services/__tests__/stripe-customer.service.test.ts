@@ -216,14 +216,18 @@ describe("StripeCustomerService", () => {
       const mockUser = {
         id: userId,
         email: "test@example.com",
-        full_name: "Test User",
-        stripe_customer_id: null,
+        firstName: "Test",
+        lastName: "User",
+        stripeCustomerId: null,
+        get fullName() {
+          return `${this.firstName} ${this.lastName}`;
+        },
       };
 
       const mockCustomer = {
         id: "cus_123",
         email: mockUser.email,
-        name: mockUser.full_name,
+        name: mockUser.fullName,
       };
 
       mockUserService.findById.mockResolvedValue(mockUser);
@@ -236,7 +240,7 @@ describe("StripeCustomerService", () => {
       expect(mockUserService.findById).toHaveBeenCalledWith(userId);
       expect(mockStripe.customers.create).toHaveBeenCalledWith({
         email: mockUser.email,
-        name: mockUser.full_name,
+        name: mockUser.fullName,
         phone: undefined,
         description: undefined,
         metadata: {
@@ -245,7 +249,7 @@ describe("StripeCustomerService", () => {
         },
       });
       expect(mockUserService.update).toHaveBeenCalledWith(userId, {
-        stripe_customer_id: mockCustomer.id,
+        stripeCustomerId: mockCustomer.id,
       });
     });
 
@@ -255,13 +259,13 @@ describe("StripeCustomerService", () => {
       const mockUser = {
         id: userId,
         email: "test@example.com",
-        stripe_customer_id: customerId,
+        stripeCustomerId: customerId,
       };
 
       const mockCustomer = {
         id: customerId,
         email: mockUser.email,
-        deleted: false,
+        name: "Test User",
       };
 
       mockUserService.findById.mockResolvedValue(mockUser);

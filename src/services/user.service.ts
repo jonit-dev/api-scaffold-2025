@@ -13,6 +13,10 @@ import { UserStatus } from "../models/enums/user-status.enum";
 import { IUserFilters } from "../models/interfaces/user.interface";
 import { UserRepository } from "../repositories/user.repository";
 import { IPaginatedResult } from "../types/database.types";
+// import {
+//   camelToSnakeKeys,
+//   snakeToCamelKeys,
+// } from "../utils/case-conversion.utils";
 
 @Service()
 export class UserService {
@@ -30,17 +34,17 @@ export class UserService {
     // Create user with defaults - password is handled by Supabase Auth separately
     const userData: Partial<IUserEntity> = {
       email: createUserDto.email,
-      first_name: createUserDto.first_name,
-      last_name: createUserDto.last_name,
-      password_hash: "", // This will be managed by Supabase Auth
-      role: createUserDto.role || UserRole.USER,
-      status: UserStatus.ACTIVE,
-      email_verified: false,
+      firstName: createUserDto.firstName,
+      lastName: createUserDto.lastName,
+      passwordHash: "", // This will be managed by Supabase Auth
+      role: createUserDto.role || UserRole.User,
+      status: UserStatus.Active,
+      emailVerified: false,
       phone: createUserDto.phone,
     };
 
     const user = await this.userRepository.create(
-      userData as Omit<IUserEntity, "id" | "created_at" | "updated_at">,
+      userData as Omit<IUserEntity, "id" | "createdAt" | "updatedAt">,
     );
     return this.mapToResponseDto(user);
   }

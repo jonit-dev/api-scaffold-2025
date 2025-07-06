@@ -124,39 +124,39 @@ export interface IWebhookEvent {
 
 // Enums
 export enum PaymentStatus {
-  REQUIRES_PAYMENT_METHOD = "requires_payment_method",
-  REQUIRES_CONFIRMATION = "requires_confirmation",
-  REQUIRES_ACTION = "requires_action",
-  PROCESSING = "processing",
-  REQUIRES_CAPTURE = "requires_capture",
-  CANCELED = "canceled",
-  SUCCEEDED = "succeeded",
+  RequiresPaymentMethod = "RequiresPaymentMethod",
+  RequiresConfirmation = "RequiresConfirmation",
+  RequiresAction = "RequiresAction",
+  Processing = "Processing",
+  RequiresCapture = "RequiresCapture",
+  Canceled = "Canceled",
+  Succeeded = "Succeeded",
 }
 
 export enum SubscriptionStatus {
-  ACTIVE = "active",
-  PAST_DUE = "past_due",
-  UNPAID = "unpaid",
-  CANCELED = "canceled",
-  INCOMPLETE = "incomplete",
-  INCOMPLETE_EXPIRED = "incomplete_expired",
-  TRIALING = "trialing",
-  PAUSED = "paused",
+  Active = "Active",
+  PastDue = "PastDue",
+  Unpaid = "Unpaid",
+  Canceled = "Canceled",
+  Incomplete = "Incomplete",
+  IncompleteExpired = "IncompleteExpired",
+  Trialing = "Trialing",
+  Paused = "Paused",
 }
 
 export enum StripeWebhookEventType {
-  PAYMENT_INTENT_SUCCEEDED = "payment_intent.succeeded",
-  PAYMENT_INTENT_FAILED = "payment_intent.payment_failed",
-  CUSTOMER_CREATED = "customer.created",
-  CUSTOMER_UPDATED = "customer.updated",
-  CUSTOMER_DELETED = "customer.deleted",
-  INVOICE_PAYMENT_SUCCEEDED = "invoice.payment_succeeded",
-  INVOICE_PAYMENT_FAILED = "invoice.payment_failed",
-  SUBSCRIPTION_CREATED = "customer.subscription.created",
-  SUBSCRIPTION_UPDATED = "customer.subscription.updated",
-  SUBSCRIPTION_DELETED = "customer.subscription.deleted",
-  SUBSCRIPTION_TRIAL_WILL_END = "customer.subscription.trial_will_end",
-  INVOICE_UPCOMING = "invoice.upcoming",
+  PaymentIntentSucceeded = "payment_intent.succeeded",
+  PaymentIntentFailed = "payment_intent.payment_failed",
+  CustomerCreated = "customer.created",
+  CustomerUpdated = "customer.updated",
+  CustomerDeleted = "customer.deleted",
+  InvoicePaymentSucceeded = "invoice.payment_succeeded",
+  InvoicePaymentFailed = "invoice.payment_failed",
+  SubscriptionCreated = "customer.subscription.created",
+  SubscriptionUpdated = "customer.subscription.updated",
+  SubscriptionDeleted = "customer.subscription.deleted",
+  SubscriptionTrialWillEnd = "customer.subscription.trial_will_end",
+  InvoiceUpcoming = "invoice.upcoming",
 }
 
 // API Response types

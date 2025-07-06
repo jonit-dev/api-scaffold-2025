@@ -15,3 +15,6 @@
 - Favor constructor injection like `constructor(private myService: MyService) {}` instead of Container.get
 - When creating controllers make sure to hook them on app.ts
 - use LoggerService for debbuging if needed
+- Never use process.env directly. Hook variable on env.ts
+- Promote DRY, SRP, KISS as main principles
+- Use mermaid for diagrams in documentation - do not use () inside of it

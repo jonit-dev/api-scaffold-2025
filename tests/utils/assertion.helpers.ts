@@ -109,12 +109,12 @@ export class AssertionHelpers {
       expect.objectContaining({
         id: expect.any(String),
         email: expect.any(String),
-        first_name: expect.any(String),
-        last_name: expect.any(String),
+        firstName: expect.any(String),
+        lastName: expect.any(String),
         role: expect.any(String),
         status: expect.any(String),
-        created_at: expect.anything(), // Can be string or Date
-        updated_at: expect.anything(), // Can be string or Date
+        createdAt: expect.anything(), // Can be string or Date
+        updatedAt: expect.anything(), // Can be string or Date
         ...expectedProperties,
       }),
     );

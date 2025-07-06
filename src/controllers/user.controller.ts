@@ -49,14 +49,14 @@ export class UserController {
     @QueryParam("limit") limit: number = 10,
     @QueryParam("role") role?: UserRole,
     @QueryParam("status") status?: UserStatus,
-    @QueryParam("email_verified") emailVerified?: boolean,
+    @QueryParam("emailVerified") emailVerified?: boolean,
     @QueryParam("search") search?: string,
   ): Promise<IPaginatedResult<UserResponseDto>> {
     const filters: IUserFilters = {};
 
     if (role) filters.role = role;
     if (status) filters.status = status;
-    if (emailVerified !== undefined) filters.email_verified = emailVerified;
+    if (emailVerified !== undefined) filters.emailVerified = emailVerified;
     if (search) filters.search = search;
 
     return await this.userService.findAll(page, limit, filters);

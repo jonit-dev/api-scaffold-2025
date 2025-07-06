@@ -32,17 +32,17 @@ describe("UserController Unit Tests", () => {
     it("should create a new user successfully", async () => {
       const createUserDto: CreateUserDto = {
         email: "test@example.com",
-        first_name: "John",
-        last_name: "Doe",
+        firstName: "John",
+        lastName: "Doe",
         password: "Password123!",
-        role: UserRole.USER,
+        role: UserRole.User,
         phone: "+1234567890",
       };
 
       const createdUser = AuthFactory.createTestUserResponse({
         email: createUserDto.email,
-        first_name: createUserDto.first_name,
-        last_name: createUserDto.last_name,
+        firstName: createUserDto.firstName,
+        lastName: createUserDto.lastName,
         role: createUserDto.role,
         phone: createUserDto.phone,
       });
@@ -84,7 +84,7 @@ describe("UserController Unit Tests", () => {
 
     it("should apply filters when provided", async () => {
       const paginatedResult = {
-        data: [AuthFactory.createTestUserResponse({ role: UserRole.ADMIN })],
+        data: [AuthFactory.createTestUserResponse({ role: UserRole.Admin })],
         pagination: {
           page: 1,
           limit: 10,
@@ -99,17 +99,17 @@ describe("UserController Unit Tests", () => {
       const result = await userController.getAllUsers(
         1,
         10,
-        UserRole.ADMIN,
-        UserStatus.ACTIVE,
+        UserRole.Admin,
+        UserStatus.Active,
         true,
         "john",
       );
 
       expect(result).toEqual(paginatedResult);
       expect(mockUserService.findAll).toHaveBeenCalledWith(1, 10, {
-        role: UserRole.ADMIN,
-        status: UserStatus.ACTIVE,
-        email_verified: true,
+        role: UserRole.Admin,
+        status: UserStatus.Active,
+        emailVerified: true,
         search: "john",
       });
     });
@@ -133,15 +133,15 @@ describe("UserController Unit Tests", () => {
     it("should update user successfully", async () => {
       const userId = "user-123";
       const updateUserDto: UpdateUserDto = {
-        first_name: "Updated",
-        last_name: "Name",
+        firstName: "Updated",
+        lastName: "Name",
         phone: "+9876543210",
       };
 
       const updatedUser = AuthFactory.createTestUserResponse({
         id: userId,
-        first_name: updateUserDto.first_name,
-        last_name: updateUserDto.last_name,
+        firstName: updateUserDto.firstName,
+        lastName: updateUserDto.lastName,
         phone: updateUserDto.phone,
       });
 
@@ -172,7 +172,7 @@ describe("UserController Unit Tests", () => {
   describe("updateUserStatus", () => {
     it("should update user status successfully", async () => {
       const userId = "user-123";
-      const newStatus = UserStatus.SUSPENDED;
+      const newStatus = UserStatus.Suspended;
 
       const updatedUser = AuthFactory.createTestUserResponse({
         id: userId,
@@ -197,8 +197,8 @@ describe("UserController Unit Tests", () => {
     it("should search users successfully", async () => {
       const query = "john";
       const users = [
-        AuthFactory.createTestUserResponse({ first_name: "John" }),
-        AuthFactory.createTestUserResponse({ first_name: "Johnny" }),
+        AuthFactory.createTestUserResponse({ firstName: "John" }),
+        AuthFactory.createTestUserResponse({ firstName: "Johnny" }),
       ];
 
       const paginatedResult = {
@@ -242,16 +242,16 @@ describe("UserController Unit Tests", () => {
     it("should update current user successfully", async () => {
       const userId = "current-user-123";
       const updateUserDto: UpdateUserDto = {
-        first_name: "Updated",
+        firstName: "Updated",
         phone: "+9876543210",
       };
       const mockRequest = {
-        user: { id: userId, email: "test@example.com", role: UserRole.USER },
+        user: { id: userId, email: "test@example.com", role: UserRole.User },
       } as any;
 
       const updatedUser = AuthFactory.createTestUserResponse({
         id: userId,
-        first_name: updateUserDto.first_name,
+        firstName: updateUserDto.firstName,
         phone: updateUserDto.phone,
       });
 

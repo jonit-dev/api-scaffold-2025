@@ -23,9 +23,9 @@ describe("RbacMiddleware", () => {
 
   describe("use", () => {
     it("should allow access when user has required role", () => {
-      const rbacMiddleware = new RbacMiddleware([UserRole.USER]);
+      const rbacMiddleware = new RbacMiddleware([UserRole.User]);
       const authenticatedUser = AuthFactory.createAuthenticatedUser({
-        role: UserRole.USER,
+        role: UserRole.User,
       });
       mockRequest.user = authenticatedUser;
 
@@ -35,9 +35,9 @@ describe("RbacMiddleware", () => {
     });
 
     it("should allow admin access to any role requirement", () => {
-      const rbacMiddleware = new RbacMiddleware([UserRole.MODERATOR]);
+      const rbacMiddleware = new RbacMiddleware([UserRole.Moderator]);
       const adminUser = AuthFactory.createAuthenticatedUser({
-        role: UserRole.ADMIN,
+        role: UserRole.Admin,
       });
       mockRequest.user = adminUser;
 
@@ -48,11 +48,11 @@ describe("RbacMiddleware", () => {
 
     it("should allow access when user has one of multiple required roles", () => {
       const rbacMiddleware = new RbacMiddleware([
-        UserRole.ADMIN,
-        UserRole.MODERATOR,
+        UserRole.Admin,
+        UserRole.Moderator,
       ]);
       const moderatorUser = AuthFactory.createAuthenticatedUser({
-        role: UserRole.MODERATOR,
+        role: UserRole.Moderator,
       });
       mockRequest.user = moderatorUser;
 
@@ -62,7 +62,7 @@ describe("RbacMiddleware", () => {
     });
 
     it("should throw UnauthorizedException when no user in request", () => {
-      const rbacMiddleware = new RbacMiddleware([UserRole.USER]);
+      const rbacMiddleware = new RbacMiddleware([UserRole.User]);
       mockRequest.user = undefined;
 
       rbacMiddleware.use(mockRequest, mockResponse, mockNext);
@@ -72,9 +72,9 @@ describe("RbacMiddleware", () => {
     });
 
     it("should throw ForbiddenException when user lacks required role", () => {
-      const rbacMiddleware = new RbacMiddleware([UserRole.ADMIN]);
+      const rbacMiddleware = new RbacMiddleware([UserRole.Admin]);
       const regularUser = AuthFactory.createAuthenticatedUser({
-        role: UserRole.USER,
+        role: UserRole.User,
       });
       mockRequest.user = regularUser;
 
@@ -88,11 +88,11 @@ describe("RbacMiddleware", () => {
 
     it("should throw ForbiddenException when user has wrong role from multiple options", () => {
       const rbacMiddleware = new RbacMiddleware([
-        UserRole.ADMIN,
-        UserRole.MODERATOR,
+        UserRole.Admin,
+        UserRole.Moderator,
       ]);
       const regularUser = AuthFactory.createAuthenticatedUser({
-        role: UserRole.USER,
+        role: UserRole.User,
       });
       mockRequest.user = regularUser;
 
@@ -105,7 +105,7 @@ describe("RbacMiddleware", () => {
     });
 
     it("should handle errors by passing them to next", () => {
-      const rbacMiddleware = new RbacMiddleware([UserRole.USER]);
+      const rbacMiddleware = new RbacMiddleware([UserRole.User]);
       // Simulate an error by making user undefined but still present
       mockRequest.user = null;
 
@@ -119,21 +119,21 @@ describe("RbacMiddleware", () => {
     let rbacMiddleware: RbacMiddleware;
 
     beforeEach(() => {
-      rbacMiddleware = new RbacMiddleware([UserRole.USER]);
+      rbacMiddleware = new RbacMiddleware([UserRole.User]);
     });
 
     it("should return true when admin role checking any role", () => {
-      const hasRole = (rbacMiddleware as any).hasRequiredRole(UserRole.ADMIN, [
-        UserRole.USER,
-        UserRole.MODERATOR,
+      const hasRole = (rbacMiddleware as any).hasRequiredRole(UserRole.Admin, [
+        UserRole.User,
+        UserRole.Moderator,
       ]);
 
       expect(hasRole).toBe(true);
     });
 
     it("should return true when user role matches required role", () => {
-      const hasRole = (rbacMiddleware as any).hasRequiredRole(UserRole.USER, [
-        UserRole.USER,
+      const hasRole = (rbacMiddleware as any).hasRequiredRole(UserRole.User, [
+        UserRole.User,
       ]);
 
       expect(hasRole).toBe(true);
@@ -141,17 +141,17 @@ describe("RbacMiddleware", () => {
 
     it("should return true when user role is in required roles list", () => {
       const hasRole = (rbacMiddleware as any).hasRequiredRole(
-        UserRole.MODERATOR,
-        [UserRole.USER, UserRole.MODERATOR, UserRole.ADMIN],
+        UserRole.Moderator,
+        [UserRole.User, UserRole.Moderator, UserRole.Admin],
       );
 
       expect(hasRole).toBe(true);
     });
 
     it("should return false when user role is not in required roles list", () => {
-      const hasRole = (rbacMiddleware as any).hasRequiredRole(UserRole.USER, [
-        UserRole.ADMIN,
-        UserRole.MODERATOR,
+      const hasRole = (rbacMiddleware as any).hasRequiredRole(UserRole.User, [
+        UserRole.Admin,
+        UserRole.Moderator,
       ]);
 
       expect(hasRole).toBe(false);
@@ -159,7 +159,7 @@ describe("RbacMiddleware", () => {
 
     it("should return false when required roles list is empty", () => {
       const hasRole = (rbacMiddleware as any).hasRequiredRole(
-        UserRole.USER,
+        UserRole.User,
         [],
       );
 
@@ -169,42 +169,42 @@ describe("RbacMiddleware", () => {
 
   describe("createRoleMiddleware", () => {
     it("should create middleware with single role", () => {
-      const middleware = createRoleMiddleware(UserRole.ADMIN);
+      const middleware = createRoleMiddleware(UserRole.Admin);
 
       expect(middleware).toBeInstanceOf(RbacMiddleware);
-      expect((middleware as any).requiredRoles).toEqual([UserRole.ADMIN]);
+      expect((middleware as any).requiredRoles).toEqual([UserRole.Admin]);
     });
 
     it("should create middleware with multiple roles", () => {
       const middleware = createRoleMiddleware(
-        UserRole.ADMIN,
-        UserRole.MODERATOR,
+        UserRole.Admin,
+        UserRole.Moderator,
       );
 
       expect(middleware).toBeInstanceOf(RbacMiddleware);
       expect((middleware as any).requiredRoles).toEqual([
-        UserRole.ADMIN,
-        UserRole.MODERATOR,
+        UserRole.Admin,
+        UserRole.Moderator,
       ]);
     });
 
     it("should create different instances for different calls", () => {
-      const middleware1 = createRoleMiddleware(UserRole.ADMIN);
-      const middleware2 = createRoleMiddleware(UserRole.USER);
+      const middleware1 = createRoleMiddleware(UserRole.Admin);
+      const middleware2 = createRoleMiddleware(UserRole.User);
 
       expect(middleware1).not.toBe(middleware2);
-      expect((middleware1 as any).requiredRoles).toEqual([UserRole.ADMIN]);
-      expect((middleware2 as any).requiredRoles).toEqual([UserRole.USER]);
+      expect((middleware1 as any).requiredRoles).toEqual([UserRole.Admin]);
+      expect((middleware2 as any).requiredRoles).toEqual([UserRole.User]);
     });
   });
 
   describe("Integration scenarios", () => {
     it("should work correctly in a typical admin-only scenario", () => {
-      const adminOnlyMiddleware = createRoleMiddleware(UserRole.ADMIN);
+      const adminOnlyMiddleware = createRoleMiddleware(UserRole.Admin);
 
       // Test with admin user
       const adminUser = AuthFactory.createAuthenticatedUser({
-        role: UserRole.ADMIN,
+        role: UserRole.Admin,
       });
       mockRequest.user = adminUser;
       adminOnlyMiddleware.use(mockRequest, mockResponse, mockNext);
@@ -215,7 +215,7 @@ describe("RbacMiddleware", () => {
 
       // Test with regular user
       const regularUser = AuthFactory.createAuthenticatedUser({
-        role: UserRole.USER,
+        role: UserRole.User,
       });
       mockRequest.user = regularUser;
       adminOnlyMiddleware.use(mockRequest, mockResponse, mockNext);
@@ -224,13 +224,13 @@ describe("RbacMiddleware", () => {
 
     it("should work correctly in a moderator-or-admin scenario", () => {
       const moderatorOrAdminMiddleware = createRoleMiddleware(
-        UserRole.MODERATOR,
-        UserRole.ADMIN,
+        UserRole.Moderator,
+        UserRole.Admin,
       );
 
       // Test with moderator user
       const moderatorUser = AuthFactory.createAuthenticatedUser({
-        role: UserRole.MODERATOR,
+        role: UserRole.Moderator,
       });
       mockRequest.user = moderatorUser;
       moderatorOrAdminMiddleware.use(mockRequest, mockResponse, mockNext);
@@ -241,7 +241,7 @@ describe("RbacMiddleware", () => {
 
       // Test with admin user (should also work)
       const adminUser = AuthFactory.createAuthenticatedUser({
-        role: UserRole.ADMIN,
+        role: UserRole.Admin,
       });
       mockRequest.user = adminUser;
       moderatorOrAdminMiddleware.use(mockRequest, mockResponse, mockNext);
@@ -252,7 +252,7 @@ describe("RbacMiddleware", () => {
 
       // Test with regular user (should fail)
       const regularUser = AuthFactory.createAuthenticatedUser({
-        role: UserRole.USER,
+        role: UserRole.User,
       });
       mockRequest.user = regularUser;
       moderatorOrAdminMiddleware.use(mockRequest, mockResponse, mockNext);

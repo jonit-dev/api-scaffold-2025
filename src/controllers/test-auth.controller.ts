@@ -24,7 +24,7 @@ export class TestAuthController {
   }
 
   @Get("/admin-only")
-  @RequireRole(UserRole.ADMIN)
+  @RequireRole(UserRole.Admin)
   public getAdminOnlyEndpoint(): object {
     return {
       message: "This is an admin-only endpoint",
@@ -33,7 +33,7 @@ export class TestAuthController {
   }
 
   @Get("/moderator-or-admin")
-  @RequireRole(UserRole.MODERATOR, UserRole.ADMIN)
+  @RequireRole(UserRole.Moderator, UserRole.Admin)
   public getModeratorOrAdminEndpoint(): object {
     return {
       message: "This endpoint requires moderator or admin role",
@@ -42,7 +42,7 @@ export class TestAuthController {
   }
 
   @Post("/create-user")
-  @RequireRole(UserRole.ADMIN)
+  @RequireRole(UserRole.Admin)
   public createUser(@Body() userData: object): object {
     return {
       message: "User created successfully",
@@ -62,7 +62,7 @@ export class TestAuthController {
   }
 
   @Post("/admin/users")
-  @RequireRole(UserRole.ADMIN)
+  @RequireRole(UserRole.Admin)
   public adminCreateUser(@Body() createUserData: object): object {
     return {
       message: "Admin created user",

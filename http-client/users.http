@@ -11,8 +11,8 @@ Content-Type: application/json
 {
   "email": "newuser@example.com",
   "password": "SecurePass123!",
-  "first_name": "New",
-  "last_name": "User",
+  "firstName": "New",
+  "lastName": "User",
   "role": "USER",
   "phone": "+1234567890"
 }
@@ -22,7 +22,7 @@ GET {{baseUrl}}/users?page=1&limit=10
 Authorization: Bearer {{token}}
 
 ### Get All Users with Filters
-GET {{baseUrl}}/users?status=ACTIVE&role=USER&email_verified=true&search=john
+GET {{baseUrl}}/users?status=ACTIVE&role=USER&emailVerified=true&search=john
 Authorization: Bearer {{token}}
 
 ### Get User by ID
@@ -35,8 +35,8 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "first_name": "Updated",
-  "last_name": "User",
+  "firstName": "Updated",
+  "lastName": "User",
   "email": "updated@example.com",
   "phone": "+9876543210"
 }
@@ -68,8 +68,8 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "first_name": "Updated",
-  "last_name": "Profile",
+  "firstName": "Updated",
+  "lastName": "Profile",
   "email": "updated-profile@example.com",
   "phone": "+5555555555"
 }

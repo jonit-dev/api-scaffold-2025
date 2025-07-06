@@ -88,9 +88,9 @@ export interface IDatabase {
 // Base entity interface
 export interface IBaseEntity {
   id: string;
-  created_at: string;
-  updated_at: string;
-  deleted_at?: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
 }
 
 // Common field types

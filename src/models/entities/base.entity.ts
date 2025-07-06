@@ -1,4 +1,4 @@
-import { IBaseEntity as IBaseEntityType } from "@common-types/database.types";
+import { IBaseEntity as IBaseEntityType } from "../../types/database.types";
 
 export interface IBaseEntity extends IBaseEntityType {
   id: string;
@@ -9,15 +9,22 @@ export interface IBaseEntity extends IBaseEntityType {
 
 export abstract class BaseEntityModel implements IBaseEntity {
   id: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
   created_at: string;
   updated_at: string;
   deleted_at?: string;
 
   constructor(data: Partial<IBaseEntity>) {
     this.id = data.id || "";
-    this.created_at = data.created_at || new Date().toISOString();
-    this.updated_at = data.updated_at || new Date().toISOString();
+    const now = new Date().toISOString();
+    this.created_at = data.created_at || now;
+    this.updated_at = data.updated_at || now;
     this.deleted_at = data.deleted_at;
+    this.createdAt = this.created_at;
+    this.updatedAt = this.updated_at;
+    this.deletedAt = this.deleted_at;
   }
 
   // Check if entity is soft deleted
@@ -27,19 +34,27 @@ export abstract class BaseEntityModel implements IBaseEntity {
 
   // Mark entity as deleted
   markAsDeleted(): void {
-    this.deleted_at = new Date().toISOString();
-    this.updated_at = new Date().toISOString();
+    const now = new Date().toISOString();
+    this.deleted_at = now;
+    this.deletedAt = now;
+    this.updated_at = now;
+    this.updatedAt = now;
   }
 
   // Restore soft deleted entity
   restore(): void {
     this.deleted_at = undefined;
-    this.updated_at = new Date().toISOString();
+    this.deletedAt = undefined;
+    const now = new Date().toISOString();
+    this.updated_at = now;
+    this.updatedAt = now;
   }
 
   // Update the updated_at timestamp
   touch(): void {
-    this.updated_at = new Date().toISOString();
+    const now = new Date().toISOString();
+    this.updated_at = now;
+    this.updatedAt = now;
   }
 
   // Convert to plain object for database operations

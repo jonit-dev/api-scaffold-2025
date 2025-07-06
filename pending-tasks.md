@@ -1,1 +1,2 @@
-Winston
+- sqlite mode should support basic auth with jwt
+- production mode should use pm2

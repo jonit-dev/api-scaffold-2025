@@ -11,7 +11,7 @@ import { Cache } from "../../decorators/cache.decorator";
 
 describe("Cache Integration Tests", () => {
   let app: express.Application;
-  let redisService: CacheService;
+  let cacheService: CacheService;
 
   beforeEach(() => {
     app = express();
@@ -47,12 +47,15 @@ describe("Cache Integration Tests", () => {
       invalidateCache: vi.fn(),
       invalidateCachePattern: vi.fn(),
       getClient: vi.fn(),
+      getRedisClient: vi.fn(),
+      getHealthStatus: vi.fn(),
+      incrWithExpire: vi.fn(),
       disconnect: vi.fn(),
     };
 
     // Register the mock service in the container
     Container.set(CacheService, mockCacheService);
-    redisService = Container.get(CacheService);
+    cacheService = Container.get(CacheService);
   });
 
   afterEach(() => {
@@ -68,19 +71,19 @@ describe("Cache Integration Tests", () => {
       });
 
       // First request - cache miss
-      vi.mocked(redisService.get).mockResolvedValue(null);
-      vi.mocked(redisService.set).mockResolvedValue(undefined);
+      vi.mocked(cacheService.get).mockResolvedValue(null);
+      vi.mocked(cacheService.set).mockResolvedValue(undefined);
 
       const response1 = await request(app).get("/test").expect(200);
 
       expect(response1.headers["x-cache"]).toBe("MISS");
       expect(response1.body.message).toBe("Hello World");
-      expect(redisService.get).toHaveBeenCalled();
-      expect(redisService.set).toHaveBeenCalled();
+      expect(cacheService.get).toHaveBeenCalled();
+      expect(cacheService.set).toHaveBeenCalled();
 
       // Second request - cache hit
       const cachedData = { message: "Hello World", timestamp: 123456789 };
-      vi.mocked(redisService.get).mockResolvedValue(cachedData);
+      vi.mocked(cacheService.get).mockResolvedValue(cachedData);
 
       const response2 = await request(app).get("/test").expect(200);
 
@@ -93,7 +96,7 @@ describe("Cache Integration Tests", () => {
         res.json({ message: "Created" });
       });
 
-      vi.mocked(redisService.get).mockResolvedValue(null);
+      vi.mocked(cacheService.get).mockResolvedValue(null);
 
       const response = await request(app)
         .post("/test")
@@ -101,7 +104,7 @@ describe("Cache Integration Tests", () => {
         .expect(200);
 
       expect(response.headers["x-cache"]).toBeUndefined();
-      expect(redisService.get).not.toHaveBeenCalled();
+      expect(cacheService.get).not.toHaveBeenCalled();
     });
 
     it("should respect cache condition", async () => {
@@ -118,14 +121,14 @@ describe("Cache Integration Tests", () => {
       // Request without cache condition
       await request(app).get("/test-condition?cache=false").expect(200);
 
-      expect(redisService.get).not.toHaveBeenCalled();
+      expect(cacheService.get).not.toHaveBeenCalled();
 
       // Request with cache condition
-      vi.mocked(redisService.get).mockResolvedValue(null);
+      vi.mocked(cacheService.get).mockResolvedValue(null);
 
       await request(app).get("/test-condition?cache=true").expect(200);
 
-      expect(redisService.get).toHaveBeenCalled();
+      expect(cacheService.get).toHaveBeenCalled();
     });
 
     it("should use custom key generator", async () => {
@@ -141,12 +144,12 @@ describe("Cache Integration Tests", () => {
         },
       );
 
-      vi.mocked(redisService.get).mockResolvedValue(null);
+      vi.mocked(cacheService.get).mockResolvedValue(null);
 
       await request(app).get("/test-custom-key").expect(200);
 
       expect(customKeyGen).toHaveBeenCalled();
-      expect(redisService.get).toHaveBeenCalledWith("custom-key");
+      expect(cacheService.get).toHaveBeenCalledWith("custom-key");
     });
   });
 
@@ -176,7 +179,7 @@ describe("Cache Integration Tests", () => {
 
       // This test would require more complex setup to fully test decorator metadata
       // For now, we'll test the basic middleware functionality
-      vi.mocked(redisService.get).mockResolvedValue(null);
+      vi.mocked(cacheService.get).mockResolvedValue(null);
 
       const response = await request(app).get("/decorated").expect(200);
 
@@ -191,7 +194,7 @@ describe("Cache Integration Tests", () => {
       });
 
       // Simulate Redis error
-      vi.mocked(redisService.get).mockRejectedValue(
+      vi.mocked(cacheService.get).mockRejectedValue(
         new Error("Redis connection failed"),
       );
 
@@ -207,7 +210,7 @@ describe("Cache Integration Tests", () => {
       });
 
       // Return invalid JSON from cache
-      vi.mocked(redisService.get).mockResolvedValue("invalid-json{");
+      vi.mocked(cacheService.get).mockResolvedValue("invalid-json{");
 
       const response = await request(app).get("/test").expect(200);
 
@@ -222,7 +225,7 @@ describe("Cache Integration Tests", () => {
         res.json({ message: "Headers test" });
       });
 
-      vi.mocked(redisService.get).mockResolvedValue(null);
+      vi.mocked(cacheService.get).mockResolvedValue(null);
 
       const response = await request(app).get("/test-headers").expect(200);
 
@@ -236,7 +239,7 @@ describe("Cache Integration Tests", () => {
       });
 
       const cachedData = { message: "Cached response" };
-      vi.mocked(redisService.get).mockResolvedValue(cachedData);
+      vi.mocked(cacheService.get).mockResolvedValue(cachedData);
 
       const response = await request(app).get("/test-hit").expect(200);
 

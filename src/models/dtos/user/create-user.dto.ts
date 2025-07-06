@@ -19,12 +19,12 @@ export class CreateUserDto {
   @IsString()
   @MinLength(2)
   @MaxLength(50)
-  first_name!: string;
+  firstName!: string;
 
   @IsString()
   @MinLength(2)
   @MaxLength(50)
-  last_name!: string;
+  lastName!: string;
 
   @IsString()
   @MinLength(8)

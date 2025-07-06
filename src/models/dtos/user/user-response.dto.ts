@@ -10,10 +10,10 @@ export class UserResponseDto {
   email!: string;
 
   @Expose()
-  first_name!: string;
+  firstName!: string;
 
   @Expose()
-  last_name!: string;
+  lastName!: string;
 
   @Expose()
   role!: UserRole;
@@ -22,37 +22,37 @@ export class UserResponseDto {
   status!: UserStatus;
 
   @Expose()
-  email_verified!: boolean;
+  emailVerified!: boolean;
 
   @Expose()
   phone?: string;
 
   @Expose()
-  avatar_url?: string;
+  avatarUrl?: string;
 
   @Expose()
-  stripe_customer_id?: string;
+  stripeCustomerId?: string;
 
   @Expose()
   @Transform(({ value }) => (value ? new Date(value) : null))
-  last_login?: Date;
+  lastLogin?: Date;
 
   @Expose()
   @Transform(({ value }) => new Date(value))
-  created_at!: Date;
+  createdAt!: Date;
 
   @Expose()
   @Transform(({ value }) => new Date(value))
-  updated_at!: Date;
+  updatedAt!: Date;
 
   @Expose()
-  @Transform(({ obj }) => `${obj.first_name} ${obj.last_name}`)
-  full_name!: string;
+  @Transform(({ obj }) => `${obj.firstName} ${obj.lastName}`)
+  fullName!: string;
 
   // Exclude sensitive fields
   @Exclude()
-  password_hash?: string;
+  passwordHash?: string;
 
   @Exclude()
-  deleted_at?: string;
+  deletedAt?: string;
 }

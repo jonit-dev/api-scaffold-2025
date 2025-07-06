@@ -61,7 +61,7 @@ describe("StripeWebhookService", () => {
       const signature = "test_signature";
       const mockEvent = {
         id: "evt_123",
-        type: StripeWebhookEventType.PAYMENT_INTENT_SUCCEEDED,
+        type: StripeWebhookEventType.PaymentIntentSucceeded,
         data: {
           object: {
             id: "pi_123",
@@ -112,7 +112,7 @@ describe("StripeWebhookService", () => {
       const signature = "test_signature";
       const mockEvent = {
         id: "evt_123",
-        type: StripeWebhookEventType.PAYMENT_INTENT_SUCCEEDED,
+        type: StripeWebhookEventType.PaymentIntentSucceeded,
         data: {
           object: {
             id: "pi_123",
@@ -252,7 +252,7 @@ describe("StripeWebhookService", () => {
       const signature = "test_signature";
       const mockEvent = {
         id: "evt_123",
-        type: StripeWebhookEventType.PAYMENT_INTENT_SUCCEEDED,
+        type: StripeWebhookEventType.PaymentIntentSucceeded,
         data: {
           object: {
             id: "pi_123",

@@ -20,13 +20,13 @@ export class UpdateUserDto {
   @MinLength(2)
   @MaxLength(50)
   @IsOptional()
-  first_name?: string;
+  firstName?: string;
 
   @IsString()
   @MinLength(2)
   @MaxLength(50)
   @IsOptional()
-  last_name?: string;
+  lastName?: string;
 
   @IsEnum(UserRole)
   @IsOptional()
@@ -42,13 +42,13 @@ export class UpdateUserDto {
 
   @IsUrl()
   @IsOptional()
-  avatar_url?: string;
+  avatarUrl?: string;
 
   @IsBoolean()
   @IsOptional()
-  email_verified?: boolean;
+  emailVerified?: boolean;
 
   @IsString()
   @IsOptional()
-  stripe_customer_id?: string;
+  stripeCustomerId?: string;
 }
