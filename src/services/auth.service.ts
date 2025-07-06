@@ -4,6 +4,7 @@ import { Inject, Service } from "typedi";
 import * as bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
 import { config } from "../config/env";
+import { HttpStatus } from "../types/http-status";
 import {
   AccountSuspendedException,
   AuthException,
@@ -72,7 +73,7 @@ export class AuthService {
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     // Validate password confirmation
     if (registerDto.password !== registerDto.confirmPassword) {
-      throw new AuthException("Passwords do not match", 400);
+      throw new AuthException("Passwords do not match", HttpStatus.BadRequest);
     }
 
     // Check if email already exists
@@ -80,7 +81,7 @@ export class AuthService {
       registerDto.email,
     );
     if (existingUser) {
-      throw new AuthException("Email already registered", 409);
+      throw new AuthException("Email already registered", HttpStatus.Conflict);
     }
 
     try {
@@ -93,7 +94,10 @@ export class AuthService {
       if (error instanceof AuthException) {
         throw error;
       }
-      throw new AuthException("Registration failed", 500);
+      throw new AuthException(
+        "Registration failed",
+        HttpStatus.InternalServerError,
+      );
     }
   }
 
@@ -101,7 +105,10 @@ export class AuthService {
     registerDto: RegisterDto,
   ): Promise<AuthResponseDto> {
     if (!this.supabaseAuth) {
-      throw new AuthException("Supabase not configured", 500);
+      throw new AuthException(
+        "Supabase not configured",
+        HttpStatus.InternalServerError,
+      );
     }
 
     // Register user with Supabase Auth
@@ -118,11 +125,14 @@ export class AuthService {
       });
 
     if (authError) {
-      throw new AuthException(authError.message, 400);
+      throw new AuthException(authError.message, HttpStatus.BadRequest);
     }
 
     if (!authData.user) {
-      throw new AuthException("User registration failed", 500);
+      throw new AuthException(
+        "User registration failed",
+        HttpStatus.InternalServerError,
+      );
     }
 
     // Create user profile in our database
@@ -174,8 +184,8 @@ export class AuthService {
     // Generate unique ID
     const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Create user entity
-    const userEntity: Omit<IUserEntity, "createdAt" | "updatedAt"> = {
+    // Create user entity data (plain object for SQLite compatibility)
+    const userEntityData = {
       id: userId,
       email: registerDto.email,
       firstName: registerDto.firstName,
@@ -184,27 +194,11 @@ export class AuthService {
       role: UserRole.User,
       status: UserStatus.Active, // For SQLite, we'll set to active by default
       emailVerified: false, // Can be implemented later
-      get fullName() {
-        return `${this.firstName} ${this.lastName}`;
-      },
-      isActive() {
-        return this.status === UserStatus.Active;
-      },
-      isAdmin() {
-        return this.role === UserRole.Admin;
-      },
-      isModerator() {
-        return this.role === UserRole.Moderator;
-      },
-      hasRole(role: UserRole) {
-        return this.role === role;
-      },
-      hasAnyRole(...roles: UserRole[]) {
-        return roles.includes(this.role);
-      },
     };
 
-    const user = await this.userRepository.create(userEntity);
+    const user = await this.userRepository.create(
+      userEntityData as Omit<IUserEntity, "createdAt" | "updatedAt">,
+    );
 
     // Generate JWT tokens
     const accessToken = this.generateJWT(user);
@@ -245,7 +239,7 @@ export class AuthService {
       if (error instanceof AuthException) {
         throw error;
       }
-      throw new AuthException("Login failed", 500);
+      throw new AuthException("Login failed", HttpStatus.InternalServerError);
     }
   }
 
@@ -253,7 +247,10 @@ export class AuthService {
     loginDto: LoginDto,
   ): Promise<AuthResponseDto> {
     if (!this.supabaseAuth) {
-      throw new AuthException("Supabase not configured", 500);
+      throw new AuthException(
+        "Supabase not configured",
+        HttpStatus.InternalServerError,
+      );
     }
 
     // Login with Supabase Auth
@@ -283,7 +280,7 @@ export class AuthService {
     }
 
     if (user.status === UserStatus.Inactive) {
-      throw new AuthException("Account is inactive", 403);
+      throw new AuthException("Account is inactive", HttpStatus.Forbidden);
     }
 
     // Update last login
@@ -317,7 +314,7 @@ export class AuthService {
     }
 
     if (user.status === UserStatus.Inactive) {
-      throw new AuthException("Account is inactive", 403);
+      throw new AuthException("Account is inactive", HttpStatus.Forbidden);
     }
 
     // Update last login
@@ -354,18 +351,24 @@ export class AuthService {
   async logout(): Promise<void> {
     try {
       if (!this.supabaseAuth) {
-        throw new AuthException("Authentication service not configured", 500);
+        throw new AuthException(
+          "Authentication service not configured",
+          HttpStatus.InternalServerError,
+        );
       }
       // Supabase handles the current session automatically
       const { error } = await this.supabaseAuth.auth.signOut();
       if (error) {
-        throw new AuthException("Logout failed", 500);
+        throw new AuthException(
+          "Logout failed",
+          HttpStatus.InternalServerError,
+        );
       }
     } catch (error) {
       if (error instanceof AuthException) {
         throw error;
       }
-      throw new AuthException("Logout failed", 500);
+      throw new AuthException("Logout failed", HttpStatus.InternalServerError);
     }
   }
 
@@ -374,7 +377,10 @@ export class AuthService {
   ): Promise<SessionResponseDto> {
     try {
       if (!this.supabaseAuth) {
-        throw new AuthException("Authentication service not configured", 500);
+        throw new AuthException(
+          "Authentication service not configured",
+          HttpStatus.InternalServerError,
+        );
       }
 
       const { data: authData, error } =
@@ -383,7 +389,10 @@ export class AuthService {
         });
 
       if (error) {
-        throw new AuthException("Token refresh failed", 401);
+        throw new AuthException(
+          "Token refresh failed",
+          HttpStatus.Unauthorized,
+        );
       }
 
       return {
@@ -393,14 +402,20 @@ export class AuthService {
       if (error instanceof AuthException) {
         throw error;
       }
-      throw new AuthException("Token refresh failed", 500);
+      throw new AuthException(
+        "Token refresh failed",
+        HttpStatus.InternalServerError,
+      );
     }
   }
 
   async forgotPassword(email: string): Promise<void> {
     try {
       if (!this.supabaseAuth) {
-        throw new AuthException("Authentication service not configured", 500);
+        throw new AuthException(
+          "Authentication service not configured",
+          HttpStatus.InternalServerError,
+        );
       }
       const { error } = await this.supabaseAuth.auth.resetPasswordForEmail(
         email,
@@ -423,7 +438,10 @@ export class AuthService {
   async resetPassword(token: string, newPassword: string): Promise<void> {
     try {
       if (!this.supabaseAuth) {
-        throw new AuthException("Authentication service not configured", 500);
+        throw new AuthException(
+          "Authentication service not configured",
+          HttpStatus.InternalServerError,
+        );
       }
       // First verify the OTP token
       const { error: verifyError } = await this.supabaseAuth.auth.verifyOtp({
@@ -457,12 +475,15 @@ export class AuthService {
   ): Promise<void> {
     // Validate password confirmation
     if (changePasswordDto.newPassword !== changePasswordDto.confirmPassword) {
-      throw new AuthException("Passwords do not match", 400);
+      throw new AuthException("Passwords do not match", HttpStatus.BadRequest);
     }
 
     try {
       if (!this.supabaseAuth) {
-        throw new AuthException("Authentication service not configured", 500);
+        throw new AuthException(
+          "Authentication service not configured",
+          HttpStatus.InternalServerError,
+        );
       }
       // The user is already authenticated (middleware verified the token)
       // We can directly update the password without additional verification
@@ -472,42 +493,97 @@ export class AuthService {
       });
 
       if (error) {
-        throw new AuthException("Password change failed", 500);
+        throw new AuthException(
+          "Password change failed",
+          HttpStatus.InternalServerError,
+        );
       }
     } catch (error) {
       if (error instanceof AuthException) {
         throw error;
       }
-      throw new AuthException("Password change failed", 500);
+      throw new AuthException(
+        "Password change failed",
+        HttpStatus.InternalServerError,
+      );
     }
   }
 
   async verifyUser(accessToken: string): Promise<IUserEntity> {
     try {
-      if (!this.supabaseAuth) {
-        throw new AuthException("Authentication service not configured", 500);
+      if (this.isUsingSQLite) {
+        return await this.verifyUserJWT(accessToken);
+      } else {
+        return await this.verifyUserSupabase(accessToken);
       }
-      const {
-        data: { user },
-        error,
-      } = await this.supabaseAuth.auth.getUser(accessToken);
-
-      if (error || !user) {
-        throw new AuthException("Invalid token", 401);
-      }
-
-      const userProfile = await this.userRepository.findById(user.id);
-      if (!userProfile) {
-        throw new UserNotFoundException("User profile not found");
-      }
-
-      return userProfile;
     } catch (error) {
       if (error instanceof AuthException) {
         throw error;
       }
-      throw new AuthException("User verification failed", 500);
+      throw new AuthException(
+        "User verification failed",
+        HttpStatus.InternalServerError,
+      );
     }
+  }
+
+  private async verifyUserJWT(accessToken: string): Promise<IUserEntity> {
+    try {
+      const decoded = jwt.verify(accessToken, config.auth.jwtSecret) as {
+        id: string;
+        email: string;
+        role: string;
+      };
+
+      const user = await this.userRepository.findById(decoded.id);
+      if (!user) {
+        throw new UserNotFoundException("User profile not found");
+      }
+
+      // Check if user is still active
+      if (user.status === UserStatus.Suspended) {
+        throw new AccountSuspendedException("Account is suspended");
+      }
+
+      if (user.status === UserStatus.Inactive) {
+        throw new AuthException("Account is inactive", HttpStatus.Forbidden);
+      }
+
+      return user;
+    } catch (error) {
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw new AuthException("Invalid token", HttpStatus.Unauthorized);
+      }
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new AuthException("Token expired", HttpStatus.Unauthorized);
+      }
+      throw error;
+    }
+  }
+
+  private async verifyUserSupabase(accessToken: string): Promise<IUserEntity> {
+    if (!this.supabaseAuth) {
+      throw new AuthException(
+        "Authentication service not configured",
+        HttpStatus.InternalServerError,
+      );
+    }
+
+    const {
+      data: { user },
+      error,
+    } = await this.supabaseAuth.auth.getUser(accessToken);
+
+    if (error || !user) {
+      throw new AuthException("Invalid token", HttpStatus.Unauthorized);
+    }
+
+    const userProfile = await this.userRepository.findById(user.id);
+    if (!userProfile) {
+      throw new UserNotFoundException("User profile not found");
+    }
+
+    return userProfile;
   }
 
   async getCurrentUser(userId: string): Promise<UserResponseDto> {
@@ -531,7 +607,10 @@ export class AuthService {
   async verifyEmail(token: string): Promise<void> {
     try {
       if (!this.supabaseAuth) {
-        throw new AuthException("Authentication service not configured", 500);
+        throw new AuthException(
+          "Authentication service not configured",
+          HttpStatus.InternalServerError,
+        );
       }
       const { error } = await this.supabaseAuth.auth.verifyOtp({
         token_hash: token,
@@ -539,20 +618,29 @@ export class AuthService {
       });
 
       if (error) {
-        throw new AuthException("Email verification failed", 400);
+        throw new AuthException(
+          "Email verification failed",
+          HttpStatus.BadRequest,
+        );
       }
     } catch (error) {
       if (error instanceof AuthException) {
         throw error;
       }
-      throw new AuthException("Email verification failed", 500);
+      throw new AuthException(
+        "Email verification failed",
+        HttpStatus.InternalServerError,
+      );
     }
   }
 
   async resendVerification(email: string): Promise<void> {
     try {
       if (!this.supabaseAuth) {
-        throw new AuthException("Authentication service not configured", 500);
+        throw new AuthException(
+          "Authentication service not configured",
+          HttpStatus.InternalServerError,
+        );
       }
       const { error } = await this.supabaseAuth.auth.resend({
         type: "signup",
@@ -560,13 +648,19 @@ export class AuthService {
       });
 
       if (error) {
-        throw new AuthException("Verification email resend failed", 400);
+        throw new AuthException(
+          "Verification email resend failed",
+          HttpStatus.BadRequest,
+        );
       }
     } catch (error) {
       if (error instanceof AuthException) {
         throw error;
       }
-      throw new AuthException("Verification email resend failed", 500);
+      throw new AuthException(
+        "Verification email resend failed",
+        HttpStatus.InternalServerError,
+      );
     }
   }
 

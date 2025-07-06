@@ -1,20 +1,25 @@
-# Critical rules
+**Concise Critical Rules**
 
-- use yarn
-- After every task run `yarn verify` and ONLY CONSIDER IT DONE IF ALL 100% PASS!
-- when debugging try: adding logging on the related flow, running `git diff`.
-- To explore folder structure: `tree -I 'node_modules|.git|dist|build' -L 3 --dirsfirst`
-- Always prefix interfaces with `I`
-- Follow existing project structure and naming conventions
-- Run tests / lint / type checks proactively, after changes.
-- To validate endpoints, use `curl`
-- When throwing errors, favor usage of src/exceptions/http-exceptions.ts
-- Use context7 to fetch docs about libs, if needed.
-- Avoid using index.ts to reexport things all the time. Its redundant.
-- If needed to kill a port, use `npx kill-port PORTNUMBERHERE`
-- Favor constructor injection like `constructor(private myService: MyService) {}` instead of Container.get
-- When creating controllers make sure to hook them on app.ts
-- use LoggerService for debbuging if needed
-- Never use process.env directly. Hook variable on env.ts
-- Promote DRY, SRP, KISS as main principles
-- Use mermaid for diagrams in documentation - do not use () inside of it
+- Use **Yarn**.
+- After every change run `yarn verify`; only proceed when **100 % green**.
+- Debug with extra logs + `git diff`.
+- Inspect folders:
+
+  ```bash
+  tree -I 'node_modules|.git|dist|build' -L 3 --dirsfirst
+  ```
+
+- Prefix _all_ interfaces with **I**; follow existing structure/names.
+- Run tests / lint / type-checks proactively.
+- Check endpoints via `curl`.
+- Throw errors via `src/exceptions/http-exceptions.ts`.
+- Grab library docs with **context7** if needed.
+- Skip redundant `index.ts` re-exports.
+- Free a port: `npx kill-port <PORT>`.
+- Prefer constructor DI: `constructor(private svc: MyService) {}` (avoid `Container.get`).
+- Register new controllers in **app.ts**.
+- Use **LoggerService** for debugging.
+- Access env vars only through **env.ts** (no direct `process.env`).
+- Embrace **DRY / SRP / KISS**.
+- Docs: draw diagrams in **Mermaid** (no parentheses).
+- Use the **HttpStatus** enum instead of hard-coding codes.

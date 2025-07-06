@@ -25,24 +25,13 @@ export class AuthMiddleware {
         throw new UnauthorizedException("Access token required");
       }
 
-      // Verify token with Supabase
-      const {
-        data: { user },
-        error,
-      } = await this.supabaseClient.auth.getUser(token);
-
-      if (error || !user) {
-        throw new UnauthorizedException("Invalid or expired token");
-      }
-
-      // Get user profile from our database
-      const userProfile = await this.authService.getUserProfile(user.id);
+      // Verify user using auth service (handles both SQLite and Supabase)
+      const userProfile = await this.authService.verifyUser(token);
 
       const authenticatedUser: IAuthenticatedUser = {
-        id: user.id,
-        email: user.email!,
+        id: userProfile.id,
+        email: userProfile.email,
         role: userProfile.role,
-        supabaseUser: user,
       };
 
       request.user = authenticatedUser;

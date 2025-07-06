@@ -179,10 +179,9 @@ describe("Auth Middleware Integration Tests", () => {
     it("should deny access with invalid Bearer token", async () => {
       const invalidToken = AuthFactory.createInvalidJwtToken();
 
-      mockSupabaseAuth.auth.getUser.mockResolvedValue({
-        data: { user: null },
-        error: { message: "Invalid token" },
-      });
+      (mockAuthService.verifyUser as any).mockRejectedValue(
+        new Error("Invalid or expired token"),
+      );
 
       const response = await request(app)
         .get("/protected")
@@ -191,20 +190,15 @@ describe("Auth Middleware Integration Tests", () => {
 
       expect(response.body).toMatchObject({
         name: "UnauthorizedException",
-        message: "Invalid or expired token",
+        message: "Authentication failed",
       });
     });
 
     it("should allow access with valid token and user profile", async () => {
       const validToken = AuthFactory.createValidJwtToken();
-      const supabaseUser = AuthFactory.createSupabaseUser();
       const userProfile = AuthFactory.createTestUser();
 
-      mockSupabaseAuth.auth.getUser.mockResolvedValue({
-        data: { user: supabaseUser },
-        error: null,
-      });
-      (mockAuthService.getUserProfile as any).mockResolvedValue(userProfile);
+      (mockAuthService.verifyUser as any).mockResolvedValue(userProfile);
 
       const response = await request(app)
         .get("/protected")
@@ -218,13 +212,8 @@ describe("Auth Middleware Integration Tests", () => {
 
     it("should deny access when user profile not found", async () => {
       const validToken = AuthFactory.createValidJwtToken();
-      const supabaseUser = AuthFactory.createSupabaseUser();
 
-      mockSupabaseAuth.auth.getUser.mockResolvedValue({
-        data: { user: supabaseUser },
-        error: null,
-      });
-      (mockAuthService.getUserProfile as any).mockRejectedValue(
+      (mockAuthService.verifyUser as any).mockRejectedValue(
         new Error("User profile not found"),
       );
 
@@ -243,14 +232,9 @@ describe("Auth Middleware Integration Tests", () => {
   describe("Role-based access control", () => {
     const setupValidAuth = (userRole: UserRole) => {
       const validToken = AuthFactory.createValidJwtToken();
-      const supabaseUser = AuthFactory.createSupabaseUser();
       const userProfile = AuthFactory.createTestUser({ role: userRole });
 
-      mockSupabaseAuth.auth.getUser.mockResolvedValue({
-        data: { user: supabaseUser },
-        error: null,
-      });
-      (mockAuthService.getUserProfile as any).mockResolvedValue(userProfile);
+      (mockAuthService.verifyUser as any).mockResolvedValue(userProfile);
 
       return validToken;
     };
@@ -327,7 +311,7 @@ describe("Auth Middleware Integration Tests", () => {
     it("should handle Supabase service errors gracefully", async () => {
       const validToken = AuthFactory.createValidJwtToken();
 
-      mockSupabaseAuth.auth.getUser.mockRejectedValue(
+      (mockAuthService.verifyUser as any).mockRejectedValue(
         new Error("Supabase service unavailable"),
       );
 
@@ -344,13 +328,8 @@ describe("Auth Middleware Integration Tests", () => {
 
     it("should handle auth service errors gracefully", async () => {
       const validToken = AuthFactory.createValidJwtToken();
-      const supabaseUser = AuthFactory.createSupabaseUser();
 
-      mockSupabaseAuth.auth.getUser.mockResolvedValue({
-        data: { user: supabaseUser },
-        error: null,
-      });
-      (mockAuthService.getUserProfile as any).mockRejectedValue(
+      (mockAuthService.verifyUser as any).mockRejectedValue(
         new Error("Database connection failed"),
       );
 

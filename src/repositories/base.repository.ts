@@ -19,14 +19,22 @@ export abstract class BaseRepository<T extends IBaseEntity> {
   protected abstract tableName: string;
   private adapter: IDatabaseAdapter<T>;
   private supabaseClient?: SupabaseClient<IDatabase>;
+  private isTableInitialized = false;
 
   constructor(@Inject("supabase") supabase?: SupabaseClient<IDatabase>) {
     if (config.database.provider === "sqlite") {
       this.adapter = new SQLiteAdapter<T>(SQLiteConfig.getClient());
-      this.initializeTable();
+      // Note: initializeTable() will be called lazily on first use
     } else {
       this.supabaseClient = supabase || getSupabaseClient();
       this.adapter = new SupabaseAdapter<T>(this.supabaseClient);
+    }
+  }
+
+  protected ensureTableInitialized(): void {
+    if (config.database.provider === "sqlite" && !this.isTableInitialized) {
+      this.initializeTable();
+      this.isTableInitialized = true;
     }
   }
 
@@ -42,11 +50,13 @@ export abstract class BaseRepository<T extends IBaseEntity> {
 
   // Create a new record
   async create(data: Omit<T, "id" | "createdAt" | "updatedAt">): Promise<T> {
+    this.ensureTableInitialized();
     return this.adapter.create(data, this.tableName);
   }
 
   // Find a record by ID
   async findById(id: string): Promise<T | null> {
+    this.ensureTableInitialized();
     return this.adapter.findById(id, this.tableName);
   }
 
@@ -56,6 +66,7 @@ export abstract class BaseRepository<T extends IBaseEntity> {
     orderBy?: IOrderByOptions;
     pagination?: IPaginationOptions;
   }): Promise<T[]> {
+    this.ensureTableInitialized();
     return this.adapter.findMany(options || {}, this.tableName);
   }
 
@@ -65,6 +76,7 @@ export abstract class BaseRepository<T extends IBaseEntity> {
     orderBy?: IOrderByOptions;
     pagination?: IPaginationOptions;
   }): Promise<IPaginatedResult<T>> {
+    this.ensureTableInitialized();
     return this.adapter.findWithPagination(options || {}, this.tableName);
   }
 
@@ -73,21 +85,25 @@ export abstract class BaseRepository<T extends IBaseEntity> {
     id: string,
     data: Partial<Omit<T, "id" | "createdAt" | "updatedAt">>,
   ): Promise<T> {
+    this.ensureTableInitialized();
     return this.adapter.update(id, data, this.tableName);
   }
 
   // Soft delete a record
   async softDelete(id: string): Promise<void> {
+    this.ensureTableInitialized();
     return this.adapter.softDelete(id, this.tableName);
   }
 
   // Hard delete a record (permanent)
   async hardDelete(id: string): Promise<void> {
+    this.ensureTableInitialized();
     return this.adapter.hardDelete(id, this.tableName);
   }
 
   // Count records
   async count(filters?: IFilterOptions): Promise<number> {
+    this.ensureTableInitialized();
     return this.adapter.count(filters, this.tableName);
   }
 
@@ -99,6 +115,7 @@ export abstract class BaseRepository<T extends IBaseEntity> {
 
   // Find first record matching filters
   async findFirst(filters?: IFilterOptions): Promise<T | null> {
+    this.ensureTableInitialized();
     return this.adapter.findFirst(filters, this.tableName);
   }
 }

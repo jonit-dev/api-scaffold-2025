@@ -1,4 +1,5 @@
 import { AuthException } from "../exceptions/auth.exception";
+import { HttpStatus } from "../types/http-status";
 
 /**
  * Extracts Bearer token from authorization header
@@ -8,15 +9,21 @@ import { AuthException } from "../exceptions/auth.exception";
 export function extractBearerToken(request: {
   headers?: { authorization?: string };
 }): string | null {
-  const authorization = request.headers?.authorization;
+  const authorization = request.headers?.authorization?.trim();
 
   if (!authorization) {
     return null;
   }
 
-  const [type, token] = authorization.split(" ");
+  const parts = authorization.split(/\s+/); // Split by one or more whitespace characters
 
-  if (type !== "Bearer" || !token) {
+  if (parts.length !== 2) {
+    return null;
+  }
+
+  const [type, token] = parts;
+
+  if (type.toLowerCase() !== "bearer" || !token) {
     return null;
   }
 
@@ -35,7 +42,10 @@ export function extractBearerTokenOrThrow(request: {
   const token = extractBearerToken(request);
 
   if (!token) {
-    throw new AuthException("Missing or invalid authorization token", 401);
+    throw new AuthException(
+      "Missing or invalid authorization token",
+      HttpStatus.Unauthorized,
+    );
   }
 
   return token;

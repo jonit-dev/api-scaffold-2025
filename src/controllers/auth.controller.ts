@@ -8,6 +8,7 @@ import {
 } from "routing-controllers";
 import { Service } from "typedi";
 import { Request } from "express";
+import { HttpStatus } from "../types/http-status";
 import { AuthService } from "../services/auth.service";
 import { LoginDto } from "@models/dtos/auth/login.dto";
 import { RegisterDto } from "@models/dtos/auth/register.dto";
@@ -30,28 +31,28 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post("/register")
-  @HttpCode(201)
+  @HttpCode(HttpStatus.Created)
   @RateLimit(authRateLimits.register)
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
     return await this.authService.register(registerDto);
   }
 
   @Post("/login")
-  @HttpCode(200)
+  @HttpCode(HttpStatus.Ok)
   @RateLimit(authRateLimits.login)
   async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
     return await this.authService.login(loginDto);
   }
 
   @Post("/logout")
-  @HttpCode(204)
+  @HttpCode(HttpStatus.NoContent)
   @Authenticated()
   async logout(): Promise<void> {
     await this.authService.logout();
   }
 
   @Post("/refresh")
-  @HttpCode(200)
+  @HttpCode(HttpStatus.Ok)
   @RateLimit(authRateLimits.refresh)
   async refreshToken(
     @Body() refreshTokenDto: RefreshTokenDto,
@@ -60,7 +61,7 @@ export class AuthController {
   }
 
   @Post("/forgot-password")
-  @HttpCode(200)
+  @HttpCode(HttpStatus.Ok)
   @RateLimit(authRateLimits.forgotPassword)
   async forgotPassword(
     @Body() forgotPasswordDto: ForgotPasswordDto,
@@ -70,7 +71,7 @@ export class AuthController {
   }
 
   @Post("/change-password")
-  @HttpCode(200)
+  @HttpCode(HttpStatus.Ok)
   @Authenticated()
   async changePassword(
     @Body() changePasswordDto: ChangePasswordDto,
@@ -81,7 +82,7 @@ export class AuthController {
   }
 
   @Post("/verify-email")
-  @HttpCode(200)
+  @HttpCode(HttpStatus.Ok)
   @RateLimit(authRateLimits.emailVerification)
   async verifyEmail(
     @Body() verifyEmailDto: VerifyEmailDto,
@@ -91,7 +92,7 @@ export class AuthController {
   }
 
   @Post("/resend-verification")
-  @HttpCode(200)
+  @HttpCode(HttpStatus.Ok)
   @RateLimit(authRateLimits.resendVerification)
   async resendVerification(
     @Body() resendVerificationDto: ResendVerificationDto,
@@ -101,7 +102,7 @@ export class AuthController {
   }
 
   @Get("/me")
-  @HttpCode(200)
+  @HttpCode(HttpStatus.Ok)
   @Authenticated()
   async getCurrentUser(
     @Req() req: Request & { user: IAuthenticatedUser },
@@ -110,7 +111,7 @@ export class AuthController {
   }
 
   @Post("/verify-token")
-  @HttpCode(200)
+  @HttpCode(HttpStatus.Ok)
   async verifyToken(
     @Req() req: Request,
   ): Promise<{ valid: boolean; user?: UserResponseDto }> {
@@ -128,7 +129,7 @@ export class AuthController {
   }
 
   @Get("/health")
-  @HttpCode(200)
+  @HttpCode(HttpStatus.Ok)
   async healthCheck(): Promise<{ status: string; timestamp: string }> {
     return {
       status: "healthy",

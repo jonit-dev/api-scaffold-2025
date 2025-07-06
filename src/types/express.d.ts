@@ -15,7 +15,7 @@ export interface IAuthenticatedUser {
   id: string;
   email: string;
   role: UserRole;
-  supabaseUser: User;
+  supabaseUser?: User;
 }
 
 export interface IAuthenticatedRequest extends Request {

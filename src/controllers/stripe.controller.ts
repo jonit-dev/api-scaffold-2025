@@ -12,6 +12,7 @@ import {
 } from "routing-controllers";
 import { Service } from "typedi";
 import { Request, Response } from "express";
+import { HttpStatus } from "../types/http-status";
 import { AuthMiddleware } from "../middlewares/auth.middleware";
 import { StripeCustomerService } from "../services/stripe-customer.service";
 import { StripePaymentService } from "../services/stripe-payment.service";
@@ -340,11 +341,11 @@ export class StripeController {
 
       await this.stripeWebhookService.processWebhook(body, signature);
 
-      return res.status(200).json({ received: true });
+      return res.status(HttpStatus.Ok).json({ received: true });
     } catch (error) {
       // Keep console.error for webhook debugging - critical for Stripe integration
       console.error("Webhook error:", error);
-      return res.status(400).json({
+      return res.status(HttpStatus.BadRequest).json({
         error: error instanceof Error ? error.message : "Unknown error",
       });
     }

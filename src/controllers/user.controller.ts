@@ -12,6 +12,7 @@ import {
 } from "routing-controllers";
 import { Service } from "typedi";
 import { Request } from "express";
+import { HttpStatus } from "../types/http-status";
 import { UserService } from "../services/user.service";
 import { CreateUserDto } from "../models/dtos/user/create-user.dto";
 import { UpdateUserDto } from "../models/dtos/user/update-user.dto";
@@ -32,7 +33,7 @@ export class UserController {
   constructor(private userService: UserService) {}
 
   @Post("/")
-  @HttpCode(201)
+  @HttpCode(HttpStatus.Created)
   @Authenticated()
   @RateLimit(authRateLimits.register)
   async createUser(
@@ -42,7 +43,7 @@ export class UserController {
   }
 
   @Get("/")
-  @HttpCode(200)
+  @HttpCode(HttpStatus.Ok)
   @Authenticated()
   async getAllUsers(
     @QueryParam("page") page: number = 1,
@@ -63,7 +64,7 @@ export class UserController {
   }
 
   @Get("/:id")
-  @HttpCode(200)
+  @HttpCode(HttpStatus.Ok)
   @Authenticated()
   async getUserById(@Param("id") id: string): Promise<UserResponseDto> {
     if (!id) {
@@ -73,7 +74,7 @@ export class UserController {
   }
 
   @Put("/:id")
-  @HttpCode(200)
+  @HttpCode(HttpStatus.Ok)
   @Authenticated()
   async updateUser(
     @Param("id") id: string,
@@ -86,7 +87,7 @@ export class UserController {
   }
 
   @Delete("/:id")
-  @HttpCode(204)
+  @HttpCode(HttpStatus.NoContent)
   @Authenticated()
   async deleteUser(@Param("id") id: string): Promise<void> {
     if (!id) {
@@ -96,7 +97,7 @@ export class UserController {
   }
 
   @Put("/:id/status")
-  @HttpCode(200)
+  @HttpCode(HttpStatus.Ok)
   @Authenticated()
   async updateUserStatus(
     @Param("id") id: string,
@@ -112,7 +113,7 @@ export class UserController {
   }
 
   @Get("/search")
-  @HttpCode(200)
+  @HttpCode(HttpStatus.Ok)
   @Authenticated()
   async searchUsers(
     @QueryParam("q") query: string,
@@ -126,7 +127,7 @@ export class UserController {
   }
 
   @Get("/me")
-  @HttpCode(200)
+  @HttpCode(HttpStatus.Ok)
   @Authenticated()
   async getCurrentUser(
     @Req() req: Request & { user: IAuthenticatedUser },
@@ -135,7 +136,7 @@ export class UserController {
   }
 
   @Put("/me")
-  @HttpCode(200)
+  @HttpCode(HttpStatus.Ok)
   @Authenticated()
   async updateCurrentUser(
     @Req() req: Request & { user: IAuthenticatedUser },

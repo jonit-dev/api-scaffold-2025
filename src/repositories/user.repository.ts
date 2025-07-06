@@ -29,6 +29,8 @@ export class UserRepository extends BaseRepository<IUserEntity> {
         role TEXT NOT NULL DEFAULT 'user',
         status TEXT NOT NULL DEFAULT 'active',
         email_verified BOOLEAN DEFAULT FALSE,
+        phone TEXT,
+        avatar_url TEXT,
         last_login TEXT,
         stripe_customer_id TEXT,
         created_at TEXT NOT NULL,
@@ -56,6 +58,7 @@ export class UserRepository extends BaseRepository<IUserEntity> {
 
   async findByEmail(email: string): Promise<IUserEntity | null> {
     if (config.database.provider === "sqlite") {
+      this.ensureTableInitialized();
       return this.findByEmailSQLite(email);
     } else {
       return this.findByEmailSupabase(email);
@@ -97,6 +100,7 @@ export class UserRepository extends BaseRepository<IUserEntity> {
     filters?: IUserFilters,
   ): Promise<IPaginatedResult<IUserEntity>> {
     if (config.database.provider === "sqlite") {
+      this.ensureTableInitialized();
       return this.findUsersPaginatedSQLite(page, limit, filters);
     } else {
       return this.findUsersPaginatedSupabase(page, limit, filters);
@@ -221,6 +225,7 @@ export class UserRepository extends BaseRepository<IUserEntity> {
 
   async updateLastLogin(id: string): Promise<void> {
     if (config.database.provider === "sqlite") {
+      this.ensureTableInitialized();
       return this.updateLastLoginSQLite(id);
     } else {
       return this.updateLastLoginSupabase(id);
@@ -260,6 +265,7 @@ export class UserRepository extends BaseRepository<IUserEntity> {
 
   async isEmailUnique(email: string, excludeId?: string): Promise<boolean> {
     if (config.database.provider === "sqlite") {
+      this.ensureTableInitialized();
       return this.isEmailUniqueSQLite(email, excludeId);
     } else {
       return this.isEmailUniqueSupabase(email, excludeId);
@@ -312,6 +318,7 @@ export class UserRepository extends BaseRepository<IUserEntity> {
 
   async findByRole(role: UserRole): Promise<IUserEntity[]> {
     if (config.database.provider === "sqlite") {
+      this.ensureTableInitialized();
       return this.findByRoleSQLite(role);
     } else {
       return this.findByRoleSupabase(role);
@@ -350,6 +357,7 @@ export class UserRepository extends BaseRepository<IUserEntity> {
     stripeCustomerId: string,
   ): Promise<IUserEntity | null> {
     if (config.database.provider === "sqlite") {
+      this.ensureTableInitialized();
       return this.findByStripeCustomerIdSQLite(stripeCustomerId);
     } else {
       return this.findByStripeCustomerIdSupabase(stripeCustomerId);
@@ -392,6 +400,7 @@ export class UserRepository extends BaseRepository<IUserEntity> {
 
   async findByStatus(status: UserStatus): Promise<IUserEntity[]> {
     if (config.database.provider === "sqlite") {
+      this.ensureTableInitialized();
       return this.findByStatusSQLite(status);
     } else {
       return this.findByStatusSupabase(status);
@@ -433,6 +442,7 @@ export class UserRepository extends BaseRepository<IUserEntity> {
 
   async countByRole(role: UserRole): Promise<number> {
     if (config.database.provider === "sqlite") {
+      this.ensureTableInitialized();
       return this.countByRoleSQLite(role);
     } else {
       return this.countByRoleSupabase(role);
@@ -467,6 +477,7 @@ export class UserRepository extends BaseRepository<IUserEntity> {
 
   async countByStatus(status: UserStatus): Promise<number> {
     if (config.database.provider === "sqlite") {
+      this.ensureTableInitialized();
       return this.countByStatusSQLite(status);
     } else {
       return this.countByStatusSupabase(status);
@@ -501,6 +512,7 @@ export class UserRepository extends BaseRepository<IUserEntity> {
 
   async updateEmailVerification(id: string, verified: boolean): Promise<void> {
     if (config.database.provider === "sqlite") {
+      this.ensureTableInitialized();
       return this.updateEmailVerificationSQLite(id, verified);
     } else {
       return this.updateEmailVerificationSupabase(id, verified);
@@ -546,6 +558,7 @@ export class UserRepository extends BaseRepository<IUserEntity> {
 
   async findUnverifiedUsers(olderThanDays: number = 7): Promise<IUserEntity[]> {
     if (config.database.provider === "sqlite") {
+      this.ensureTableInitialized();
       return this.findUnverifiedUsersSQLite(olderThanDays);
     } else {
       return this.findUnverifiedUsersSupabase(olderThanDays);
