@@ -1,5 +1,4 @@
 ### Error Testing Endpoints
-@baseUrl = http://localhost:3000
 
 ### Test 400 Bad Request
 GET {{baseUrl}}/test/400

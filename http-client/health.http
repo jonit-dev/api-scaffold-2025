@@ -1,5 +1,4 @@
 ### Health Check Endpoints
-@baseUrl = http://localhost:3000
 
 ### Basic Health Check
 GET {{baseUrl}}/health

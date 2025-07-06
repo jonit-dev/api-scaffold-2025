@@ -1,6 +1,5 @@
 ### Cache Demo Endpoints
-@baseUrl = http://localhost:3000
-@token = {{login.response.body.token}}
+@token = {{login.response.body.session.access_token}}
 
 ### Basic Caching (5 minute cache)
 GET {{baseUrl}}/cache-demo/basic

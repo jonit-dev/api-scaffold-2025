@@ -4,8 +4,7 @@
 # Replace {{authToken}} with a valid JWT token
 
 ### Variables
-@baseUrl = http://localhost:3000
-@authToken = your_jwt_token_here
+@authToken = {{login.response.body.session.access_token}}
 
 ### Health Check (to verify server is running)
 GET {{baseUrl}}/health

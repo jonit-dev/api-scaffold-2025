@@ -4,7 +4,6 @@
 # Replace {{baseUrl}} with your server URL
 
 ### Variables
-@baseUrl = http://localhost:3000
 @webhookSecret = your_webhook_secret_here
 
 ### 1. Payment Intent Events

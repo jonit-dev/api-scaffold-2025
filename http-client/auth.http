@@ -1,10 +1,9 @@
 ### Authentication Endpoints
-@baseUrl = {{baseUrl}}
 # Dynamic token capture from login response
-@accessToken = {{login.response.body.accessToken}}
-@refreshToken = {{login.response.body.refreshToken}}
+@accessToken = {{login.response.body.session.access_token}}
+@refreshToken = {{login.response.body.session.refresh_token}}
 # Updated token from refresh endpoint
-@newAccessToken = {{refreshToken.response.body.accessToken}}
+@newAccessToken = {{refreshTokenRequest.response.body.session.access_token}}
 
 ### User Registration
 POST {{baseUrl}}/auth/register
@@ -37,7 +36,7 @@ POST {{baseUrl}}/auth/logout
 Authorization: Bearer {{accessToken}}
 
 ### Refresh JWT Token
-# @name refreshToken
+# @name refreshTokenRequest
 POST {{baseUrl}}/auth/refresh
 Content-Type: application/json
 
@@ -60,6 +59,7 @@ Content-Type: application/json
 
 {
   "currentPassword": "SecurePass123!",
+  "confirmPassword": "SecurePass123!",
   "newPassword": "NewSecurePass456!"
 }
 

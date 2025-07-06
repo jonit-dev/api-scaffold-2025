@@ -1,6 +1,5 @@
 ### Test Authentication Endpoints
-@baseUrl = http://localhost:3000
-@token = {{login.response.body.token}}
+@token = {{login.response.body.session.access_token}}
 @userId = 123
 
 ### Public Endpoint

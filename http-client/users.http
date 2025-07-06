@@ -1,6 +1,5 @@
 ### User Management Endpoints
-@baseUrl = {{baseUrl}}
-@accessToken = {{login.response.body.accessToken}}
+@accessToken = {{login.response.body.session.access_token}}
 @userId = 123
 
 ### Create User
