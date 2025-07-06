@@ -31,6 +31,9 @@ export class UserResponseDto {
   avatar_url?: string;
 
   @Expose()
+  stripe_customer_id?: string;
+
+  @Expose()
   @Transform(({ value }) => (value ? new Date(value) : null))
   last_login?: Date;
 

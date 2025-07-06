@@ -123,6 +123,17 @@ export class UserService {
     return this.findAll(page, limit, filters);
   }
 
+  async findByStripeCustomerId(
+    stripeCustomerId: string,
+  ): Promise<UserResponseDto | null> {
+    const user =
+      await this.userRepository.findByStripeCustomerId(stripeCustomerId);
+    if (!user) {
+      return null;
+    }
+    return this.mapToResponseDto(user);
+  }
+
   private mapToResponseDto(user: IUserEntity): UserResponseDto {
     return plainToClass(UserResponseDto, user, {
       excludeExtraneousValues: true,

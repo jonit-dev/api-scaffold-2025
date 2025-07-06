@@ -47,4 +47,8 @@ export class UpdateUserDto {
   @IsBoolean()
   @IsOptional()
   email_verified?: boolean;
+
+  @IsString()
+  @IsOptional()
+  stripe_customer_id?: string;
 }

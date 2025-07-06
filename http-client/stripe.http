@@ -1,0 +1,222 @@
+###
+# Stripe API Test File
+# Replace {{baseUrl}} with your server URL (e.g., http://localhost:3000)
+# Replace {{authToken}} with a valid JWT token
+
+### Variables
+@baseUrl = http://localhost:3000
+@authToken = your_jwt_token_here
+
+### Health Check (to verify server is running)
+GET {{baseUrl}}/health
+
+### 1. Authentication - Login to get token
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Admin123!"
+}
+
+### 2. Customer Management
+
+### Sync customer with current user
+GET {{baseUrl}}/stripe/customers/sync
+Authorization: Bearer {{authToken}}
+
+### Create a new customer
+POST {{baseUrl}}/stripe/customers
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "email": "customer@example.com",
+  "name": "Test Customer",
+  "phone": "+1234567890",
+  "description": "Test customer for API testing"
+}
+
+### Get customer details (replace with actual customer ID)
+GET {{baseUrl}}/stripe/customers/cus_PQrST1234567890
+Authorization: Bearer {{authToken}}
+
+### Get customer payment methods
+GET {{baseUrl}}/stripe/customers/cus_PQrST1234567890/payment-methods
+Authorization: Bearer {{authToken}}
+
+### 3. Payment Management
+
+### Create payment intent
+POST {{baseUrl}}/stripe/payment-intents
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "amount": 2000,
+  "currency": "usd",
+  "customerId": "cus_PQrST1234567890",
+  "description": "Test payment via API",
+  "captureMethod": "automatic"
+}
+
+### Confirm payment intent (replace with actual payment intent ID)
+POST {{baseUrl}}/stripe/payment-intents/pi_3AbCdE1234567890/confirm
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "paymentMethodId": "pm_card_visa",
+  "returnUrl": "https://yourapp.com/return"
+}
+
+### Refund payment (replace with actual payment intent ID)
+POST {{baseUrl}}/stripe/payment-intents/pi_3AbCdE1234567890/refund
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "amount": 1000,
+  "reason": "requested_by_customer"
+}
+
+### Get user payments
+GET {{baseUrl}}/stripe/payments
+Authorization: Bearer {{authToken}}
+
+### Get user payments with filters
+GET {{baseUrl}}/stripe/payments?status=succeeded&limit=10&offset=0
+Authorization: Bearer {{authToken}}
+
+### Get specific payment (replace with actual payment ID)
+GET {{baseUrl}}/stripe/payments/550e8400-e29b-41d4-a716-446655440000
+Authorization: Bearer {{authToken}}
+
+### Create setup intent for saving payment methods
+GET {{baseUrl}}/stripe/setup-intent
+Authorization: Bearer {{authToken}}
+
+### 4. Subscription Management
+
+### Create subscription (replace with actual customer ID and price ID)
+POST {{baseUrl}}/stripe/subscriptions
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "customerId": "cus_PQrST1234567890",
+  "priceId": "price_1AbCdE1234567890",
+  "quantity": 1,
+  "trialPeriodDays": 7,
+  "prorationBehavior": "create_prorations"
+}
+
+### Get user subscriptions
+GET {{baseUrl}}/stripe/subscriptions
+Authorization: Bearer {{authToken}}
+
+### Get active subscriptions only
+GET {{baseUrl}}/stripe/subscriptions?status=active
+Authorization: Bearer {{authToken}}
+
+### Get specific subscription (replace with actual subscription ID)
+GET {{baseUrl}}/stripe/subscriptions/sub_1AbCdE1234567890
+Authorization: Bearer {{authToken}}
+
+### Cancel subscription at period end
+PUT {{baseUrl}}/stripe/subscriptions/sub_1AbCdE1234567890/cancel?at_period_end=true
+Authorization: Bearer {{authToken}}
+
+### Cancel subscription immediately
+PUT {{baseUrl}}/stripe/subscriptions/sub_1AbCdE1234567890/cancel?at_period_end=false
+Authorization: Bearer {{authToken}}
+
+### Pause subscription
+PUT {{baseUrl}}/stripe/subscriptions/sub_1AbCdE1234567890/pause
+Authorization: Bearer {{authToken}}
+
+### Resume subscription
+PUT {{baseUrl}}/stripe/subscriptions/sub_1AbCdE1234567890/resume
+Authorization: Bearer {{authToken}}
+
+### 5. Products and Pricing
+
+### Get all active products
+GET {{baseUrl}}/stripe/products
+Authorization: Bearer {{authToken}}
+
+### Get all products (including inactive)
+GET {{baseUrl}}/stripe/products?active=false
+Authorization: Bearer {{authToken}}
+
+### Get prices for a specific product (replace with actual product ID)
+GET {{baseUrl}}/stripe/products/prod_1AbCdE1234567890/prices
+Authorization: Bearer {{authToken}}
+
+### Get all prices for a product (including inactive)
+GET {{baseUrl}}/stripe/products/prod_1AbCdE1234567890/prices?active=false
+Authorization: Bearer {{authToken}}
+
+### 6. Webhook Testing
+
+### Test webhook endpoint (normally called by Stripe)
+# Note: This will fail without proper Stripe signature
+POST {{baseUrl}}/stripe/webhooks
+Content-Type: application/json
+Stripe-Signature: t=1234567890,v1=test_signature
+
+{
+  "id": "evt_test_webhook",
+  "object": "event",
+  "type": "payment_intent.succeeded",
+  "data": {
+    "object": {
+      "id": "pi_test_payment_intent",
+      "amount": 2000,
+      "currency": "usd",
+      "status": "succeeded"
+    }
+  },
+  "created": 1234567890,
+  "livemode": false
+}
+
+### 7. Error Testing
+
+### Test with invalid customer ID
+GET {{baseUrl}}/stripe/customers/invalid_customer_id
+Authorization: Bearer {{authToken}}
+
+### Test with missing authorization
+GET {{baseUrl}}/stripe/customers/sync
+
+### Test with invalid payment amount
+POST {{baseUrl}}/stripe/payment-intents
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "amount": 10,
+  "currency": "usd",
+  "customerId": "cus_invalid"
+}
+
+### Test with invalid email format
+POST {{baseUrl}}/stripe/customers
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "email": "not-an-email",
+  "name": "Test Customer"
+}
+
+### 8. Performance Testing
+
+### Test pagination
+GET {{baseUrl}}/stripe/payments?limit=100&offset=0
+Authorization: Bearer {{authToken}}
+
+### Test multiple requests (run several times to test concurrency)
+GET {{baseUrl}}/stripe/customers/sync
+Authorization: Bearer {{authToken}}

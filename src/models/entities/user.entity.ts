@@ -14,6 +14,7 @@ export interface IUserEntity extends IBaseEntity {
   phone?: string;
   avatar_url?: string;
   last_login?: string;
+  stripe_customer_id?: string;
   created_at: string;
   updated_at: string;
   deleted_at?: string;
@@ -39,6 +40,7 @@ export class UserEntity implements IUserEntity {
   phone?: string;
   avatar_url?: string;
   last_login?: string;
+  stripe_customer_id?: string;
   created_at: string;
   updated_at: string;
   deleted_at?: string;
@@ -55,6 +57,7 @@ export class UserEntity implements IUserEntity {
     this.phone = data.phone;
     this.avatar_url = data.avatar_url;
     this.last_login = data.last_login;
+    this.stripe_customer_id = data.stripe_customer_id;
     this.created_at = data.created_at;
     this.updated_at = data.updated_at;
     this.deleted_at = data.deleted_at;

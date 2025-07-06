@@ -137,6 +137,23 @@ export class UserRepository extends BaseRepository<IUserEntity> {
     return data || [];
   }
 
+  async findByStripeCustomerId(
+    stripeCustomerId: string,
+  ): Promise<IUserEntity | null> {
+    const { data, error } = await this.supabase
+      .from(this.tableName)
+      .select("*")
+      .eq("stripe_customer_id", stripeCustomerId)
+      .eq("deleted_at", null)
+      .maybeSingle();
+
+    if (error) {
+      throw new DatabaseException(error.message);
+    }
+
+    return data;
+  }
+
   async findByStatus(status: UserStatus): Promise<IUserEntity[]> {
     const { data, error } = await this.supabase
       .from(this.tableName)

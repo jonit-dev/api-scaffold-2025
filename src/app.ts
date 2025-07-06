@@ -11,6 +11,7 @@ import { AuthController } from "./controllers/auth.controller";
 import { TestAuthController } from "./controllers/test-auth.controller";
 import { CacheDemoController } from "./controllers/cache-demo.controller";
 import { UserController } from "./controllers/user.controller";
+import { StripeController } from "./controllers/stripe.controller";
 import { GlobalErrorHandler } from "./middlewares/error.middleware";
 import { CacheInterceptor } from "./interceptors/cache.interceptor";
 
@@ -26,6 +27,7 @@ export const app = createExpressServer({
     TestAuthController,
     CacheDemoController,
     UserController,
+    StripeController,
   ],
   middlewares: [GlobalErrorHandler],
   interceptors: [CacheInterceptor],
