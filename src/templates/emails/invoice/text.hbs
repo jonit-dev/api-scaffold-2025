@@ -1,0 +1,32 @@
+Invoice #{{invoiceNumber}}
+
+Hello {{customerName}}!
+
+Thank you for your payment. Here are the details of your invoice:
+
+Invoice Number: #{{invoiceNumber}}
+Date: {{formatDate invoiceDate "long"}}
+Amount: {{formatCurrency amount currency}}
+Status: {{capitalize status}}
+
+{{#if items}}
+Items:
+{{#each items}}
+- {{description}} x{{quantity}} @ {{formatCurrency unitPrice ../currency}} = {{formatCurrency total ../currency}}
+{{/each}}
+{{/if}}
+
+{{#if downloadUrl}}
+Download Invoice PDF: {{downloadUrl}}
+{{/if}}
+
+If you have any questions about this invoice, please contact our billing team.
+
+Thank you for your business!
+
+Best regards,
+The {{appName}} Team
+
+---
+© {{currentYear}} {{appName}}. All rights reserved.
+This is an automated billing email.

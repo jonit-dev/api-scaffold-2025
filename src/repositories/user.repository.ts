@@ -17,6 +17,11 @@ export class UserRepository extends BaseRepository<IUserEntity> {
 
   protected initializeTable(): void {
     if (config.database.provider !== "sqlite") return;
+    if (!this.tableName || this.tableName === "undefined") {
+      throw new Error(
+        `Invalid table name: ${this.tableName}. Cannot initialize table.`,
+      );
+    }
 
     const db = SQLiteConfig.getClient();
     const createTableQuery = `

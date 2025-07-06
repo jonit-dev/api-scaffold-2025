@@ -1,0 +1,141 @@
+@baseUrl = http://localhost:3000
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjQ2NzM5NDE4LTliZGUtNGI5YS1iMDcwLWZmNDgyMzgzYzllOCIsImVtYWlsIjoiam9hb3BhdWxvZnVydGFkb0BsaXZlLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTc1MTg0MjM1MiwiZXhwIjoxNzUxOTI4NzUyfQ.HvnVrwfIFdPpY3eIqOl-mNQu8SavbVK3m6yRKiV8MH4
+
+### Get available email templates
+GET {{baseUrl}}/email/templates
+Authorization: Bearer {{adminToken}}
+
+### Send a basic email using welcome template
+POST {{baseUrl}}/email/send-template
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "templateName": "welcome",
+  "templateData": {
+    "firstName": "John",
+    "appName": "API Scaffold App",
+    "verificationUrl": "https://app.example.com/verify-email?token=abc123",
+    "currentYear": 2024
+  },
+  "to": "jfurtado141@gmail.com",
+  "subject": "Welcome to API Scaffold!"
+}
+
+### Send email with CC and BCC using template
+POST {{baseUrl}}/email/send-template
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "templateName": "welcome",
+  "templateData": {
+    "firstName": "Team",
+    "appName": "API Scaffold App",
+    "verificationUrl": "https://app.example.com/team-update",
+    "currentYear": 2024
+  },
+  "to": ["user1@example.com", "user2@example.com"],
+  "cc": "manager@example.com",
+  "bcc": "admin@example.com",
+  "subject": "Team Update",
+  "replyTo": "noreply@example.com",
+  "tags": [
+    {"name": "category", "value": "team-update"}
+  ]
+}
+
+### Send welcome email using template
+POST {{baseUrl}}/email/welcome
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "to": "newuser@example.com",
+  "firstName": "John",
+  "appName": "API Scaffold App",
+  "verificationUrl": "https://app.example.com/verify-email?token=abc123"
+}
+
+### Send password reset email using template
+POST {{baseUrl}}/email/password-reset
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "to": "user@example.com",
+  "firstName": "Jane",
+  "resetUrl": "https://app.example.com/reset-password?token=xyz789",
+  "expirationHours": 2,
+  "appName": "API Scaffold App"
+}
+
+### Send invoice email using template
+POST {{baseUrl}}/email/invoice
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "to": "jfurtado141@gmail.com",
+  "customerName": "Acme Corporation",
+  "invoiceNumber": "INV-2024-001",
+  "invoiceDate": "2024-01-15",
+  "amount": 15000,
+  "currency": "USD",
+  "status": "paid",
+  "items": [
+    {
+      "description": "API Usage - Premium Plan",
+      "quantity": 1,
+      "unitPrice": 9900,
+      "total": 9900
+    },
+    {
+      "description": "Additional API Calls",
+      "quantity": 510,
+      "unitPrice": 10,
+      "total": 5100
+    }
+  ],
+  "downloadUrl": "https://app.example.com/invoices/INV-2024-001.pdf",
+  "appName": "API Scaffold App"
+}
+
+### Send email using custom template
+POST {{baseUrl}}/email/send-template
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "templateName": "welcome",
+  "templateData": {
+    "firstName": "Alice",
+    "appName": "My Custom App",
+    "verificationUrl": "https://custom.example.com/verify",
+    "currentYear": 2024
+  },
+  "to": "alice@example.com",
+  "cc": "notifications@example.com"
+}
+
+### Test error handling - missing required fields
+POST {{baseUrl}}/email/send
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "to": "test@example.com"
+}
+
+### Test error handling - invalid template
+POST {{baseUrl}}/email/send-template
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "templateName": "nonexistent-template",
+  "templateData": {
+    "name": "Test"
+  },
+  "to": "test@example.com"
+}

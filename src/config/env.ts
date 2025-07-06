@@ -104,6 +104,14 @@ export const config = {
     enableCompression: process.env.ENABLE_COMPRESSION_MIDDLEWARE !== "false",
     enableMorganLogging: process.env.ENABLE_MORGAN_LOGGING !== "false",
   },
+  email: {
+    resendApiKey: getEnvVar("RESEND_API", "your_resend_api_key_here"),
+    fromAddress: getEnvVar(
+      "RESEND_EMAIL_FROM_ADDRESS",
+      "onboarding@resend.dev",
+    ),
+    fromName: getEnvVar("RESEND_EMAIL_FROM_NAME", "Your App"),
+  },
   env: {
     supabaseUrl: getEnvVar("SUPABASE_URL", "https://your_supabase_url_here"),
     supabaseAnonKey: getEnvVar(

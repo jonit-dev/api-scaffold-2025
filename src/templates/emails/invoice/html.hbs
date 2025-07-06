@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Invoice #{{invoiceNumber}} - {{appName}}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #28a745; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #f9f9f9; }
+        .invoice-details { background: white; padding: 20px; border-radius: 4px; margin: 20px 0; }
+        .amount { font-size: 24px; font-weight: bold; color: #28a745; }
+        .button { display: inline-block; padding: 12px 24px; background: #28a745; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0; }
+        .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Invoice #{{invoiceNumber}}</h1>
+        </div>
+        
+        <div class="content">
+            <h2>Hello {{customerName}}!</h2>
+            
+            <p>Thank you for your payment. Here are the details of your invoice:</p>
+            
+            <div class="invoice-details">
+                <table>
+                    <tr>
+                        <td><strong>Invoice Number:</strong></td>
+                        <td>#{{invoiceNumber}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Date:</strong></td>
+                        <td>{{formatDate invoiceDate "long"}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Amount:</strong></td>
+                        <td class="amount">{{formatCurrency amount currency}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Status:</strong></td>
+                        <td>{{capitalize status}}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            {{#if items}}
+            <h3>Items</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each items}}
+                    <tr>
+                        <td>{{description}}</td>
+                        <td>{{quantity}}</td>
+                        <td>{{formatCurrency unitPrice ../currency}}</td>
+                        <td>{{formatCurrency total ../currency}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+            {{/if}}
+            
+            {{#if downloadUrl}}
+            <p>You can download a PDF copy of this invoice:</p>
+            <a href="{{downloadUrl}}" class="button">Download Invoice</a>
+            {{/if}}
+            
+            <p>If you have any questions about this invoice, please contact our billing team.</p>
+            
+            <p>Thank you for your business!</p>
+            
+            <p>Best regards,<br>The {{appName}} Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; {{currentYear}} {{appName}}. All rights reserved.</p>
+            <p>This is an automated billing email.</p>
+        </div>
+    </div>
+</body>
+</html>

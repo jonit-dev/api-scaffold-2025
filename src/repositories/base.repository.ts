@@ -33,6 +33,11 @@ export abstract class BaseRepository<T extends IBaseEntity> {
 
   protected ensureTableInitialized(): void {
     if (config.database.provider === "sqlite" && !this.isTableInitialized) {
+      if (!this.tableName || this.tableName === "undefined") {
+        throw new Error(
+          `Invalid table name: ${this.tableName}. Cannot initialize table.`,
+        );
+      }
       this.initializeTable();
       this.isTableInitialized = true;
     }

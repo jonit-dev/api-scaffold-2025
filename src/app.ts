@@ -7,6 +7,7 @@ import { Container } from "typedi";
 import { config } from "./config/env";
 import { AuthController } from "./controllers/auth.controller";
 import { CacheDemoController } from "./controllers/cache-demo.controller";
+import { EmailController } from "./controllers/email.controller";
 import { HealthController } from "./controllers/health.controller";
 import { StripeController } from "./controllers/stripe.controller";
 import { TestAuthController } from "./controllers/test-auth.controller";
@@ -75,6 +76,7 @@ useExpressServer(app, {
     CacheDemoController,
     UserController,
     StripeController,
+    EmailController,
   ],
   middlewares: [GlobalErrorHandler],
   interceptors: [CacheInterceptor],
