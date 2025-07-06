@@ -23,27 +23,74 @@ function createSupabaseClient(): SupabaseClient<IDatabase> {
     );
 
     // Create a mock client for development when Supabase is not configured
+    const mockError = {
+      code: "SUPABASE_NOT_CONFIGURED",
+      message: "Supabase not configured",
+    };
+
+    type MockQueryChain = {
+      select: () => MockQueryChain;
+      eq: () => MockQueryChain;
+      neq: () => MockQueryChain;
+      gt: () => MockQueryChain;
+      gte: () => MockQueryChain;
+      lt: () => MockQueryChain;
+      lte: () => MockQueryChain;
+      like: () => MockQueryChain;
+      ilike: () => MockQueryChain;
+      in: () => MockQueryChain;
+      contains: () => MockQueryChain;
+      containedBy: () => MockQueryChain;
+      range: () => MockQueryChain;
+      order: () => MockQueryChain;
+      limit: () => MockQueryChain;
+      offset: () => MockQueryChain;
+      or: () => MockQueryChain;
+      and: () => MockQueryChain;
+      not: () => MockQueryChain;
+      is: () => MockQueryChain;
+      single: () => Promise<{ data: null; error: typeof mockError }>;
+      insert: () => MockQueryChain;
+      update: () => MockQueryChain;
+      delete: () => MockQueryChain;
+      then: (
+        resolve: (value: { data: null; error: typeof mockError }) => unknown,
+      ) => unknown;
+    };
+
+    const createMockQueryChain = (): MockQueryChain => ({
+      select: (): MockQueryChain => createMockQueryChain(),
+      eq: (): MockQueryChain => createMockQueryChain(),
+      neq: (): MockQueryChain => createMockQueryChain(),
+      gt: (): MockQueryChain => createMockQueryChain(),
+      gte: (): MockQueryChain => createMockQueryChain(),
+      lt: (): MockQueryChain => createMockQueryChain(),
+      lte: (): MockQueryChain => createMockQueryChain(),
+      like: (): MockQueryChain => createMockQueryChain(),
+      ilike: (): MockQueryChain => createMockQueryChain(),
+      in: (): MockQueryChain => createMockQueryChain(),
+      contains: (): MockQueryChain => createMockQueryChain(),
+      containedBy: (): MockQueryChain => createMockQueryChain(),
+      range: (): MockQueryChain => createMockQueryChain(),
+      order: (): MockQueryChain => createMockQueryChain(),
+      limit: (): MockQueryChain => createMockQueryChain(),
+      offset: (): MockQueryChain => createMockQueryChain(),
+      or: (): MockQueryChain => createMockQueryChain(),
+      and: (): MockQueryChain => createMockQueryChain(),
+      not: (): MockQueryChain => createMockQueryChain(),
+      is: (): MockQueryChain => createMockQueryChain(),
+      single: (): Promise<{ data: null; error: typeof mockError }> =>
+        Promise.resolve({ data: null, error: mockError }),
+      insert: (): MockQueryChain => createMockQueryChain(),
+      update: (): MockQueryChain => createMockQueryChain(),
+      delete: (): MockQueryChain => createMockQueryChain(),
+      then: (
+        resolve: (value: { data: null; error: typeof mockError }) => unknown,
+      ): unknown => resolve({ data: null, error: mockError }),
+    });
+
     return {
-      from: () => ({
-        select: () => ({
-          limit: () =>
-            Promise.resolve({
-              data: null,
-              error: {
-                code: "SUPABASE_NOT_CONFIGURED",
-                message: "Supabase not configured",
-              },
-            }),
-          single: () =>
-            Promise.resolve({
-              data: null,
-              error: {
-                code: "SUPABASE_NOT_CONFIGURED",
-                message: "Supabase not configured",
-              },
-            }),
-        }),
-      }),
+      from: (): MockQueryChain => createMockQueryChain(),
     } as unknown as SupabaseClient<IDatabase>;
   }
 
