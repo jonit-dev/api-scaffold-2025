@@ -1,0 +1,35 @@
+### Cache Demo Endpoints
+@baseUrl = http://localhost:3000
+@token = {{login.response.body.token}}
+
+### Basic Caching (5 minute cache)
+GET {{baseUrl}}/cache-demo/basic
+Authorization: Bearer {{token}}
+
+### Dynamic Caching with Conditions
+GET {{baseUrl}}/cache-demo/dynamic?fresh=true
+Authorization: Bearer {{token}}
+
+### Dynamic Caching without Conditions
+GET {{baseUrl}}/cache-demo/dynamic
+Authorization: Bearer {{token}}
+
+### Manual Cache Control
+GET {{baseUrl}}/cache-demo/manual
+Authorization: Bearer {{token}}
+
+### Expensive Operation Caching
+GET {{baseUrl}}/cache-demo/expensive
+Authorization: Bearer {{token}}
+
+### Cache Statistics
+GET {{baseUrl}}/cache-demo/stats
+Authorization: Bearer {{token}}
+
+### Clear Cache
+GET {{baseUrl}}/cache-demo/clear
+Authorization: Bearer {{token}}
+
+### Clear Specific Cache Key
+GET {{baseUrl}}/cache-demo/clear?key=specific-key
+Authorization: Bearer {{token}}

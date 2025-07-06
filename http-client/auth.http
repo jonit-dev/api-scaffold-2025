@@ -1,0 +1,85 @@
+### Authentication Endpoints
+@baseUrl = http://localhost:3000
+@token = {{login.response.body.token}}
+
+### User Registration
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "SecurePass123!",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+
+### User Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "SecurePass123!"
+}
+
+### Get Current User Profile
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+### User Logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{token}}
+
+### Refresh JWT Token
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "your-refresh-token-here"
+}
+
+### Forgot Password
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "test@example.com"
+}
+
+### Change Password
+POST {{baseUrl}}/auth/change-password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "currentPassword": "SecurePass123!",
+  "newPassword": "NewSecurePass456!"
+}
+
+### Verify Email
+POST {{baseUrl}}/auth/verify-email
+Content-Type: application/json
+
+{
+  "token": "verification-token-here"
+}
+
+### Resend Verification Email
+POST {{baseUrl}}/auth/resend-verification
+Content-Type: application/json
+
+{
+  "email": "test@example.com"
+}
+
+### Verify JWT Token
+POST {{baseUrl}}/auth/verify-token
+Content-Type: application/json
+
+{
+  "token": "{{token}}"
+}
+
+### Auth Service Health Check
+GET {{baseUrl}}/auth/health

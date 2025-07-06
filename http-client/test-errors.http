@@ -1,0 +1,32 @@
+### Error Testing Endpoints
+@baseUrl = http://localhost:3000
+
+### Test 400 Bad Request
+GET {{baseUrl}}/test/400
+
+### Test 401 Unauthorized
+GET {{baseUrl}}/test/401
+
+### Test 403 Forbidden
+GET {{baseUrl}}/test/403
+
+### Test 404 Not Found
+GET {{baseUrl}}/test/404
+
+### Test 409 Conflict
+GET {{baseUrl}}/test/409
+
+### Test 422 Unprocessable Entity
+GET {{baseUrl}}/test/422
+
+### Test 429 Too Many Requests
+GET {{baseUrl}}/test/429
+
+### Test 500 Internal Server Error
+GET {{baseUrl}}/test/500
+
+### Test Dynamic Error Types
+GET {{baseUrl}}/test/error/validation
+
+### Test Database Error
+GET {{baseUrl}}/test/error/database

@@ -1,0 +1,75 @@
+### User Management Endpoints
+@baseUrl = http://localhost:3000
+@token = {{login.response.body.token}}
+@userId = 123
+
+### Create User
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "newuser@example.com",
+  "password": "SecurePass123!",
+  "first_name": "New",
+  "last_name": "User",
+  "role": "USER",
+  "phone": "+1234567890"
+}
+
+### Get All Users with Pagination
+GET {{baseUrl}}/users?page=1&limit=10
+Authorization: Bearer {{token}}
+
+### Get All Users with Filters
+GET {{baseUrl}}/users?status=ACTIVE&role=USER&email_verified=true&search=john
+Authorization: Bearer {{token}}
+
+### Get User by ID
+GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+
+### Update User
+PUT {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "first_name": "Updated",
+  "last_name": "User",
+  "email": "updated@example.com",
+  "phone": "+9876543210"
+}
+
+### Delete User
+DELETE {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+
+### Update User Status
+PUT {{baseUrl}}/users/{{userId}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "SUSPENDED"
+}
+
+### Search Users
+GET {{baseUrl}}/users/search?q=john&page=1&limit=10
+Authorization: Bearer {{token}}
+
+### Get Current User Profile
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{token}}
+
+### Update Current User Profile
+PUT {{baseUrl}}/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "first_name": "Updated",
+  "last_name": "Profile",
+  "email": "updated-profile@example.com",
+  "phone": "+5555555555"
+}

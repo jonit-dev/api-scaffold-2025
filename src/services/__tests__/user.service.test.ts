@@ -236,5 +236,60 @@ describe("UserService", () => {
         { method: "findUsersPaginated", args: [1, 10, { search: "test" }] },
       ]);
     });
+
+    it("should use default pagination values for search", async () => {
+      MockHelpers.setupRepositoryResponses(mockUserRepository, {
+        findUsersPaginated: testData.pagination.firstPage,
+      });
+
+      const result = await userService.search("test");
+
+      AssertionHelpers.expectPaginationResponse(result, 2);
+      AssertionHelpers.expectRepositoryCalls(mockUserRepository, [
+        { method: "findUsersPaginated", args: [1, 10, { search: "test" }] },
+      ]);
+    });
+  });
+
+  describe("findAll", () => {
+    it("should return paginated users successfully", async () => {
+      MockHelpers.setupRepositoryResponses(mockUserRepository, {
+        findUsersPaginated: testData.pagination.firstPage,
+      });
+
+      const result = await userService.findAll(1, 10);
+
+      AssertionHelpers.expectPaginationResponse(result, 2);
+      AssertionHelpers.expectRepositoryCalls(mockUserRepository, [
+        { method: "findUsersPaginated", args: [1, 10, undefined] },
+      ]);
+    });
+
+    it("should apply filters when provided", async () => {
+      const filters = { role: UserRole.ADMIN, status: UserStatus.ACTIVE };
+      MockHelpers.setupRepositoryResponses(mockUserRepository, {
+        findUsersPaginated: testData.pagination.firstPage,
+      });
+
+      const result = await userService.findAll(1, 10, filters);
+
+      AssertionHelpers.expectPaginationResponse(result, 2);
+      AssertionHelpers.expectRepositoryCalls(mockUserRepository, [
+        { method: "findUsersPaginated", args: [1, 10, filters] },
+      ]);
+    });
+
+    it("should use default pagination values", async () => {
+      MockHelpers.setupRepositoryResponses(mockUserRepository, {
+        findUsersPaginated: testData.pagination.firstPage,
+      });
+
+      const result = await userService.findAll();
+
+      AssertionHelpers.expectPaginationResponse(result, 2);
+      AssertionHelpers.expectRepositoryCalls(mockUserRepository, [
+        { method: "findUsersPaginated", args: [1, 10, undefined] },
+      ]);
+    });
   });
 });

@@ -225,4 +225,24 @@ export class AuthFactory {
   static createMockNext(): any {
     return vi.fn();
   }
+
+  static createTestUserResponse(overrides?: Partial<any>): any {
+    const now = new Date();
+    return {
+      id: "test-user-id-123",
+      email: "test@example.com",
+      first_name: "Test",
+      last_name: "User",
+      role: UserRole.USER,
+      status: UserStatus.ACTIVE,
+      email_verified: true,
+      phone: "+1234567890",
+      avatar_url: "https://example.com/avatar.jpg",
+      last_login: now,
+      created_at: now,
+      updated_at: now,
+      full_name: "Test User",
+      ...overrides,
+    };
+  }
 }

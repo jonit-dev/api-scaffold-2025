@@ -1,0 +1,11 @@
+### Health Check Endpoints
+@baseUrl = http://localhost:3000
+
+### Basic Health Check
+GET {{baseUrl}}/health
+
+### Database Health Check
+GET {{baseUrl}}/health/database
+
+### Detailed Health Check
+GET {{baseUrl}}/health/detailed
