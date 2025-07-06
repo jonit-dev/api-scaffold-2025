@@ -15,6 +15,9 @@ import { StripeController } from "./controllers/stripe.controller";
 import { GlobalErrorHandler } from "./middlewares/error.middleware";
 import { RequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
 import { CacheInterceptor } from "./interceptors/cache.interceptor";
+import { CompressionMiddleware } from "./middlewares/compression.middleware";
+import { SecurityMiddleware } from "./middlewares/security.middleware";
+import { MorganMiddleware } from "./middlewares/morgan.middleware";
 
 // Configure TypeDI container integration BEFORE importing any controllers
 useContainer(Container);
@@ -45,7 +48,7 @@ export const app = createExpressServer({
   // Disable default error handler to use custom error handling
   defaultErrorHandler: false,
 
-  // Enable CORS (can be configured with specific options)
+  // Enable built-in CORS (simpler than custom middleware)
   cors: {
     origin: config.cors.origin,
     credentials: config.cors.credentials,
@@ -61,8 +64,35 @@ export const app = createExpressServer({
   },
 });
 
-// Apply request logging middleware
+// Apply middleware based on environment configuration
+// Skip middleware during tests to avoid conflicts
+const isTestEnvironment = config.server.environment === "test";
+
+if (!isTestEnvironment) {
+  // 1. Security headers (production/development only)
+  if (config.middleware.enableSecurity) {
+    app.use(SecurityMiddleware.create());
+    app.use(SecurityMiddleware.apiHeaders());
+    app.use(SecurityMiddleware.validateHeaders());
+    app.use(SecurityMiddleware.webhookHeaders());
+  }
+
+  // 2. HTTP access logging (production/development only)
+  if (config.middleware.enableMorganLogging) {
+    app.use(MorganMiddleware.create());
+    app.use(MorganMiddleware.webhookLogger());
+    app.use(MorganMiddleware.errorLogger());
+  }
+
+  // 3. Compression (production/development only)
+  if (config.middleware.enableCompression) {
+    app.use(CompressionMiddleware.create());
+    app.use(CompressionMiddleware.log());
+  }
+}
+
+// Application-specific middleware (always needed)
 app.use(RequestLoggerMiddleware.create());
 
-// Apply global error handler as the last middleware
+// Global error handler (must be last)
 app.use(GlobalErrorHandler.handle);

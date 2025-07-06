@@ -4,6 +4,7 @@ import { IBaseEntity } from "../../types/database.types";
 import { BaseFactory } from "@tests/factories/base.factory";
 import { DatabaseFactory } from "@tests/factories/database.factory";
 import { TestHelpers } from "@tests/utils/test.helpers";
+import { config } from "../../config/env";
 
 interface ITestEntity extends IBaseEntity {
   name: string;
@@ -66,6 +67,10 @@ describe("BaseRepository", () => {
     };
 
     TestHelpers.setupMockSupabaseClient(mockSupabaseClient);
+
+    // Force repository to use Supabase for these tests
+    vi.spyOn(config.database, "provider", "get").mockReturnValue("supabase");
+
     // Create repository with explicit Supabase injection
     repository = new TestRepository(mockSupabaseClient);
   });

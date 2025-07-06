@@ -99,6 +99,11 @@ export const config = {
     maxRetries: parseInt(process.env.WEBHOOK_MAX_RETRIES || "3", 10),
     retryDelay: parseInt(process.env.WEBHOOK_RETRY_DELAY || "1000", 10),
   },
+  middleware: {
+    enableSecurity: process.env.ENABLE_SECURITY_MIDDLEWARE !== "false",
+    enableCompression: process.env.ENABLE_COMPRESSION_MIDDLEWARE !== "false",
+    enableMorganLogging: process.env.ENABLE_MORGAN_LOGGING !== "false",
+  },
   env: {
     supabaseUrl: getEnvVar("SUPABASE_URL", "https://your_supabase_url_here"),
     supabaseAnonKey: getEnvVar(

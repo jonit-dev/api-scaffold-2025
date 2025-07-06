@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AccountSuspendedException,
   AuthException,
@@ -12,6 +12,7 @@ import {
   MockHelpers,
 } from "@tests/utils/test.helpers";
 import { AuthService } from "../auth.service";
+import { config } from "../../config/env";
 
 describe("AuthService (Refactored with Test Utils)", () => {
   let authService: AuthService;
@@ -21,6 +22,9 @@ describe("AuthService (Refactored with Test Utils)", () => {
   let testData: any;
 
   beforeEach(() => {
+    // Force AuthService to use Supabase for these tests
+    vi.spyOn(config.database, "provider", "get").mockReturnValue("supabase");
+
     const setup = SetupHelpers.createAuthTestSetup();
     mockUserRepository = setup.mockUserRepository;
     mockSupabaseAuth = setup.mockSupabaseAuth;

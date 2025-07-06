@@ -13,6 +13,7 @@ import { UserRepository } from "@repositories/user.repository";
 import { AuthFactory } from "@tests/factories/auth.factory";
 import { TestHelpers } from "@tests/utils/test.helpers";
 import { AuthService } from "../auth.service";
+import { config } from "../../config/env";
 
 describe("AuthService", () => {
   let authService: AuthService;
@@ -21,6 +22,9 @@ describe("AuthService", () => {
   let mockSupabaseAdmin: any;
 
   beforeEach(() => {
+    // Force AuthService to use Supabase for these tests
+    vi.spyOn(config.database, "provider", "get").mockReturnValue("supabase");
+
     // Create mock repositories
     mockUserRepository = TestHelpers.createMockRepository<UserRepository>([
       "findByEmail",

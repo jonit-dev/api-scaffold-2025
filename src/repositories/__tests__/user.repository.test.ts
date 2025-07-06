@@ -8,7 +8,7 @@ import { AuthFactory } from "@tests/factories/auth.factory";
 import { TestHelpers } from "@tests/utils/test.helpers";
 import { UserRepository } from "../user.repository";
 import * as supabaseConfig from "../../config/supabase";
-import { SQLiteConfig } from "../../config/sqlite";
+import { config } from "../../config/env";
 
 describe("UserRepository", () => {
   let userRepository: UserRepository;
@@ -24,29 +24,11 @@ describe("UserRepository", () => {
     // Mock the getSupabaseClient function to return our mock
     vi.spyOn(supabaseConfig, "getSupabaseClient").mockReturnValue(mockSupabase);
 
-    // Create the repository - constructor will handle table creation if SQLite
-    userRepository = new UserRepository();
+    // Force repository to use Supabase for these tests
+    vi.spyOn(config.database, "provider", "get").mockReturnValue("supabase");
 
-    // Manually create table for SQLite tests
-    const db = SQLiteConfig.getClient();
-    const createTableQuery = `
-      CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
-        email TEXT NOT NULL UNIQUE,
-        first_name TEXT,
-        last_name TEXT,
-        password_hash TEXT,
-        role TEXT NOT NULL DEFAULT 'user',
-        status TEXT NOT NULL DEFAULT 'active',
-        email_verified BOOLEAN DEFAULT FALSE,
-        last_login TEXT,
-        stripe_customer_id TEXT,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
-        deleted_at TEXT
-      )
-    `;
-    db.prepare(createTableQuery).run();
+    // Create the repository
+    userRepository = new UserRepository();
   });
 
   describe("findByEmail", () => {
