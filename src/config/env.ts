@@ -40,7 +40,14 @@ export const config = {
     max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "100", 10),
   },
   logging: {
-    level: process.env.LOG_LEVEL || "combined",
+    level: process.env.LOG_LEVEL || "info",
+    format: process.env.LOG_FORMAT || "combined",
+    enableConsole: process.env.ENABLE_CONSOLE_LOGS !== "false",
+    enableFile: process.env.ENABLE_FILE_LOGS === "true",
+    dir: process.env.LOG_DIR || "logs",
+    maxSize: process.env.LOG_MAX_SIZE || "20m",
+    maxFiles: parseInt(process.env.LOG_MAX_FILES || "14", 10),
+    enableRotation: process.env.ENABLE_LOG_ROTATION !== "false",
   },
   redis: {
     url: getEnvVar("REDIS_URL", "redis://localhost:6379"),
@@ -96,6 +103,7 @@ const requiredEnvVars = ["NODE_ENV"];
 const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
+  // Use console.warn here since logger service depends on this config
   console.warn(
     `⚠️  Missing optional environment variables: ${missingEnvVars.join(", ")}`,
   );

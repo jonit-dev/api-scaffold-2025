@@ -1,12 +1,13 @@
 import { Service } from "typedi";
 import Stripe from "stripe";
 import { config } from "../config/env";
+import { LoggerService } from "./logger.service";
 
 @Service()
 export class StripeService {
   private stripe: Stripe;
 
-  constructor() {
+  constructor(private logger: LoggerService) {
     this.validateConfiguration();
     this.stripe = new Stripe(config.stripe.secretKey, {
       apiVersion: config.stripe.apiVersion,
@@ -47,7 +48,9 @@ export class StripeService {
       await this.stripe.accounts.retrieve();
       return true;
     } catch (error) {
-      console.error("Stripe connection test failed:", error);
+      this.logger.error("Stripe connection test failed", {
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
       return false;
     }
   }

@@ -35,12 +35,23 @@ vi.mock("../../config/env", () => ({
 describe("StripeWebhookService", () => {
   let webhookService: StripeWebhookService;
 
+  let mockLogger: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockStripeService.getStripeInstance.mockReturnValue(mockStripe);
+    mockLogger = {
+      error: vi.fn(),
+      warn: vi.fn(),
+      info: vi.fn(),
+      debug: vi.fn(),
+      logStripeEvent: vi.fn(),
+      logError: vi.fn(),
+    } as any;
     webhookService = new StripeWebhookService(
       mockStripeService,
       mockCustomerService,
+      mockLogger,
     );
   });
 
@@ -71,8 +82,13 @@ describe("StripeWebhookService", () => {
         signature,
         "whsec_test_12345",
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Successfully processed webhook event: payment_intent.succeeded",
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        "Webhook event received: payment_intent.succeeded (evt_123)",
+      );
+      expect(mockLogger.logStripeEvent).toHaveBeenCalledWith(
+        "payment_intent.succeeded",
+        "evt_123",
+        true,
       );
 
       consoleSpy.mockRestore();
@@ -115,7 +131,7 @@ describe("StripeWebhookService", () => {
       // Process the same event again
       await webhookService.processWebhook(payload, signature);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(mockLogger.info).toHaveBeenCalledWith(
         "Event evt_123 already processed, skipping",
       );
 
@@ -247,16 +263,12 @@ describe("StripeWebhookService", () => {
 
       mockStripe.webhooks.constructEvent.mockReturnValue(mockEvent);
 
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
       await webhookService.processWebhook(payload, signature);
 
-      expect(consoleSpy).toHaveBeenCalledWith("Payment succeeded: pi_123");
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(mockLogger.info).toHaveBeenCalledWith("Payment succeeded: pi_123");
+      expect(mockLogger.info).toHaveBeenCalledWith(
         "Payment successful for customer: cus_123",
       );
-
-      consoleSpy.mockRestore();
     });
 
     it("should handle unhandled event types", async () => {
@@ -272,15 +284,11 @@ describe("StripeWebhookService", () => {
 
       mockStripe.webhooks.constructEvent.mockReturnValue(mockEvent);
 
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
       await webhookService.processWebhook(payload, signature);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(mockLogger.info).toHaveBeenCalledWith(
         "Unhandled webhook event type: unknown.event.type",
       );
-
-      consoleSpy.mockRestore();
     });
   });
 });

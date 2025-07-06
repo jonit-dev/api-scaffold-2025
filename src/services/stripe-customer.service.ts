@@ -139,6 +139,7 @@ export class StripeCustomerService {
           return await this.getCustomer(user.stripe_customer_id);
         } catch {
           // If customer doesn't exist in Stripe, create a new one
+          // Note: This console.warn is preserved for debugging critical user state issues
           console.warn(
             `Stripe customer ${user.stripe_customer_id} not found, creating new one`,
           );

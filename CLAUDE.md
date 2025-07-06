@@ -14,3 +14,4 @@
 - If needed to kill a port, use `npx kill-port PORTNUMBERHERE`
 - Favor constructor injection like `constructor(private myService: MyService) {}` instead of Container.get
 - When creating controllers make sure to hook them on app.ts
+- use LoggerService for debbuging if needed

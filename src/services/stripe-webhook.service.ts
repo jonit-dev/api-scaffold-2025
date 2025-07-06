@@ -2,6 +2,7 @@ import { Service } from "typedi";
 import Stripe from "stripe";
 import { StripeService } from "./stripe.service";
 import { StripeCustomerService } from "./stripe-customer.service";
+import { LoggerService } from "./logger.service";
 import { StripeEvent, StripeWebhookEventType } from "../types/stripe.types";
 import {
   handleStripeError,
@@ -17,6 +18,7 @@ export class StripeWebhookService {
   constructor(
     private stripeService: StripeService,
     private customerService: StripeCustomerService,
+    private logger: LoggerService,
   ) {
     this.stripe = this.stripeService.getStripeInstance();
   }
@@ -27,7 +29,7 @@ export class StripeWebhookService {
 
       // Check if event was already processed
       if (await this.isEventProcessed(event.id)) {
-        console.log(`Event ${event.id} already processed, skipping`);
+        this.logger.info(`Event ${event.id} already processed, skipping`);
         return;
       }
 
@@ -40,9 +42,9 @@ export class StripeWebhookService {
       // Mark event as processed
       await this.markEventAsProcessed(event.id);
 
-      console.log(`Successfully processed webhook event: ${event.type}`);
+      this.logger.logStripeEvent(event.type, event.id, true);
     } catch (error) {
-      console.error("Webhook processing failed:", error);
+      this.logger.logError(error as Error, "Stripe webhook processing");
       throw error;
     }
   }
@@ -113,10 +115,12 @@ export class StripeWebhookService {
           break;
 
         default:
-          console.log(`Unhandled webhook event type: ${event.type}`);
+          this.logger.info(`Unhandled webhook event type: ${event.type}`);
       }
     } catch (error) {
-      console.error(`Error handling webhook event ${event.type}:`, error);
+      this.logger.error(`Error handling webhook event ${event.type}:`, {
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
       throw error;
     }
   }
@@ -126,7 +130,7 @@ export class StripeWebhookService {
   ): Promise<void> {
     const paymentIntent = event.data.object as Stripe.PaymentIntent;
 
-    console.log(`Payment succeeded: ${paymentIntent.id}`);
+    this.logger.info(`Payment succeeded: ${paymentIntent.id}`);
 
     // TODO: Update local payment record
     // TODO: Send payment confirmation email
@@ -135,28 +139,32 @@ export class StripeWebhookService {
 
     // Example notification logic
     if (paymentIntent.customer) {
-      console.log(`Payment successful for customer: ${paymentIntent.customer}`);
+      this.logger.info(
+        `Payment successful for customer: ${paymentIntent.customer}`,
+      );
     }
   }
 
   private async handlePaymentIntentFailed(event: StripeEvent): Promise<void> {
     const paymentIntent = event.data.object as Stripe.PaymentIntent;
 
-    console.log(`Payment failed: ${paymentIntent.id}`);
+    this.logger.info(`Payment failed: ${paymentIntent.id}`);
 
     // TODO: Update local payment record
     // TODO: Send payment failure notification
     // TODO: Handle retry logic if applicable
 
     if (paymentIntent.customer) {
-      console.log(`Payment failed for customer: ${paymentIntent.customer}`);
+      this.logger.info(
+        `Payment failed for customer: ${paymentIntent.customer}`,
+      );
     }
   }
 
   private async handleCustomerCreated(event: StripeEvent): Promise<void> {
     const customer = event.data.object as Stripe.Customer;
 
-    console.log(`Customer created: ${customer.id}`);
+    this.logger.info(`Customer created: ${customer.id}`);
 
     // TODO: Sync with local user database if needed
     // TODO: Send welcome email
@@ -165,7 +173,7 @@ export class StripeWebhookService {
   private async handleCustomerUpdated(event: StripeEvent): Promise<void> {
     const customer = event.data.object as Stripe.Customer;
 
-    console.log(`Customer updated: ${customer.id}`);
+    this.logger.info(`Customer updated: ${customer.id}`);
 
     // TODO: Sync changes with local user database
   }
@@ -173,7 +181,7 @@ export class StripeWebhookService {
   private async handleCustomerDeleted(event: StripeEvent): Promise<void> {
     const customer = event.data.object as Stripe.Customer;
 
-    console.log(`Customer deleted: ${customer.id}`);
+    this.logger.info(`Customer deleted: ${customer.id}`);
 
     // TODO: Update local user record
     // TODO: Handle data cleanup
@@ -184,7 +192,7 @@ export class StripeWebhookService {
   ): Promise<void> {
     const invoice = event.data.object as Stripe.Invoice;
 
-    console.log(`Invoice payment succeeded: ${invoice.id}`);
+    this.logger.info(`Invoice payment succeeded: ${invoice.id}`);
 
     // TODO: Update subscription status
     // TODO: Send payment receipt
@@ -194,7 +202,7 @@ export class StripeWebhookService {
   private async handleInvoicePaymentFailed(event: StripeEvent): Promise<void> {
     const invoice = event.data.object as Stripe.Invoice;
 
-    console.log(`Invoice payment failed: ${invoice.id}`);
+    this.logger.info(`Invoice payment failed: ${invoice.id}`);
 
     // TODO: Handle dunning management
     // TODO: Send payment failure notification
@@ -204,7 +212,7 @@ export class StripeWebhookService {
   private async handleSubscriptionCreated(event: StripeEvent): Promise<void> {
     const subscription = event.data.object as Stripe.Subscription;
 
-    console.log(`Subscription created: ${subscription.id}`);
+    this.logger.info(`Subscription created: ${subscription.id}`);
 
     // TODO: Create local subscription record
     // TODO: Send welcome email
@@ -214,7 +222,7 @@ export class StripeWebhookService {
   private async handleSubscriptionUpdated(event: StripeEvent): Promise<void> {
     const subscription = event.data.object as Stripe.Subscription;
 
-    console.log(`Subscription updated: ${subscription.id}`);
+    this.logger.info(`Subscription updated: ${subscription.id}`);
 
     // TODO: Update local subscription record
     // TODO: Handle proration if needed
@@ -224,7 +232,7 @@ export class StripeWebhookService {
   private async handleSubscriptionDeleted(event: StripeEvent): Promise<void> {
     const subscription = event.data.object as Stripe.Subscription;
 
-    console.log(`Subscription deleted: ${subscription.id}`);
+    this.logger.info(`Subscription deleted: ${subscription.id}`);
 
     // TODO: Update local subscription record
     // TODO: Revoke service access
@@ -236,7 +244,7 @@ export class StripeWebhookService {
   ): Promise<void> {
     const subscription = event.data.object as Stripe.Subscription;
 
-    console.log(`Trial ending soon for subscription: ${subscription.id}`);
+    this.logger.info(`Trial ending soon for subscription: ${subscription.id}`);
 
     // TODO: Send trial ending notification
     // TODO: Prompt for payment method if needed
@@ -245,7 +253,7 @@ export class StripeWebhookService {
   private async handleInvoiceUpcoming(event: StripeEvent): Promise<void> {
     const invoice = event.data.object as Stripe.Invoice;
 
-    console.log(`Upcoming invoice: ${invoice.id}`);
+    this.logger.info(`Upcoming invoice: ${invoice.id}`);
 
     // TODO: Send upcoming invoice notification
     // TODO: Check payment method validity
@@ -265,7 +273,7 @@ export class StripeWebhookService {
 
   private async logWebhookEvent(event: StripeEvent): Promise<void> {
     // TODO: Store webhook event in database for audit trail
-    console.log(`Webhook event received: ${event.type} (${event.id})`);
+    this.logger.info(`Webhook event received: ${event.type} (${event.id})`);
   }
 
   private async isEventProcessed(eventId: string): Promise<boolean> {

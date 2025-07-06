@@ -192,6 +192,7 @@ export function logError(
   path: string,
   timestamp: string,
 ): void {
+  // Use console here since this utility is called before logger might be initialized
   if (
     (error.statusCode || error.status || HttpStatus.InternalServerError) >=
     HttpStatus.InternalServerError

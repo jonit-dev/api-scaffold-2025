@@ -342,6 +342,7 @@ export class StripeController {
 
       return res.status(200).json({ received: true });
     } catch (error) {
+      // Keep console.error for webhook debugging - critical for Stripe integration
       console.error("Webhook error:", error);
       return res.status(400).json({
         error: error instanceof Error ? error.message : "Unknown error",

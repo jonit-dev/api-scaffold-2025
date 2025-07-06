@@ -13,6 +13,7 @@ import { CacheDemoController } from "./controllers/cache-demo.controller";
 import { UserController } from "./controllers/user.controller";
 import { StripeController } from "./controllers/stripe.controller";
 import { GlobalErrorHandler } from "./middlewares/error.middleware";
+import { RequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
 import { CacheInterceptor } from "./interceptors/cache.interceptor";
 
 // Configure TypeDI container integration BEFORE importing any controllers
@@ -59,6 +60,9 @@ export const app = createExpressServer({
     },
   },
 });
+
+// Apply request logging middleware
+app.use(RequestLoggerMiddleware.create());
 
 // Apply global error handler as the last middleware
 app.use(GlobalErrorHandler.handle);

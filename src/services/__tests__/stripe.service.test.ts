@@ -40,7 +40,13 @@ describe("StripeService", () => {
     config.stripe.secretKey = "sk_test_12345";
     config.stripe.publishableKey = "pk_test_12345";
     config.stripe.webhookSecret = "whsec_test_12345";
-    stripeService = new StripeService();
+    const mockLogger = {
+      error: vi.fn(),
+      warn: vi.fn(),
+      info: vi.fn(),
+      debug: vi.fn(),
+    } as any;
+    stripeService = new StripeService(mockLogger);
   });
 
   describe("constructor", () => {
@@ -53,7 +59,13 @@ describe("StripeService", () => {
 
       config.stripe.secretKey = "sk_test_default";
 
-      expect(() => new StripeService()).toThrow(
+      const mockLogger = {
+        error: vi.fn(),
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+      } as any;
+      expect(() => new StripeService(mockLogger)).toThrow(
         "Missing required Stripe environment variables: STRIPE_SECRET_KEY",
       );
 
