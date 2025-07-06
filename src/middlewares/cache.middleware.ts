@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { Container } from "typedi";
 import crypto from "crypto";
-import { RedisService } from "../services/redis.service";
+import { CacheService } from "../services/cache.service";
 import {
   CACHE_METADATA_KEY,
   ICacheConfig,
@@ -43,7 +43,7 @@ export function cacheMiddleware(
 
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const redisService = Container.get(RedisService);
+      const cacheService = Container.get(CacheService);
 
       // Only cache GET requests by default
       if (req.method !== "GET" || !defaultOptions.condition(req)) {
@@ -52,7 +52,7 @@ export function cacheMiddleware(
 
       const cacheKey = defaultOptions.keyGenerator(req);
 
-      const cachedResponse = await redisService.get(cacheKey);
+      const cachedResponse = await cacheService.get(cacheKey);
 
       if (cachedResponse) {
         // Set cache headers
@@ -71,7 +71,7 @@ export function cacheMiddleware(
       const originalJson = res.json.bind(res);
       res.json = function (data: object): Response<object> {
         // Cache the response asynchronously
-        redisService.set(cacheKey, data, defaultOptions.ttl).catch((error) => {
+        cacheService.set(cacheKey, data, defaultOptions.ttl).catch((error) => {
           console.error("Failed to cache response:", error);
         });
 
@@ -96,7 +96,7 @@ export function decoratorCacheMiddleware(): (
   next: NextFunction,
 ) => Promise<void> {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const redisService = Container.get(RedisService);
+    const cacheService = Container.get(CacheService);
     // Only for GET requests
     if (req.method !== "GET") {
       return next();
@@ -148,7 +148,7 @@ export function decoratorCacheMiddleware(): (
     }
 
     try {
-      const cachedResponse = await redisService.get(cacheKey);
+      const cachedResponse = await cacheService.get(cacheKey);
 
       if (cachedResponse) {
         // Set cache headers
@@ -168,9 +168,9 @@ export function decoratorCacheMiddleware(): (
       const originalJson = res.json.bind(res);
       res.json = function (data: object): Response<object> {
         // Cache the response asynchronously
-        redisService
+        cacheService
           .set(cacheKey, data, cacheConfig!.ttl || 300)
-          .catch((error) => {
+          .catch((error: unknown) => {
             console.error("Failed to cache response:", error);
           });
 
@@ -192,22 +192,22 @@ export function cacheInvalidationMiddleware(
   pattern?: string,
 ): (req: Request, res: Response, next: NextFunction) => void {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const redisService = Container.get(RedisService);
+    const cacheService = Container.get(CacheService);
     // Override res.json to invalidate cache after response
     const originalJson = res.json.bind(res);
     res.json = function (data: object): Response<object> {
       // Invalidate cache asynchronously
       if (pattern) {
-        redisService.invalidateCachePattern(pattern).catch((error) => {
+        cacheService.invalidateCachePattern(pattern).catch((error: unknown) => {
           console.error("Failed to invalidate cache:", error);
         });
       } else {
         // Default invalidation based on route
         const url = req.originalUrl || req.url;
         const invalidationPattern = `route:*${url.split("/")[1]}*`;
-        redisService
+        cacheService
           .invalidateCachePattern(invalidationPattern)
-          .catch((error) => {
+          .catch((error: unknown) => {
             console.error("Failed to invalidate cache:", error);
           });
       }

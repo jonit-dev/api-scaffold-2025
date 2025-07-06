@@ -84,7 +84,7 @@ export class TestController {
             "forbidden",
             "servererror",
           ],
-          usage: "GET /api/test/error/{type}",
+          usage: "GET /test/error/{type}",
           statusCodes: {
             badrequest: HttpStatus.BadRequest,
             notfound: HttpStatus.NotFound,

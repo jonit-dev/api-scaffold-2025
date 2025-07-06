@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { Container } from "typedi";
-import { RedisService } from "../services/redis.service";
+import { CacheService } from "../services/cache.service";
 import { TooManyRequestsException } from "../exceptions/http-exceptions";
 
 export interface IRateLimitOptions {
@@ -21,9 +21,9 @@ export class RateLimitMiddleware {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const redisService = Container.get(RedisService);
+      const cacheService = Container.get(CacheService);
       const key = this.generateKey(request);
-      const current = await this.getCurrentCount(key, redisService);
+      const current = await this.getCurrentCount(key, cacheService);
       const remaining = Math.max(0, this.options.max - current);
 
       // Set rate limit headers
@@ -32,7 +32,7 @@ export class RateLimitMiddleware {
       response.setHeader("X-RateLimit-Window", this.options.windowMs);
 
       if (current >= this.options.max) {
-        const resetTime = await this.getResetTime(key, redisService);
+        const resetTime = await this.getResetTime(key, cacheService);
         response.setHeader("X-RateLimit-Reset", resetTime);
 
         throw new TooManyRequestsException(
@@ -41,7 +41,7 @@ export class RateLimitMiddleware {
       }
 
       // Increment counter
-      await this.incrementCounter(key, redisService);
+      await this.incrementCounter(key, cacheService);
 
       next();
     } catch (error) {
@@ -66,10 +66,10 @@ export class RateLimitMiddleware {
 
   private async getCurrentCount(
     key: string,
-    redisService: RedisService,
+    cacheService: CacheService,
   ): Promise<number> {
     try {
-      const count = await redisService.get<string>(key);
+      const count = await cacheService.get<string>(key);
       return count ? parseInt(count, 10) : 0;
     } catch {
       return 0;
@@ -78,24 +78,25 @@ export class RateLimitMiddleware {
 
   private async incrementCounter(
     key: string,
-    redisService: RedisService,
+    cacheService: CacheService,
   ): Promise<void> {
     try {
-      const pipeline = redisService.getClient().multi();
-      pipeline.incr(key);
-      pipeline.expire(key, Math.ceil(this.options.windowMs / 1000));
-      await pipeline.exec();
+      // Use atomic increment with expire
+      await cacheService.incrWithExpire(
+        key,
+        Math.ceil(this.options.windowMs / 1000),
+      );
     } catch {
-      // If Redis is down, silently fail
+      // If cache is down, silently fail
     }
   }
 
   private async getResetTime(
     key: string,
-    redisService: RedisService,
+    cacheService: CacheService,
   ): Promise<number> {
     try {
-      const ttl = await redisService.getClient().ttl(key);
+      const ttl = await cacheService.ttl(key);
       return Date.now() + ttl * 1000;
     } catch {
       return Date.now() + this.options.windowMs;

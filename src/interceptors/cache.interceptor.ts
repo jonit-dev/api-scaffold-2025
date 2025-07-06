@@ -1,6 +1,6 @@
 import { Interceptor, InterceptorInterface, Action } from "routing-controllers";
 import { Service } from "typedi";
-import { RedisService } from "../services/redis.service";
+import { CacheService } from "../services/cache.service";
 import {
   CACHE_METADATA_KEY,
   ICacheConfig,
@@ -23,7 +23,7 @@ function generateCacheKey(action: Action, prefix = "route:"): string {
 @Interceptor()
 @Service()
 export class CacheInterceptor implements InterceptorInterface {
-  constructor(private redisService: RedisService) {}
+  constructor(private cacheService: CacheService) {}
 
   async intercept(action: Action, content: unknown): Promise<unknown> {
     // Only cache GET requests
@@ -63,7 +63,7 @@ export class CacheInterceptor implements InterceptorInterface {
 
     try {
       // Check if we already have a cached response
-      const cachedResponse = await this.redisService.get(cacheKey);
+      const cachedResponse = await this.cacheService.get(cacheKey);
 
       if (cachedResponse) {
         // Set cache headers
@@ -81,7 +81,7 @@ export class CacheInterceptor implements InterceptorInterface {
 
       // Cache the response content
       if (content) {
-        this.redisService
+        this.cacheService
           .set(cacheKey, content, cacheConfig.ttl || 300)
           .catch((error) => {
             console.error("Failed to cache response:", error);

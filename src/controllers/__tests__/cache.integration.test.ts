@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import request from "supertest";
 import express from "express";
 import { Container } from "typedi";
-import { RedisService } from "../../services/redis.service";
+import { CacheService } from "../../services/cache.service";
 import {
   cacheMiddleware,
   decoratorCacheMiddleware,
@@ -11,7 +11,7 @@ import { Cache } from "../../decorators/cache.decorator";
 
 describe("Cache Integration Tests", () => {
   let app: express.Application;
-  let redisService: RedisService;
+  let redisService: CacheService;
 
   beforeEach(() => {
     app = express();
@@ -21,7 +21,7 @@ describe("Cache Integration Tests", () => {
     Container.reset();
 
     // Create a mock Redis service
-    const mockRedisService = {
+    const mockCacheService = {
       get: vi.fn(),
       set: vi.fn().mockResolvedValue(undefined),
       del: vi.fn(),
@@ -51,8 +51,8 @@ describe("Cache Integration Tests", () => {
     };
 
     // Register the mock service in the container
-    Container.set(RedisService, mockRedisService);
-    redisService = Container.get(RedisService);
+    Container.set(CacheService, mockCacheService);
+    redisService = Container.get(CacheService);
   });
 
   afterEach(() => {
@@ -69,7 +69,7 @@ describe("Cache Integration Tests", () => {
 
       // First request - cache miss
       vi.mocked(redisService.get).mockResolvedValue(null);
-      vi.mocked(redisService.set).mockResolvedValue("OK");
+      vi.mocked(redisService.set).mockResolvedValue(undefined);
 
       const response1 = await request(app).get("/test").expect(200);
 

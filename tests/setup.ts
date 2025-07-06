@@ -11,7 +11,7 @@ import {
   getSupabaseMockInstance,
 } from "./setup/supabase.mock";
 import { CacheInterceptor } from "@/interceptors/cache.interceptor";
-import { RedisService } from "@/services/redis.service";
+import { CacheService } from "@/services/cache.service";
 
 // Load test environment variables
 dotenv.config({ path: ".env.test" });

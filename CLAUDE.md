@@ -9,7 +9,6 @@
 - Run tests / lint / type checks proactively, after changes.
 - To validate endpoints, use `curl`
 - When throwing errors, favor usage of src/exceptions/http-exceptions.ts
-- Docker containers debugging, please use docker mcp
 - Use context7 to fetch docs about libs, if needed.
 - Avoid using index.ts to reexport things all the time. Its redundant.
 - If needed to kill a port, use `npx kill-port PORTNUMBERHERE`

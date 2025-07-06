@@ -24,7 +24,7 @@ import { authRateLimits } from "../middlewares/rate-limit.middleware";
 import { IAuthenticatedUser } from "../types/express";
 import { extractBearerTokenOrThrow } from "../utils/auth.utils";
 
-@JsonController("/api/auth")
+@JsonController("/auth")
 @Service()
 export class AuthController {
   constructor(private authService: AuthService) {}

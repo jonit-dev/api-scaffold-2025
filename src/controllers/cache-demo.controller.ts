@@ -1,12 +1,12 @@
 import { JsonController, Get, QueryParam } from "routing-controllers";
 import { Service } from "typedi";
 import { Cache } from "../decorators/cache.decorator";
-import { RedisService } from "../services/redis.service";
+import { CacheService } from "../services/cache.service";
 
 @JsonController("/cache-demo")
 @Service()
 export class CacheDemoController {
-  constructor(private redisService: RedisService) {}
+  constructor(private cacheService: CacheService) {}
 
   @Get("/basic")
   @Cache({ ttl: 60, key: "basic-demo" })
@@ -59,7 +59,7 @@ export class CacheDemoController {
 
     if (!refresh) {
       // Try to get from cache first
-      const cached = await this.redisService.get(cacheKey);
+      const cached = await this.cacheService.get(cacheKey);
       if (cached) {
         return {
           ...cached,
@@ -77,7 +77,7 @@ export class CacheDemoController {
     };
 
     // Cache for 2 minutes
-    await this.redisService.set(cacheKey, data, 120);
+    await this.cacheService.set(cacheKey, data, 120);
 
     return data;
   }
@@ -86,7 +86,7 @@ export class CacheDemoController {
   async expensiveOperation(
     @QueryParam("category", { required: false }) category: string = "default",
   ): Promise<object> {
-    return await this.redisService.cache(
+    return await this.cacheService.cache(
       `expensive-op-${category}`,
       async () => {
         // Simulate expensive computation
@@ -116,14 +116,14 @@ export class CacheDemoController {
     const stats: Record<string, object> = {};
 
     for (const pattern of patterns) {
-      const keys = await this.redisService.keys(pattern);
+      const keys = await this.cacheService.keys(pattern);
       stats[pattern] = {
         count: keys.length,
         keys: keys,
         ttls: await Promise.all(
           keys.map(async (key) => ({
             key,
-            ttl: await this.redisService.ttl(key),
+            ttl: await this.cacheService.ttl(key),
           })),
         ),
       };
@@ -143,7 +143,7 @@ export class CacheDemoController {
     let deletedCount = 0;
 
     if (pattern) {
-      deletedCount = await this.redisService.clearByPattern(pattern);
+      deletedCount = await this.cacheService.clearByPattern(pattern);
     } else {
       // Clear all demo cache keys
       const patterns = [
@@ -153,7 +153,7 @@ export class CacheDemoController {
         "manual-cache-demo",
       ];
       for (const p of patterns) {
-        deletedCount += await this.redisService.clearByPattern(p);
+        deletedCount += await this.cacheService.clearByPattern(p);
       }
     }
 

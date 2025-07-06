@@ -356,15 +356,69 @@ export const config = {
 
 ### Caching Strategy
 
-- **Redis** for session storage
-- **Query result caching**
-- **Static asset caching**
+The application implements a robust multi-tier caching system with automatic fallback:
+
+#### Cache Architecture
+
+```
+┌─────────────────────┐
+│   Application       │
+├─────────────────────┤
+│   CacheService      │  ← Single Public Interface
+├─────────────────────┤
+│ Memory ←→ Redis     │  ← Multi-tier with fallback
+└─────────────────────┘
+```
+
+#### Features
+
+- **Single Interface**: CacheService is the only public caching API
+- **Automatic Fallback**: Redis unavailable → Memory-only caching
+- **Multi-tier Caching**: Memory (L1) + Redis (L2) when available
+- **Internal Redis**: Redis operations handled internally by CacheService
+- **Health Monitoring**: Cache status reporting and diagnostics
+- **Graceful Degradation**: Warnings for Redis-specific features in memory mode
+
+#### Cache Layers
+
+1. **Memory Cache (L1)**:
+   - Built-in memory store with LRU
+   - Process-local, fastest access
+   - Temporary storage, lost on restart
+
+2. **Redis Cache (L2)**:
+   - Persistent, distributed storage
+   - Survives application restarts
+   - Supports advanced Redis features
+
+#### Fallback Behavior
+
+- **Full Support**: get, set, del, exists, incr, decr, cache operations
+- **Limited Support**: Hash operations (flattened to simple keys)
+- **Redis-only**: List operations, pattern matching, distributed locks
+
+#### Configuration
+
+```typescript
+// Automatic Redis detection at startup
+// Falls back to memory-only if Redis unavailable
+@Service()
+export class MyService {
+  constructor(private cacheService: CacheService) {}
+
+  async checkHealth() {
+    const health = this.cacheService.getHealthStatus();
+    // { redis: boolean, memory: boolean }
+  }
+}
+```
 
 ### Database Optimization
 
 - **Connection pooling**
 - **Query optimization**
 - **Index strategy**
+- **Query result caching** via CacheService
 
 ## Deployment Architecture
 

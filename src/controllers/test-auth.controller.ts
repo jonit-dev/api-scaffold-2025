@@ -3,7 +3,7 @@ import { Service } from "typedi";
 import { Authenticated, RequireRole } from "../decorators/auth.decorator";
 import { UserRole } from "../models/enums/user-roles.enum";
 
-@JsonController("/api/test-auth")
+@JsonController("/test-auth")
 @Service()
 export class TestAuthController {
   @Get("/public")
