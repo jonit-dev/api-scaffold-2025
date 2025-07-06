@@ -479,29 +479,68 @@ export class AuthService {
     }
 
     try {
-      if (!this.supabaseAuth) {
-        throw new AuthException(
-          "Authentication service not configured",
-          HttpStatus.InternalServerError,
-        );
-      }
-      // The user is already authenticated (middleware verified the token)
-      // We can directly update the password without additional verification
-      // Supabase will handle the current password verification internally
-      const { error } = await this.supabaseAuth.auth.updateUser({
-        password: changePasswordDto.newPassword,
-      });
-
-      if (error) {
-        throw new AuthException(
-          "Password change failed",
-          HttpStatus.InternalServerError,
-        );
+      if (this.isUsingSQLite) {
+        await this.changePasswordWithSQLite(userId, changePasswordDto);
+      } else {
+        await this.changePasswordWithSupabase(changePasswordDto);
       }
     } catch (error) {
       if (error instanceof AuthException) {
         throw error;
       }
+      throw new AuthException(
+        "Password change failed",
+        HttpStatus.InternalServerError,
+      );
+    }
+  }
+
+  private async changePasswordWithSQLite(
+    userId: string,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<void> {
+    // Find user by ID
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new UserNotFoundException("User not found");
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await this.comparePassword(
+      changePasswordDto.currentPassword,
+      user.passwordHash || "",
+    );
+    if (!isCurrentPasswordValid) {
+      throw new InvalidCredentialsException("Current password is incorrect");
+    }
+
+    // Hash new password
+    const newPasswordHash = await this.hashPassword(
+      changePasswordDto.newPassword,
+    );
+
+    // Update password in database
+    await this.userRepository.updatePassword(userId, newPasswordHash);
+  }
+
+  private async changePasswordWithSupabase(
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<void> {
+    if (!this.supabaseAuth) {
+      throw new AuthException(
+        "Authentication service not configured",
+        HttpStatus.InternalServerError,
+      );
+    }
+
+    // The user is already authenticated (middleware verified the token)
+    // We can directly update the password without additional verification
+    // Supabase will handle the current password verification internally
+    const { error } = await this.supabaseAuth.auth.updateUser({
+      password: changePasswordDto.newPassword,
+    });
+
+    if (error) {
       throw new AuthException(
         "Password change failed",
         HttpStatus.InternalServerError,

@@ -607,4 +607,50 @@ export class UserRepository extends BaseRepository<IUserEntity> {
 
     return (data || []).map((item) => snakeToCamelKeys<IUserEntity>(item));
   }
+
+  async updatePassword(id: string, passwordHash: string): Promise<void> {
+    if (config.database.provider === "sqlite") {
+      this.ensureTableInitialized();
+      return this.updatePasswordSQLite(id, passwordHash);
+    } else {
+      return this.updatePasswordSupabase(id, passwordHash);
+    }
+  }
+
+  private async updatePasswordSQLite(
+    id: string,
+    passwordHash: string,
+  ): Promise<void> {
+    const db = SQLiteConfig.getClient();
+    const query = `
+      UPDATE ${this.tableName}
+      SET password_hash = ?, updated_at = ?
+      WHERE id = ? AND deleted_at IS NULL
+    `;
+
+    const now = new Date().toISOString();
+    const result = db.prepare(query).run(passwordHash, now, id);
+
+    if (result.changes === 0) {
+      throw new DatabaseException("User not found or could not be updated");
+    }
+  }
+
+  private async updatePasswordSupabase(
+    id: string,
+    passwordHash: string,
+  ): Promise<void> {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase
+      .from(this.tableName)
+      .update({
+        password_hash: passwordHash,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (error) {
+      throw new DatabaseException(error.message);
+    }
+  }
 }

@@ -39,11 +39,6 @@ export class JSONParserMiddleware {
 
             // Mark that we've already parsed the body
             (req as Request & { _body?: boolean })._body = true;
-
-            // Log successful auto-correction if the JSON was modified
-            if (repairedJson !== rawBody) {
-              console.log(`🔧 Auto-corrected JSON for ${req.path}`);
-            }
           }
 
           next();
