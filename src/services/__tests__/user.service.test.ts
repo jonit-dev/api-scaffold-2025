@@ -1,13 +1,5 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeEach,
-  vi,
-  type MockedFunction,
-} from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { UserService } from "@services/user.service";
-import { UserRepository } from "@repositories/user.repository";
 import { CreateUserDto } from "@models/dtos/user/create-user.dto";
 import { UpdateUserDto } from "@models/dtos/user/update-user.dto";
 import {
@@ -16,52 +8,22 @@ import {
 } from "@exceptions/http-exceptions";
 import { UserRole } from "@models/enums/user-roles.enum";
 import { UserStatus } from "@models/enums/user-status.enum";
-import { IUserEntity } from "@models/entities/user.entity";
-
-vi.mock("@repositories/user.repository");
+import {
+  SetupHelpers,
+  MockHelpers,
+  AssertionHelpers,
+} from "@tests/utils/test.helpers";
 
 describe("UserService", () => {
   let userService: UserService;
-  let mockUserRepository: Partial<{
-    [K in keyof UserRepository]: MockedFunction<UserRepository[K]>;
-  }>;
-
-  const mockUser: IUserEntity = {
-    id: "user-123",
-    email: "test@example.com",
-    first_name: "Test",
-    last_name: "User",
-    password_hash: "hashed_password",
-    role: UserRole.USER,
-    status: UserStatus.ACTIVE,
-    email_verified: true,
-    phone: "+1234567890",
-    avatar_url: "https://example.com/avatar.jpg",
-    last_login: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    full_name: "Test User",
-    isActive: () => true,
-    isAdmin: () => false,
-    isModerator: () => false,
-    hasRole: (role: UserRole) => role === UserRole.USER,
-    hasAnyRole: (...roles: UserRole[]) => roles.includes(UserRole.USER),
-  };
+  let mockUserRepository: any;
+  let testData: any;
 
   beforeEach(() => {
-    mockUserRepository = {
-      findByEmail: vi.fn(),
-      create: vi.fn(),
-      findById: vi.fn(),
-      update: vi.fn(),
-      softDelete: vi.fn(),
-      findUsersPaginated: vi.fn(),
-      isEmailUnique: vi.fn(),
-    };
-
-    userService = new UserService(
-      mockUserRepository as unknown as UserRepository,
-    );
+    const setup = SetupHelpers.createUserServiceTestSetup();
+    userService = setup.userService;
+    mockUserRepository = setup.mockUserRepository;
+    testData = MockHelpers.createTestDataSets();
   });
 
   describe("create", () => {
@@ -75,17 +37,20 @@ describe("UserService", () => {
         phone: "+1234567890",
       };
 
-      mockUserRepository.findByEmail!.mockResolvedValue(null);
-      mockUserRepository.create!.mockResolvedValue(mockUser);
+      MockHelpers.setupRepositoryResponses(mockUserRepository, {
+        findByEmail: null, // Email is unique
+        create: testData.users.regular,
+      });
 
       const result = await userService.create(createUserDto);
 
-      expect(result).toBeDefined();
-      expect(result.email).toBe(createUserDto.email);
-      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith(
-        createUserDto.email,
-      );
-      expect(mockUserRepository.create).toHaveBeenCalled();
+      AssertionHelpers.expectUserStructure(result, {
+        email: createUserDto.email,
+      });
+      AssertionHelpers.expectRepositoryCalls(mockUserRepository, [
+        { method: "findByEmail", args: [createUserDto.email] },
+        { method: "create" },
+      ]);
     });
 
     it("should throw ValidationException when email already exists", async () => {
@@ -96,35 +61,46 @@ describe("UserService", () => {
         password: "Password123!",
       };
 
-      mockUserRepository.findByEmail!.mockResolvedValue(mockUser);
+      MockHelpers.setupRepositoryResponses(mockUserRepository, {
+        findByEmail: testData.users.regular, // Email exists
+      });
 
-      await expect(userService.create(createUserDto)).rejects.toThrow(
+      await AssertionHelpers.expectAsyncError(
+        () => userService.create(createUserDto),
         ValidationException,
       );
-      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith(
-        createUserDto.email,
-      );
+      AssertionHelpers.expectRepositoryCalls(mockUserRepository, [
+        { method: "findByEmail", args: [createUserDto.email] },
+      ]);
     });
   });
 
   describe("findById", () => {
     it("should find user by id successfully", async () => {
-      mockUserRepository.findById!.mockResolvedValue(mockUser);
+      MockHelpers.setupRepositoryResponses(mockUserRepository, {
+        findById: testData.users.regular,
+      });
 
       const result = await userService.findById("user-123");
 
-      expect(result).toBeDefined();
-      expect(result.id).toBe("user-123");
-      expect(mockUserRepository.findById).toHaveBeenCalledWith("user-123");
+      AssertionHelpers.expectUserStructure(result);
+      AssertionHelpers.expectRepositoryCalls(mockUserRepository, [
+        { method: "findById", args: ["user-123"] },
+      ]);
     });
 
     it("should throw NotFoundException when user not found", async () => {
-      mockUserRepository.findById!.mockResolvedValue(null);
+      MockHelpers.setupRepositoryResponses(mockUserRepository, {
+        findById: null,
+      });
 
-      await expect(userService.findById("non-existent")).rejects.toThrow(
+      await AssertionHelpers.expectAsyncError(
+        () => userService.findById("non-existent"),
         NotFoundException,
       );
-      expect(mockUserRepository.findById).toHaveBeenCalledWith("non-existent");
+      AssertionHelpers.expectRepositoryCalls(mockUserRepository, [
+        { method: "findById", args: ["non-existent"] },
+      ]);
     });
   });
 
@@ -135,9 +111,9 @@ describe("UserService", () => {
         last_name: "Name",
       };
 
-      mockUserRepository.findById!.mockResolvedValue(mockUser);
+      mockUserRepository.findById!.mockResolvedValue(testData.users.regular);
       mockUserRepository.update!.mockResolvedValue({
-        ...mockUser,
+        ...testData.users.regular,
         ...updateUserDto,
       });
 
@@ -156,10 +132,10 @@ describe("UserService", () => {
         email: "newemail@example.com",
       };
 
-      mockUserRepository.findById!.mockResolvedValue(mockUser);
+      mockUserRepository.findById!.mockResolvedValue(testData.users.regular);
       mockUserRepository.isEmailUnique!.mockResolvedValue(true);
       mockUserRepository.update!.mockResolvedValue({
-        ...mockUser,
+        ...testData.users.regular,
         ...updateUserDto,
       });
 
@@ -177,7 +153,7 @@ describe("UserService", () => {
         email: "existing@example.com",
       };
 
-      mockUserRepository.findById!.mockResolvedValue(mockUser);
+      mockUserRepository.findById!.mockResolvedValue(testData.users.regular);
       mockUserRepository.isEmailUnique!.mockResolvedValue(false);
 
       await expect(
@@ -200,7 +176,7 @@ describe("UserService", () => {
 
   describe("delete", () => {
     it("should delete user successfully", async () => {
-      mockUserRepository.findById!.mockResolvedValue(mockUser);
+      mockUserRepository.findById!.mockResolvedValue(testData.users.regular);
       mockUserRepository.softDelete!.mockResolvedValue(undefined);
 
       await userService.delete("user-123");
@@ -220,9 +196,9 @@ describe("UserService", () => {
 
   describe("updateStatus", () => {
     it("should update user status successfully", async () => {
-      mockUserRepository.findById!.mockResolvedValue(mockUser);
+      mockUserRepository.findById!.mockResolvedValue(testData.users.regular);
       mockUserRepository.update!.mockResolvedValue({
-        ...mockUser,
+        ...testData.users.regular,
         status: UserStatus.SUSPENDED,
       });
 
@@ -249,30 +225,16 @@ describe("UserService", () => {
 
   describe("search", () => {
     it("should search users successfully", async () => {
-      const mockPaginatedResult = {
-        data: [mockUser],
-        pagination: {
-          page: 1,
-          limit: 10,
-          total: 1,
-          hasNext: false,
-          hasPrevious: false,
-        },
-      };
-
-      mockUserRepository.findUsersPaginated!.mockResolvedValue(
-        mockPaginatedResult,
-      );
+      MockHelpers.setupRepositoryResponses(mockUserRepository, {
+        findUsersPaginated: testData.pagination.firstPage,
+      });
 
       const result = await userService.search("test", 1, 10);
 
-      expect(result).toBeDefined();
-      expect(result.data).toHaveLength(1);
-      expect(mockUserRepository.findUsersPaginated).toHaveBeenCalledWith(
-        1,
-        10,
-        { search: "test" },
-      );
+      AssertionHelpers.expectPaginationResponse(result, 2);
+      AssertionHelpers.expectRepositoryCalls(mockUserRepository, [
+        { method: "findUsersPaginated", args: [1, 10, { search: "test" }] },
+      ]);
     });
   });
 });

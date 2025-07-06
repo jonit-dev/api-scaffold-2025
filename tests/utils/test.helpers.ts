@@ -13,6 +13,12 @@ import {
   IMockRedisClient,
 } from "../setup/redis.mock";
 
+// Re-export new helper classes for convenience
+export { SetupHelpers } from "./setup.helpers";
+export { AssertionHelpers } from "./assertion.helpers";
+export { MockHelpers } from "./mock.helpers";
+export { ScenarioHelpers } from "./scenario.helpers";
+
 export class TestHelpers {
   static createMockSupabaseClient(): IMockSupabaseClient {
     // Use centralized Supabase mock instead of creating inline

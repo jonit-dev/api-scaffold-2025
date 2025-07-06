@@ -74,5 +74,3 @@ if (missingEnvVars.length > 0) {
     `⚠️  Missing optional environment variables: ${missingEnvVars.join(", ")}`,
   );
 }
-
-export default config;
