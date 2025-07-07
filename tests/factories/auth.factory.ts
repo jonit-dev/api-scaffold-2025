@@ -89,6 +89,15 @@ export class AuthFactory {
     });
   }
 
+  static createUnsubscribedUser(overrides?: Partial<IUserEntity>): IUserEntity {
+    return this.createTestUser({
+      id: "unsubscribed-user-id-123",
+      email: "unsubscribed@example.com",
+      emailUnsubscribed: true,
+      ...overrides,
+    });
+  }
+
   static createLoginDto(overrides?: Partial<LoginDto>): LoginDto {
     return {
       email: "test@example.com",
@@ -248,6 +257,7 @@ export class AuthFactory {
       role: UserRole.User,
       status: UserStatus.Active,
       emailVerified: true,
+      emailUnsubscribed: false,
       phone: "+1234567890",
       avatarUrl: "https://example.com/avatar.jpg",
       lastLogin: now,
