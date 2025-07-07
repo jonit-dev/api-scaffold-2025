@@ -5,7 +5,6 @@ import { LoginDto } from "@models/dtos/auth/login.dto";
 import { RegisterDto } from "@models/dtos/auth/register.dto";
 import { AuthResponseDto } from "@models/dtos/auth/auth-response.dto";
 import { UserResponseDto } from "@models/dtos/user/user-response.dto";
-import { User, Session } from "@supabase/supabase-js";
 import { ISession } from "../../src/models/dtos/auth/auth-response.dto";
 import { IAuthenticatedUser } from "@common-types/express";
 import jwt from "jsonwebtoken";
@@ -110,7 +109,7 @@ export class AuthFactory {
     };
   }
 
-  static createSupabaseUser(overrides?: Partial<User>): User {
+  static createSupabaseUser(overrides?: Partial<any>): any {
     return {
       id: "test-user-id-123",
       aud: "authenticated",
@@ -152,7 +151,6 @@ export class AuthFactory {
       id: "test-user-id-123",
       email: "test@example.com",
       role: UserRole.User,
-      supabaseUser: this.createSupabaseUser(),
       ...overrides,
     };
   }
@@ -185,7 +183,7 @@ export class AuthFactory {
   static createValidJwtToken(user?: Partial<IUserEntity>): string {
     // Generate a real JWT token for testing
     const testUser = user || this.createTestUser();
-    
+
     return jwt.sign(
       {
         sub: testUser.id,
@@ -194,7 +192,7 @@ export class AuthFactory {
         type: "access",
       },
       process.env.JWT_SECRET || "test-jwt-secret-key-for-testing-only",
-      { expiresIn: "1h" }
+      { expiresIn: "1h" },
     );
   }
 
@@ -208,9 +206,9 @@ export class AuthFactory {
   }
 
   static createMockSupabaseAuthResponse(
-    user?: User | null,
+    user?: any | null,
     error?: any,
-  ): { data: { user: User | null }; error: any } {
+  ): { data: { user: any | null }; error: any } {
     return {
       data: { user: user || null },
       error: error || null,
@@ -272,9 +270,15 @@ export class AuthFactory {
     dto.emailVerified = userData.emailVerified!;
     dto.phone = userData.phone || undefined;
     dto.avatarUrl = userData.avatarUrl || undefined;
-    dto.lastLogin = userData.lastLogin ? new Date(userData.lastLogin) : undefined;
-    dto.createdAt = userData.createdAt ? new Date(userData.createdAt) : new Date();
-    dto.updatedAt = userData.updatedAt ? new Date(userData.updatedAt) : new Date();
+    dto.lastLogin = userData.lastLogin
+      ? new Date(userData.lastLogin)
+      : undefined;
+    dto.createdAt = userData.createdAt
+      ? new Date(userData.createdAt)
+      : new Date();
+    dto.updatedAt = userData.updatedAt
+      ? new Date(userData.updatedAt)
+      : new Date();
     return dto;
   }
 }

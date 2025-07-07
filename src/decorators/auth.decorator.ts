@@ -1,4 +1,3 @@
-import { User } from "@supabase/supabase-js";
 import { NextFunction, Request, Response } from "express";
 import { UseBefore, createParamDecorator } from "routing-controllers";
 import { Container } from "typedi";
@@ -81,31 +80,14 @@ export function OptionalAuth(): MethodDecorator {
         const token = extractBearerToken(req);
 
         if (token) {
-          const supabaseAuth = Container.get("supabaseAuth") as {
-            auth: {
-              getUser: (
-                token: string,
-              ) => Promise<{ data: { user: User | null }; error: unknown }>;
-            };
+          const authService = Container.get("AuthService") as {
+            verifyToken: (token: string) => Promise<IAuthenticatedUser>;
           };
-
-          supabaseAuth.auth
-            .getUser(token)
-            .then(({ data, error }) => {
-              if (error || !data.user) {
-                // Token is invalid, but we don't throw - just continue without user
-                next();
-                return;
-              }
-
-              // Add user to request for use in route handler
-              (req as Request & { user: IAuthenticatedUser }).user = {
-                id: data.user.id,
-                email: data.user.email!,
-                role:
-                  (data.user.user_metadata?.role as UserRole) || UserRole.User,
-              };
-
+          // Try to verify token but don't throw if invalid
+          authService
+            .verifyToken(token)
+            .then((user: IAuthenticatedUser) => {
+              req.user = user;
               next();
             })
             .catch(() => {

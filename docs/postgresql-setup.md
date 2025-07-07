@@ -5,22 +5,30 @@ This guide covers how to set up and connect to the PostgreSQL database with pgAd
 ## Quick Start
 
 1. **Copy environment variables**:
+
    ```bash
    cp .env.example .env
    ```
 
-2. **Start the containers**:
+2. **Start the full stack** (database migrations run automatically):
+
+   ```bash
+   docker-compose up -d
+   ```
+
+   Or start just the database services:
+
    ```bash
    docker-compose up -d postgres redis pgadmin
    ```
 
-3. **Run database migrations**:
-   ```bash
-   npx prisma migrate dev --name init
-   ```
+3. **For local development without Docker**:
 
-4. **Start the application**:
    ```bash
+   # Start database services only
+   docker-compose up -d postgres redis pgadmin
+
+   # Run the app locally
    yarn dev
    ```
 
@@ -47,11 +55,12 @@ PGADMIN_PORT=8080
 
 ### Docker Services
 
-The `docker-compose.yml` includes three main services:
+The `docker-compose.yml` includes four main services:
 
-1. **PostgreSQL** (port 5432)
-2. **Redis** (port 6379) 
-3. **pgAdmin** (port 8080)
+1. **PostgreSQL** (port 5432) - Database with health checks
+2. **Redis** (port 6379) - Cache and session store
+3. **pgAdmin** (port 8080) - Database management interface (auto-configured)
+4. **App** (port 3000) - API application with automatic migration handling
 
 ## Connecting to PostgreSQL
 
@@ -60,6 +69,7 @@ The `docker-compose.yml` includes three main services:
 The application automatically connects using the `DATABASE_URL` environment variable.
 
 Test the connection:
+
 ```bash
 curl http://localhost:3000/health
 ```
@@ -67,31 +77,24 @@ curl http://localhost:3000/health
 ### 2. Via pgAdmin (Web Interface)
 
 #### Access pgAdmin:
+
 - URL: http://localhost:8080
 - Email: `admin@api-scaffold.com`
 - Password: `admin123`
 
-#### Add PostgreSQL Server:
-1. Click "Add New Server"
-2. **General tab**:
-   - Name: `API Scaffold DB`
-3. **Connection tab**:
-   - Host: `postgres` (Docker service name)
-   - Port: `5432`
-   - Database: `api_scaffold`
-   - Username: `api_user`
-   - Password: `api_password`
-4. Click "Save"
+**Note**: The PostgreSQL server connection is automatically configured when pgAdmin starts. You should see "API Scaffold Database" already available in the server list.
 
 ### 3. Via Command Line (psql)
 
 #### From Host Machine:
+
 ```bash
 psql -h localhost -p 5432 -U api_user -d api_scaffold
 # Password: api_password
 ```
 
 #### From Docker Container:
+
 ```bash
 docker exec -it api-scaffold-postgres-1 psql -U api_user -d api_scaffold
 ```
@@ -111,11 +114,13 @@ Use these connection parameters in your preferred database client:
 
 ### Prisma Commands
 
+**Note**: When using Docker, migrations are automatically applied on startup. For manual control:
+
 ```bash
 # Generate Prisma client
 npx prisma generate
 
-# Create and apply migration
+# Create and apply migration (local development)
 npx prisma migrate dev --name migration_name
 
 # Apply pending migrations (production)
@@ -131,6 +136,7 @@ npx prisma studio
 ### Database Schema
 
 The current schema includes these tables:
+
 - `User` - User accounts and authentication
 - `Payment` - Stripe payment records
 - `Subscription` - Stripe subscription management
@@ -141,10 +147,11 @@ The current schema includes these tables:
 ### Common Issues
 
 1. **Connection Refused**:
+
    ```bash
    # Check if containers are running
    docker ps
-   
+
    # Check logs
    docker logs api-scaffold-postgres-1
    ```
@@ -154,10 +161,11 @@ The current schema includes these tables:
    - Ensure `DATABASE_URL` matches container environment variables
 
 3. **Port Already in Use**:
+
    ```bash
    # Find process using port
    lsof -i :5432
-   
+
    # Kill process (be careful!)
    npx kill-port 5432
    ```
@@ -194,11 +202,13 @@ docker-compose down -v
 ### Development vs Production
 
 **Development** (current setup):
+
 - Simple passwords for easy local development
 - pgAdmin accessible without authentication restrictions
 - Database exposed on localhost
 
 **Production** (recommendations):
+
 - Use strong, randomly generated passwords
 - Restrict pgAdmin access or use VPN
 - Use connection pooling
@@ -218,11 +228,12 @@ For production, consider:
 
 1. **Managed PostgreSQL** (AWS RDS, Google Cloud SQL, etc.)
 2. **Connection pooling** (PgBouncer)
-3. **Database monitoring** 
+3. **Database monitoring**
 4. **Automated backups**
 5. **SSL/TLS encryption**
 
 Example production `DATABASE_URL`:
+
 ```env
 DATABASE_URL="postgresql://username:password@your-db-host:5432/dbname?sslmode=require"
 ```
@@ -230,6 +241,7 @@ DATABASE_URL="postgresql://username:password@your-db-host:5432/dbname?sslmode=re
 ## Backup and Restore
 
 ### Backup Database:
+
 ```bash
 # Via Docker
 docker exec api-scaffold-postgres-1 pg_dump -U api_user api_scaffold > backup.sql
@@ -239,6 +251,7 @@ pg_dump -h localhost -p 5432 -U api_user api_scaffold > backup.sql
 ```
 
 ### Restore Database:
+
 ```bash
 # Via Docker
 docker exec -i api-scaffold-postgres-1 psql -U api_user api_scaffold < backup.sql

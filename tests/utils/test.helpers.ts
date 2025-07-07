@@ -1,12 +1,6 @@
-import { SupabaseClient } from "@supabase/supabase-js";
 import { Container } from "typedi";
 import { expect, vi } from "vitest";
 import { DatabaseFactory } from "../factories/database.factory";
-import {
-  getSupabaseMockInstance,
-  createSupabaseMock,
-  IMockSupabaseClient,
-} from "../setup/supabase.mock";
 import {
   getRedisMockInstance,
   createRedisMock,
@@ -20,18 +14,9 @@ export { MockHelpers } from "./mock.helpers";
 export * from "./scenario.helpers";
 
 export class TestHelpers {
-  static createMockSupabaseClient(): IMockSupabaseClient {
-    // Use centralized Supabase mock instead of creating inline
-    return createSupabaseMock();
-  }
-
-  static setupMockSupabaseClient(mockClient: any = null): IMockSupabaseClient {
-    // Use centralized mock instance or get existing one
-    const client = mockClient
-      ? { ...getSupabaseMockInstance(), ...mockClient }
-      : getSupabaseMockInstance();
-    Container.set("supabase", client);
-    return client;
+  static setupMockSupabaseClient() {
+    // Placeholder for backward compatibility
+    return {};
   }
 
   static createSuccessfulQuery<T>(data: T[]) {
@@ -80,13 +65,13 @@ export class TestHelpers {
   }
 
   static async cleanupTestData(tableName: string) {
-    const supabase = Container.get<SupabaseClient>("supabase");
-    await supabase.from(tableName).delete().neq("id", "");
+    // TODO: Implement with Prisma client
+    console.log(`Cleaning up test data for table: ${tableName}`);
   }
 
   static async seedTestData<T>(tableName: string, data: T[]) {
-    const supabase = Container.get<SupabaseClient>("supabase");
-    await supabase.from(tableName).insert(data);
+    // TODO: Implement with Prisma client
+    console.log(`Seeding test data for table: ${tableName}`, data);
   }
 
   static createMockRedisClient(): IMockRedisClient {

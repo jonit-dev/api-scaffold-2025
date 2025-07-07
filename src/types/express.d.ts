@@ -1,4 +1,3 @@
-import { User } from "@supabase/supabase-js";
 import { Request } from "express";
 import { UserRole } from "../models/enums/user-roles.enum";
 
@@ -15,7 +14,6 @@ export interface IAuthenticatedUser {
   id: string;
   email: string;
   role: UserRole;
-  supabaseUser?: User;
 }
 
 export interface IAuthenticatedRequest extends Request {

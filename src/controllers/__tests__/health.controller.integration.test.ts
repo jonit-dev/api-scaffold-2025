@@ -7,15 +7,7 @@ import { TestHelpers } from "@tests/utils/test.helpers";
 describe("Health Controller", () => {
   beforeEach(() => {
     // Setup test environment
-    TestHelpers.setupMockSupabaseClient({
-      from: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi
-            .fn()
-            .mockResolvedValue({ data: null, error: { message: "Test" } }),
-        }),
-      }),
-    });
+    TestHelpers.setupMockSupabaseClient();
   });
 
   describe("GET /health", () => {
