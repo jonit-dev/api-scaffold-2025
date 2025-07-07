@@ -23,7 +23,7 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "joaopaulofurtado1233@live.com",
+  "email": "jfurtado141@gmail.com",
   "password": "MyPass123!"
 }
 
@@ -63,13 +63,16 @@ Content-Type: application/json
   "newPassword": "NewSecurePass456!"
 }
 
-### Verify Email
+### Verify Email (POST)
 POST {{baseUrl}}/auth/verify-email
 Content-Type: application/json
 
 {
   "token": "verification-token-here"
 }
+
+### Verify Email (GET - for email links)
+GET {{baseUrl}}/auth/verify-email?token=verification-token-here
 
 ### Resend Verification Email
 POST {{baseUrl}}/auth/resend-verification

@@ -5,6 +5,7 @@ import {
   Body,
   HttpCode,
   Req,
+  QueryParam,
 } from "routing-controllers";
 import { Service } from "typedi";
 import { Request } from "express";
@@ -106,6 +107,14 @@ export class AuthController {
     @Body() verifyEmailDto: VerifyEmailDto,
   ): Promise<{ success: boolean; message: string }> {
     return await this.authService.verifyEmail(verifyEmailDto.token);
+  }
+
+  @Get("/verify-email")
+  @HttpCode(HttpStatus.Ok)
+  async verifyEmailGet(
+    @QueryParam("token", { required: true }) token: string,
+  ): Promise<{ success: boolean; message: string }> {
+    return await this.authService.verifyEmail(token);
   }
 
   @Post("/resend-verification")

@@ -44,25 +44,59 @@ export class EmailService {
   ): Promise<{ id?: string; success: boolean }> {
     try {
       if (this.isDevMode) {
-        this.logger.info("📧 EMAIL SERVICE (DEV MODE - NOT SENT)", {
+        const emailMetadata = {
           from: `${config.email.fromName} <${config.email.fromAddress}>`,
-          to: emailData.to,
+          to: Array.isArray(emailData.to)
+            ? emailData.to.join(", ")
+            : emailData.to,
           subject: emailData.subject,
-          html: emailData.html,
-          text: emailData.text,
-          cc: emailData.cc,
-          bcc: emailData.bcc,
-          replyTo: emailData.replyTo,
-          attachments: emailData.attachments?.map((att) => ({
-            filename: att.filename,
-            contentType: att.contentType,
-            contentSize:
-              typeof att.content === "string"
-                ? att.content.length
-                : att.content.length,
-          })),
-          tags: emailData.tags,
-        });
+          ...(emailData.cc && {
+            cc: Array.isArray(emailData.cc)
+              ? emailData.cc.join(", ")
+              : emailData.cc,
+          }),
+          ...(emailData.bcc && {
+            bcc: Array.isArray(emailData.bcc)
+              ? emailData.bcc.join(", ")
+              : emailData.bcc,
+          }),
+          ...(emailData.replyTo && { replyTo: emailData.replyTo }),
+          ...(emailData.attachments && {
+            attachments: emailData.attachments.map((att) => ({
+              filename: att.filename,
+              contentType: att.contentType || "unknown",
+              size:
+                typeof att.content === "string"
+                  ? `${att.content.length} chars`
+                  : `${att.content.length} bytes`,
+            })),
+          }),
+          ...(emailData.tags && {
+            tags: emailData.tags
+              .map((tag) => `${tag.name}:${tag.value}`)
+              .join(", "),
+          }),
+        };
+
+        this.logger.info("📧 EMAIL SERVICE (DEV MODE - NOT SENT)");
+        this.logger.info("📧 Email Metadata:", emailMetadata);
+
+        if (emailData.html) {
+          this.logger.info("📧 HTML Content Preview:", {
+            length: `${emailData.html.length} chars`,
+            preview:
+              emailData.html.substring(0, 200) +
+              (emailData.html.length > 200 ? "..." : ""),
+          });
+        }
+
+        if (emailData.text) {
+          this.logger.info("📧 Text Content:", {
+            length: `${emailData.text.length} chars`,
+            content: emailData.text,
+          });
+        }
+
         return { success: true, id: "dev-mode-" + Date.now() };
       }
 
@@ -113,6 +147,13 @@ export class EmailService {
     emailData: Omit<IEmailData, "html">,
   ): Promise<{ id?: string; success: boolean }> {
     try {
+      if (this.isDevMode) {
+        this.logger.info("📧 TEMPLATE EMAIL (DEV MODE)", {
+          template: templateName,
+          templateData,
+        });
+      }
+
       const html = await this.renderTemplate(templateName, templateData);
       return this.send({ ...emailData, html });
     } catch (error) {

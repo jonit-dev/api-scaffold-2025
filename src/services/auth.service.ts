@@ -120,6 +120,30 @@ export class AuthService {
 
     const user = await this.userRepository.create(userData);
 
+    // Generate verification token
+    const verificationToken = this.generateVerificationToken(user.email);
+
+    // Send welcome email with verification link
+    try {
+      await this.emailService.sendWithTemplate(
+        "welcome",
+        {
+          firstName: user.firstName,
+          appName: config.email.fromName,
+          verificationUrl: `${config.env.frontendUrl}/auth/verify-email?token=${verificationToken}`,
+          currentYear: new Date().getFullYear(),
+        },
+        {
+          to: user.email,
+          subject: "Welcome! Please verify your account",
+        },
+      );
+    } catch (error) {
+      this.logger.error("Failed to send welcome email:", {
+        error: String(error),
+      });
+    }
+
     // Generate tokens
     const accessToken = this.generateAccessToken(user);
     const refreshToken = this.generateRefreshToken(user);
@@ -318,7 +342,6 @@ export class AuthService {
     }
 
     // Generate password reset token (valid for 1 hour)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const resetToken = jwt.sign(
       {
         sub: user.id,
@@ -329,8 +352,30 @@ export class AuthService {
       { expiresIn: "1h" },
     );
 
-    // TODO: Send password reset email
-    // await this.emailService.sendPasswordResetEmail(user.email, resetToken);
+    // Send password reset email
+    const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/auth/reset-password?token=${resetToken}`;
+
+    try {
+      await this.emailService.sendWithTemplate(
+        "password-reset",
+        {
+          appName: "API Scaffold",
+          name: user.firstName || user.email.split("@")[0],
+          resetUrl,
+          expiresIn: "1 hour",
+          currentYear: new Date().getFullYear(),
+        },
+        {
+          to: user.email,
+          subject: "Reset your API Scaffold password",
+        },
+      );
+    } catch (error) {
+      // Log error but don't expose it to prevent email enumeration
+      this.logger.error("Failed to send password reset email:", {
+        error: String(error),
+      });
+    }
 
     return {
       message: "If the email exists, a password reset link has been sent",
@@ -395,11 +440,28 @@ export class AuthService {
     }
 
     // Generate new verification token
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const verificationToken = this.generateVerificationToken(user.email);
 
-    // TODO: Send verification email
-    // await this.emailService.sendVerificationEmail(user.email, verificationToken);
+    // Send verification email
+    try {
+      await this.emailService.sendWithTemplate(
+        "welcome",
+        {
+          firstName: user.firstName,
+          appName: config.email.fromName,
+          verificationUrl: `${config.env.frontendUrl}/auth/verify-email?token=${verificationToken}`,
+          currentYear: new Date().getFullYear(),
+        },
+        {
+          to: user.email,
+          subject: "Welcome! Please verify your account",
+        },
+      );
+    } catch (error) {
+      this.logger.error("Failed to send verification email:", {
+        error: String(error),
+      });
+    }
 
     return {
       message:

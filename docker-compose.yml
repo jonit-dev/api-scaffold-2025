@@ -6,13 +6,6 @@ services:
     container_name: api-scaffold-app
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - PORT=3000
-      - DATABASE_URL=postgresql://api_user:api_password@postgres:5432/api_scaffold
-      - REDIS_URL=redis://redis:6379
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
     env_file:
       - .env
     volumes:
@@ -35,9 +28,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=api_scaffold
-      - POSTGRES_USER=api_user
-      - POSTGRES_PASSWORD=api_password
+      - POSTGRES_DB=${DATABASE_NAME}
+      - POSTGRES_USER=${DATABASE_USERNAME}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
@@ -45,7 +38,7 @@ services:
       - app-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U api_user -d api_scaffold"]
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME} -d ${DATABASE_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5

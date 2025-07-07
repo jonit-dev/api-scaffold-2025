@@ -34,7 +34,19 @@ async function startServer(): Promise<void> {
     // Start the server
     app.listen(config.server.port, () => {
       logger.info(`🚀 Server running on port ${config.server.port}`);
-      logger.info(`📋 Environment: ${config.server.environment}`);
+
+      // Colored environment logging - use background colors with contrasting text
+      const isProduction = config.server.environment === "production";
+      // Production: Red background with white text, Development: Orange background with black text
+      const colorCode = isProduction
+        ? "\x1b[41m\x1b[37m\x1b[1m" // Red background + white text + bold
+        : "\x1b[43m\x1b[30m\x1b[1m"; // Yellow background + black text + bold (closest to orange)
+      const resetCode = "\x1b[0m";
+
+      console.log(
+        `📋 Environment: ${colorCode} ${config.server.environment.toUpperCase()} ${resetCode}`,
+      );
+
       logger.info(
         `🏥 Health check: http://localhost:${config.server.port}/health`,
       );
