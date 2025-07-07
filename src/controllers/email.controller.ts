@@ -88,9 +88,15 @@ export class EmailController {
         );
       }
 
-      const result = await this.emailService.sendWithTemplate(
+      // Enhance template data with auto-generated URLs for specific templates
+      const enhancedTemplateData = this.enhanceTemplateData(
         templateName as string,
         templateData as Record<string, unknown>,
+      );
+
+      const result = await this.emailService.sendWithTemplate(
+        templateName as string,
+        enhancedTemplateData,
         {
           to: to as string | string[],
           subject: subject as string,
@@ -320,5 +326,45 @@ export class EmailController {
 
       throw new InternalServerError("Internal server error");
     }
+  }
+
+  private enhanceTemplateData(
+    templateName: string,
+    templateData: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const enhanced = { ...templateData };
+
+    // Auto-generate URLs for welcome template
+    if (templateName === "welcome") {
+      // Add verificationUrl if verificationToken is provided but verificationUrl is not
+      if (enhanced.verificationToken && !enhanced.verificationUrl) {
+        enhanced.verificationUrl = `${config.env.frontendUrl}/auth/verify-email?token=${enhanced.verificationToken}`;
+      }
+      // Set default appName if not provided
+      if (!enhanced.appName) {
+        enhanced.appName = config.email.fromName;
+      }
+    }
+
+    // Auto-generate URLs for password-reset template
+    if (templateName === "password-reset") {
+      // Add resetUrl if resetToken is provided but resetUrl is not
+      if (enhanced.resetToken && !enhanced.resetUrl) {
+        enhanced.resetUrl = `${config.env.frontendUrl}/auth/reset-password?token=${enhanced.resetToken}`;
+      }
+      // Set default appName if not provided
+      if (!enhanced.appName) {
+        enhanced.appName = config.email.fromName;
+      }
+      // Convert expirationHours to expiresIn format if provided
+      if (enhanced.expirationHours && !enhanced.expiresIn) {
+        enhanced.expiresIn = `${enhanced.expirationHours} hours`;
+      }
+    }
+
+    // Always add currentYear
+    enhanced.currentYear = new Date().getFullYear();
+
+    return enhanced;
   }
 }

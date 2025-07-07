@@ -5,7 +5,7 @@
 GET {{baseUrl}}/email/templates
 Authorization: Bearer {{adminToken}}
 
-### Send a basic email using welcome template
+### Send welcome email with manual verificationUrl
 POST {{baseUrl}}/email/send-template
 Content-Type: application/json
 Authorization: Bearer {{adminToken}}
@@ -15,8 +15,22 @@ Authorization: Bearer {{adminToken}}
   "templateData": {
     "firstName": "John",
     "appName": "API Scaffold App",
-    "verificationUrl": "https://app.example.com/verify-email?token=abc123",
-    "currentYear": 2024
+    "verificationUrl": "https://app.example.com/verify-email?token=abc123"
+  },
+  "to": "jfurtado141@gmail.com",
+  "subject": "Welcome to API Scaffold!"
+}
+
+### Send welcome email with auto-generated verificationUrl
+POST {{baseUrl}}/email/send-template
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "templateName": "welcome",
+  "templateData": {
+    "firstName": "John",
+    "verificationToken": "abc123"
   },
   "to": "jfurtado141@gmail.com",
   "subject": "Welcome to API Scaffold!"
