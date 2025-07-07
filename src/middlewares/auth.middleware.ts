@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { Service, Inject } from "typedi";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { Service } from "typedi";
 import { AuthService } from "../services/auth.service";
 import { IAuthenticatedUser } from "../types/express";
 import { UnauthorizedException } from "../exceptions/http-exceptions";
@@ -8,10 +7,7 @@ import { extractBearerToken } from "../utils/auth.utils";
 
 @Service()
 export class AuthMiddleware {
-  constructor(
-    private authService: AuthService,
-    @Inject("supabaseAuth") private supabaseClient: SupabaseClient,
-  ) {}
+  constructor(private authService: AuthService) {}
 
   async use(
     request: Request,

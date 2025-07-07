@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "API Scaffold Database",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "api_scaffold",
+      "Username": "api_user",
+      "Password": "api_password",
+      "SSLMode": "prefer",
+      "Favorite": true
+    }
+  }
+}

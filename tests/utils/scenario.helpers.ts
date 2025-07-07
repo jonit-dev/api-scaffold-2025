@@ -4,7 +4,7 @@ import { UserRole } from "../../src/models/enums/user-roles.enum";
 import { UserStatus } from "../../src/models/enums/user-status.enum";
 import { PaymentStatus } from "../../src/types/stripe.types";
 
-export interface IITestUser {
+export interface ITestUser {
   id: string;
   email: string;
   firstName: string;

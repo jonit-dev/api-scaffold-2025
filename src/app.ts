@@ -5,7 +5,7 @@ import express from "express";
 import { useContainer, useExpressServer } from "routing-controllers";
 import { Container } from "typedi";
 import { config } from "./config/env";
-// import { AuthController } from "./controllers/auth.controller";
+import { AuthController } from "./controllers/auth.controller";
 import { CacheDemoController } from "./controllers/cache-demo.controller";
 import { EmailController } from "./controllers/email.controller";
 import { HealthController } from "./controllers/health.controller";
@@ -75,7 +75,7 @@ useExpressServer(app, {
   controllers: [
     HealthController,
     TestController,
-    // AuthController,
+    AuthController,
     TestAuthController,
     CacheDemoController,
     UserController,

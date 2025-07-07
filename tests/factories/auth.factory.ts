@@ -4,9 +4,11 @@ import { IUserEntity } from "@models/entities/user.entity";
 import { LoginDto } from "@models/dtos/auth/login.dto";
 import { RegisterDto } from "@models/dtos/auth/register.dto";
 import { AuthResponseDto } from "@models/dtos/auth/auth-response.dto";
+import { UserResponseDto } from "@models/dtos/user/user-response.dto";
 import { User, Session } from "@supabase/supabase-js";
 import { ISession } from "../../src/models/dtos/auth/auth-response.dto";
 import { IAuthenticatedUser } from "@common-types/express";
+import jwt from "jsonwebtoken";
 import { vi } from "vitest";
 
 export class AuthFactory {
@@ -180,9 +182,20 @@ export class AuthFactory {
     };
   }
 
-  static createValidJwtToken(): string {
-    // This is a mock JWT token for testing
-    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LXVzZXItaWQtMTIzIiwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIiwiYXVkIjoiYXV0aGVudGljYXRlZCIsImV4cCI6OTk5OTk5OTk5OSwiaWF0IjoxNjAwMDAwMDAwLCJpc3MiOiJzdXBhYmFzZSJ9.test-signature";
+  static createValidJwtToken(user?: Partial<IUserEntity>): string {
+    // Generate a real JWT token for testing
+    const testUser = user || this.createTestUser();
+    
+    return jwt.sign(
+      {
+        sub: testUser.id,
+        email: testUser.email,
+        role: testUser.role,
+        type: "access",
+      },
+      process.env.JWT_SECRET || "test-jwt-secret-key-for-testing-only",
+      { expiresIn: "1h" }
+    );
   }
 
   static createExpiredJwtToken(): string {
@@ -245,5 +258,23 @@ export class AuthFactory {
       fullName: "Test User",
       ...overrides,
     };
+  }
+
+  static createUserResponseDto(user?: Partial<IUserEntity>): UserResponseDto {
+    const userData = user || this.createTestUser();
+    const dto = new UserResponseDto();
+    dto.id = userData.id!;
+    dto.email = userData.email!;
+    dto.firstName = userData.firstName!;
+    dto.lastName = userData.lastName!;
+    dto.role = userData.role!;
+    dto.status = userData.status!;
+    dto.emailVerified = userData.emailVerified!;
+    dto.phone = userData.phone || undefined;
+    dto.avatarUrl = userData.avatarUrl || undefined;
+    dto.lastLogin = userData.lastLogin ? new Date(userData.lastLogin) : undefined;
+    dto.createdAt = userData.createdAt ? new Date(userData.createdAt) : new Date();
+    dto.updatedAt = userData.updatedAt ? new Date(userData.updatedAt) : new Date();
+    return dto;
   }
 }
