@@ -76,7 +76,7 @@ POST {{baseUrl}}/auth/resend-verification
 Content-Type: application/json
 
 {
-  "email": "test@example.com"
+  "email": "jfurtado141@gmail.com"
 }
 
 ### Verify JWT Token

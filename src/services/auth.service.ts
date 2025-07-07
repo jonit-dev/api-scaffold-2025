@@ -15,6 +15,10 @@ import {
 } from "../models/dtos/auth/auth-response.dto";
 import { LoginDto } from "../models/dtos/auth/login.dto";
 import { RegisterDto } from "../models/dtos/auth/register.dto";
+import { RefreshTokenDto } from "../models/dtos/auth/refresh-token.dto";
+import { ForgotPasswordDto } from "../models/dtos/auth/forgot-password.dto";
+import { ChangePasswordDto } from "../models/dtos/auth/change-password.dto";
+import { ResendVerificationDto } from "../models/dtos/auth/resend-verification.dto";
 import { UserResponseDto } from "../models/dtos/user/user-response.dto";
 import { IUserEntity } from "../models/entities/user.entity";
 import { UserRole } from "../models/enums/user-roles.enum";
@@ -102,8 +106,8 @@ export class AuthService {
     // Hash password
     const passwordHash = await this.hashPassword(registerDto.password);
 
-    // Create user
-    const userEntity: Omit<IUserEntity, "id" | "createdAt" | "updatedAt"> = {
+    // Create user data for database
+    const userData = {
       email: registerDto.email,
       firstName: registerDto.firstName,
       lastName: registerDto.lastName,
@@ -111,27 +115,10 @@ export class AuthService {
       role: UserRole.User,
       status: UserStatus.PendingVerification,
       emailVerified: false,
-      get fullName() {
-        return `${this.firstName} ${this.lastName}`;
-      },
-      isActive() {
-        return this.status === UserStatus.Active;
-      },
-      isAdmin() {
-        return this.role === UserRole.Admin;
-      },
-      isModerator() {
-        return this.role === UserRole.Moderator;
-      },
-      hasRole(role: UserRole) {
-        return this.role === role;
-      },
-      hasAnyRole(...roles: UserRole[]) {
-        return roles.includes(this.role);
-      },
+      deletedAt: null,
     };
 
-    const user = await this.userRepository.create(userEntity);
+    const user = await this.userRepository.create(userData);
 
     // Generate tokens
     const accessToken = this.generateAccessToken(user);
@@ -266,6 +253,189 @@ export class AuthService {
         success: false,
         message: "Invalid or expired verification token",
       };
+    }
+  }
+
+  async refreshToken(
+    refreshTokenDto: RefreshTokenDto,
+  ): Promise<AuthResponseDto> {
+    try {
+      const decoded = jwt.verify(
+        refreshTokenDto.refreshToken,
+        config.auth.jwtSecret,
+      ) as { sub: string; type: string };
+
+      if (decoded.type !== "refresh") {
+        throw new AuthException("Invalid token type", HttpStatus.Unauthorized);
+      }
+
+      const user = await this.userRepository.findById(decoded.sub);
+      if (!user) {
+        throw new UserNotFoundException("User not found");
+      }
+
+      if (user.status !== UserStatus.Active) {
+        throw new AuthException("Account is not active", HttpStatus.Forbidden);
+      }
+
+      // Generate new tokens
+      const accessToken = this.generateAccessToken(user);
+      const newRefreshToken = this.generateRefreshToken(user);
+
+      const session: ISession = {
+        access_token: accessToken,
+        refresh_token: newRefreshToken,
+        token_type: "Bearer",
+        expires_at: Date.now() + 3600 * 1000, // 1 hour
+        expires_in: 3600,
+      };
+
+      return {
+        user: this.mapToUserResponse(user),
+        session,
+      };
+    } catch (error) {
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw new AuthException(
+          "Invalid refresh token",
+          HttpStatus.Unauthorized,
+        );
+      }
+      throw error;
+    }
+  }
+
+  async forgotPassword(
+    forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<{ message: string }> {
+    const user = await this.userRepository.findByEmail(forgotPasswordDto.email);
+
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return {
+        message: "If the email exists, a password reset link has been sent",
+      };
+    }
+
+    // Generate password reset token (valid for 1 hour)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const resetToken = jwt.sign(
+      {
+        sub: user.id,
+        email: user.email,
+        type: "password_reset",
+      },
+      config.auth.jwtSecret,
+      { expiresIn: "1h" },
+    );
+
+    // TODO: Send password reset email
+    // await this.emailService.sendPasswordResetEmail(user.email, resetToken);
+
+    return {
+      message: "If the email exists, a password reset link has been sent",
+    };
+  }
+
+  async changePassword(
+    userId: string,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new UserNotFoundException("User not found");
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await this.verifyPassword(
+      changePasswordDto.currentPassword,
+      user.passwordHash,
+    );
+
+    if (!isCurrentPasswordValid) {
+      throw new InvalidCredentialsException("Current password is incorrect");
+    }
+
+    // Validate new password confirmation
+    if (changePasswordDto.newPassword !== changePasswordDto.confirmPassword) {
+      throw new AuthException(
+        "New password and confirmation do not match",
+        HttpStatus.BadRequest,
+      );
+    }
+
+    // Hash new password
+    const newPasswordHash = await this.hashPassword(
+      changePasswordDto.newPassword,
+    );
+
+    // Update password in database
+    await this.userRepository.updatePassword(userId, newPasswordHash);
+
+    return { message: "Password changed successfully" };
+  }
+
+  async resendVerification(
+    resendVerificationDto: ResendVerificationDto,
+  ): Promise<{ message: string }> {
+    const user = await this.userRepository.findByEmail(
+      resendVerificationDto.email,
+    );
+
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return {
+        message:
+          "If the email exists and is unverified, a new verification email has been sent",
+      };
+    }
+
+    if (user.emailVerified) {
+      return { message: "Email is already verified" };
+    }
+
+    // Generate new verification token
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const verificationToken = this.generateVerificationToken(user.email);
+
+    // TODO: Send verification email
+    // await this.emailService.sendVerificationEmail(user.email, verificationToken);
+
+    return {
+      message:
+        "If the email exists and is unverified, a new verification email has been sent",
+    };
+  }
+
+  async verifyToken(
+    token: string,
+  ): Promise<{ valid: boolean; user?: UserResponseDto }> {
+    try {
+      const decoded = jwt.verify(token, config.auth.jwtSecret) as {
+        sub: string;
+        type: string;
+        email: string;
+      };
+
+      if (decoded.type !== "access") {
+        return { valid: false };
+      }
+
+      const user = await this.userRepository.findById(decoded.sub);
+      if (!user) {
+        return { valid: false };
+      }
+
+      if (user.status !== UserStatus.Active) {
+        return { valid: false };
+      }
+
+      return {
+        valid: true,
+        user: this.mapToUserResponse(user),
+      };
+    } catch {
+      return { valid: false };
     }
   }
 }

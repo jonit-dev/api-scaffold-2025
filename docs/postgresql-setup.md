@@ -84,6 +84,37 @@ curl http://localhost:3000/health
 
 **Note**: The PostgreSQL server connection is automatically configured when pgAdmin starts. You should see "API Scaffold Database" already available in the server list.
 
+#### How to Add a New Server in pgAdmin:
+
+Follow these steps to manually add the PostgreSQL server:
+
+1. **Access pgAdmin**: Open http://localhost:8080 in your browser
+2. **Login**: Use the credentials above (admin@api-scaffold.com / admin123)
+3. **Add Server**:
+   - Right-click on "Servers" in the left panel
+   - Select "Register" → "Server..."
+4. **General Tab**:
+   - **Name**: `API Scaffold Database` (or any name you prefer)
+   - **Server Group**: `Servers` (default)
+   - **Comments**: `Local development database` (optional)
+5. **Connection Tab**:
+   - **Host name/address**: `postgres` (Docker service name)
+   - **Port**: `5432`
+   - **Maintenance database**: `api_scaffold`
+   - **Username**: `api_user`
+   - **Password**: `api_password`
+   - **Save password**: Check this box for convenience
+6. **Advanced Tab** (optional):
+   - **Connection timeout**: `10` (seconds)
+   - **DB restriction**: Leave blank
+7. **Click "Save"**
+
+**Important Notes**:
+
+- Always use `postgres` as the hostname (Docker service name), never `localhost` or `127.0.0.1`
+- If you get a connection error, verify that the PostgreSQL container is running with `docker ps`
+- The connection will fail if you use `localhost` because pgAdmin runs inside Docker
+
 ### 3. Via Command Line (psql)
 
 #### From Host Machine:
@@ -96,7 +127,7 @@ psql -h localhost -p 5432 -U api_user -d api_scaffold
 #### From Docker Container:
 
 ```bash
-docker exec -it api-scaffold-postgres-1 psql -U api_user -d api_scaffold
+docker exec -it api-scaffold-postgres psql -U api_user -d api_scaffold
 ```
 
 ### 4. Via Database Client Tools
@@ -153,7 +184,7 @@ The current schema includes these tables:
    docker ps
 
    # Check logs
-   docker logs api-scaffold-postgres-1
+   docker logs api-scaffold-postgres
    ```
 
 2. **Authentication Failed**:
@@ -244,7 +275,7 @@ DATABASE_URL="postgresql://username:password@your-db-host:5432/dbname?sslmode=re
 
 ```bash
 # Via Docker
-docker exec api-scaffold-postgres-1 pg_dump -U api_user api_scaffold > backup.sql
+docker exec api-scaffold-postgres pg_dump -U api_user api_scaffold > backup.sql
 
 # Via host psql
 pg_dump -h localhost -p 5432 -U api_user api_scaffold > backup.sql
@@ -254,7 +285,7 @@ pg_dump -h localhost -p 5432 -U api_user api_scaffold > backup.sql
 
 ```bash
 # Via Docker
-docker exec -i api-scaffold-postgres-1 psql -U api_user api_scaffold < backup.sql
+docker exec -i api-scaffold-postgres psql -U api_user api_scaffold < backup.sql
 
 # Via host psql
 psql -h localhost -p 5432 -U api_user api_scaffold < backup.sql

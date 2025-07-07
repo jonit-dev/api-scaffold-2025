@@ -13,6 +13,30 @@ export class UserRepository extends BaseRepository<IUserEntity> {
     return this.prisma.user;
   }
 
+  // Override create method to properly map the result
+  async create(
+    data: Omit<
+      IUserEntity,
+      | "id"
+      | "createdAt"
+      | "updatedAt"
+      | "fullName"
+      | "isActive"
+      | "isAdmin"
+      | "isModerator"
+      | "hasRole"
+      | "hasAnyRole"
+    >,
+  ): Promise<IUserEntity> {
+    const user = await this.prisma.user.create({
+      data: {
+        ...data,
+        deletedAt: null,
+      },
+    });
+    return this.mapToUserEntity(user);
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapToUserEntity(user: any): IUserEntity {
     return {

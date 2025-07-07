@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: api-scaffold-app
     ports:
       - "3000:3000"
     environment:
@@ -30,6 +31,7 @@ services:
 
   postgres:
     image: postgres:16-alpine
+    container_name: api-scaffold-postgres
     ports:
       - "5432:5432"
     environment:
@@ -50,6 +52,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    container_name: api-scaffold-redis
     ports:
       - "6379:6379"
     volumes:
@@ -60,6 +63,7 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:latest
+    container_name: api-scaffold-pgadmin
     ports:
       - "8080:80"
     environment:
