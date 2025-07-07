@@ -5,6 +5,7 @@ import { LoggerService } from "../services/logger.service";
 import { BadRequest, InternalServerError } from "../exceptions/http-exceptions";
 import { RequireRole } from "../decorators/auth.decorator";
 import { UserRole } from "../models/enums/user-roles.enum";
+import { config } from "../config/env";
 
 @Service()
 @JsonController("/email")
@@ -151,18 +152,20 @@ export class EmailController {
       const {
         to,
         firstName,
-        appName = "Your App",
-        verificationUrl,
+        appName = config.email.fromName,
+        verificationToken,
       } = body as Record<string, unknown>;
 
-      if (!to || !firstName) {
-        throw new BadRequest("Missing required fields: to and firstName");
+      if (!to || !firstName || !verificationToken) {
+        throw new BadRequest(
+          "Missing required fields: to, firstName, and verificationToken",
+        );
       }
 
       const templateData = {
         firstName,
         appName,
-        verificationUrl,
+        verificationUrl: `${config.env.frontendUrl}/auth/verify-email?token=${verificationToken}`,
         currentYear: new Date().getFullYear(),
       };
 
@@ -202,21 +205,21 @@ export class EmailController {
       const {
         to,
         firstName,
-        resetUrl,
+        resetToken,
         expirationHours = 24,
-        appName = "Your App",
+        appName = config.email.fromName,
       } = body as Record<string, unknown>;
 
-      if (!to || !firstName || !resetUrl) {
+      if (!to || !firstName || !resetToken) {
         throw new BadRequest(
-          "Missing required fields: to, firstName, and resetUrl",
+          "Missing required fields: to, firstName, and resetToken",
         );
       }
 
       const templateData = {
         firstName,
-        resetUrl,
-        expirationHours,
+        resetUrl: `${config.env.frontendUrl}/auth/reset-password?token=${resetToken}`,
+        expiresIn: `${expirationHours} hours`,
         appName,
         currentYear: new Date().getFullYear(),
       };

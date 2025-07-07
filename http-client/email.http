@@ -53,8 +53,7 @@ Authorization: Bearer {{adminToken}}
 {
   "to": "newuser@example.com",
   "firstName": "John",
-  "appName": "API Scaffold App",
-  "verificationUrl": "https://app.example.com/verify-email?token=abc123"
+  "verificationToken": "abc123"
 }
 
 ### Send password reset email using template
@@ -65,9 +64,8 @@ Authorization: Bearer {{adminToken}}
 {
   "to": "user@example.com",
   "firstName": "Jane",
-  "resetUrl": "https://app.example.com/reset-password?token=xyz789",
-  "expirationHours": 2,
-  "appName": "API Scaffold App"
+  "resetToken": "xyz789",
+  "expirationHours": 2
 }
 
 ### Send invoice email using template

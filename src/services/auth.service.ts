@@ -206,6 +206,26 @@ export class AuthService {
 
     const user = await this.userRepository.create(userEntity);
 
+    // Send welcome email
+    const verificationToken = this.generateVerificationToken(user.email);
+    const emailResult = await this.emailService.sendWithTemplate(
+      "welcome",
+      {
+        name: user.fullName,
+        verificationUrl: `${config.env.frontendUrl}/auth/verify-email?token=${verificationToken}`,
+        appName: config.email.fromName,
+        currentYear: new Date().getFullYear(),
+      },
+      {
+        to: user.email,
+        subject: "Welcome! Please verify your email address",
+      },
+    );
+
+    if (!emailResult.success) {
+      this.logger.error(`Failed to send welcome email to: ${user.email}`);
+    }
+
     return {
       user: this.mapToUserResponse(user),
       session: authData.session,
@@ -243,7 +263,7 @@ export class AuthService {
       "welcome",
       {
         name: user.fullName,
-        verificationUrl: `${config.env.frontendUrl}/verify-email?token=${verificationToken}`,
+        verificationUrl: `${config.env.frontendUrl}/auth/verify-email?token=${verificationToken}`,
         appName: config.email.fromName,
         currentYear: new Date().getFullYear(),
       },
@@ -896,7 +916,7 @@ export class AuthService {
       "welcome",
       {
         name: user.fullName,
-        verificationUrl: `${config.env.frontendUrl}/verify-email?token=${verificationToken}`,
+        verificationUrl: `${config.env.frontendUrl}/auth/verify-email?token=${verificationToken}`,
         appName: config.email.fromName,
         currentYear: new Date().getFullYear(),
       },
