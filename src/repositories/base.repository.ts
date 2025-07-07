@@ -1,68 +1,46 @@
-import { Service, Inject } from "typedi";
-import { SupabaseClient } from "@supabase/supabase-js";
-import { getSupabaseClient } from "../config/supabase";
-import { SQLiteConfig } from "../config/sqlite";
-import { config } from "../config/env";
+import { Service } from "typedi";
+import { PrismaClient } from "@prisma/client";
+import { prisma } from "../config/prisma";
 import {
-  IDatabase,
   IBaseEntity,
   IPaginationOptions,
   IPaginatedResult,
   IFilterOptions,
   IOrderByOptions,
 } from "../types/database.types";
-import { SupabaseAdapter, IDatabaseAdapter } from "./adapters/supabase.adapter";
-import { SQLiteAdapter } from "./adapters/sqlite.adapter";
 
 @Service()
 export abstract class BaseRepository<T extends IBaseEntity> {
-  protected abstract tableName: string;
-  private adapter: IDatabaseAdapter<T>;
-  private supabaseClient?: SupabaseClient<IDatabase>;
-  private isTableInitialized = false;
+  protected prisma: PrismaClient;
 
-  constructor(@Inject("supabase") supabase?: SupabaseClient<IDatabase>) {
-    if (config.database.provider === "sqlite") {
-      this.adapter = new SQLiteAdapter<T>(SQLiteConfig.getClient());
-      // Note: initializeTable() will be called lazily on first use
-    } else {
-      this.supabaseClient = supabase || getSupabaseClient();
-      this.adapter = new SupabaseAdapter<T>(this.supabaseClient);
-    }
+  constructor() {
+    this.prisma = prisma;
   }
 
-  protected ensureTableInitialized(): void {
-    if (config.database.provider === "sqlite" && !this.isTableInitialized) {
-      if (!this.tableName || this.tableName === "undefined") {
-        throw new Error(
-          `Invalid table name: ${this.tableName}. Cannot initialize table.`,
-        );
-      }
-      this.initializeTable();
-      this.isTableInitialized = true;
-    }
-  }
-
-  // Backward compatibility for repositories that still use direct Supabase access
-  protected get supabase(): SupabaseClient<IDatabase> {
-    if (!this.supabaseClient) {
-      throw new Error("Supabase client not available in SQLite mode");
-    }
-    return this.supabaseClient;
-  }
-
-  protected abstract initializeTable(): void;
+  // Abstract method to get the Prisma model delegate for the specific entity
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected abstract getModel(): any;
 
   // Create a new record
   async create(data: Omit<T, "id" | "createdAt" | "updatedAt">): Promise<T> {
-    this.ensureTableInitialized();
-    return this.adapter.create(data, this.tableName);
+    const model = this.getModel();
+    return await model.create({
+      data: {
+        ...data,
+        deletedAt: null,
+      },
+    });
   }
 
   // Find a record by ID
   async findById(id: string): Promise<T | null> {
-    this.ensureTableInitialized();
-    return this.adapter.findById(id, this.tableName);
+    const model = this.getModel();
+    return await model.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
+    });
   }
 
   // Find multiple records with optional filters
@@ -71,8 +49,30 @@ export abstract class BaseRepository<T extends IBaseEntity> {
     orderBy?: IOrderByOptions;
     pagination?: IPaginationOptions;
   }): Promise<T[]> {
-    this.ensureTableInitialized();
-    return this.adapter.findMany(options || {}, this.tableName);
+    const model = this.getModel();
+    const { filters = {}, orderBy, pagination } = options || {};
+
+    const where = {
+      ...filters,
+      deletedAt: null,
+    };
+
+    const queryOptions: Record<string, unknown> = { where };
+
+    if (orderBy) {
+      queryOptions.orderBy = {
+        [orderBy.column]: orderBy.ascending ? "asc" : "desc",
+      };
+    }
+
+    if (pagination) {
+      const page = pagination.page ?? 1;
+      const limit = pagination.limit ?? 10;
+      queryOptions.skip = (page - 1) * limit;
+      queryOptions.take = limit;
+    }
+
+    return await model.findMany(queryOptions);
   }
 
   // Find with pagination
@@ -81,8 +81,50 @@ export abstract class BaseRepository<T extends IBaseEntity> {
     orderBy?: IOrderByOptions;
     pagination?: IPaginationOptions;
   }): Promise<IPaginatedResult<T>> {
-    this.ensureTableInitialized();
-    return this.adapter.findWithPagination(options || {}, this.tableName);
+    const model = this.getModel();
+    const {
+      filters = {},
+      orderBy,
+      pagination = { page: 1, limit: 10 },
+    } = options || {};
+
+    const where = {
+      ...filters,
+      deletedAt: null,
+    };
+
+    const queryOptions: Record<string, unknown> = { where };
+
+    if (orderBy) {
+      queryOptions.orderBy = {
+        [orderBy.column]: orderBy.ascending ? "asc" : "desc",
+      };
+    }
+
+    const page = pagination.page ?? 1;
+    const limit = pagination.limit ?? 10;
+    const skip = (page - 1) * limit;
+    queryOptions.skip = skip;
+    queryOptions.take = limit;
+
+    const [data, total] = await Promise.all([
+      model.findMany(queryOptions),
+      model.count({ where }),
+    ]);
+
+    const hasNext = skip + limit < total;
+    const hasPrevious = page > 1;
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        hasNext,
+        hasPrevious,
+      },
+    };
   }
 
   // Update a record
@@ -90,26 +132,46 @@ export abstract class BaseRepository<T extends IBaseEntity> {
     id: string,
     data: Partial<Omit<T, "id" | "createdAt" | "updatedAt">>,
   ): Promise<T> {
-    this.ensureTableInitialized();
-    return this.adapter.update(id, data, this.tableName);
+    const model = this.getModel();
+    return await model.update({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      data,
+    });
   }
 
   // Soft delete a record
   async softDelete(id: string): Promise<void> {
-    this.ensureTableInitialized();
-    return this.adapter.softDelete(id, this.tableName);
+    const model = this.getModel();
+    await model.update({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
   }
 
   // Hard delete a record (permanent)
   async hardDelete(id: string): Promise<void> {
-    this.ensureTableInitialized();
-    return this.adapter.hardDelete(id, this.tableName);
+    const model = this.getModel();
+    await model.delete({
+      where: { id },
+    });
   }
 
   // Count records
   async count(filters?: IFilterOptions): Promise<number> {
-    this.ensureTableInitialized();
-    return this.adapter.count(filters, this.tableName);
+    const model = this.getModel();
+    const where = {
+      ...filters,
+      deletedAt: null,
+    };
+    return await model.count({ where });
   }
 
   // Check if record exists
@@ -120,7 +182,11 @@ export abstract class BaseRepository<T extends IBaseEntity> {
 
   // Find first record matching filters
   async findFirst(filters?: IFilterOptions): Promise<T | null> {
-    this.ensureTableInitialized();
-    return this.adapter.findFirst(filters, this.tableName);
+    const model = this.getModel();
+    const where = {
+      ...filters,
+      deletedAt: null,
+    };
+    return await model.findFirst({ where });
   }
 }

@@ -17,26 +17,23 @@ export const config = {
     environment: process.env.NODE_ENV || "development",
   },
   database: {
-    provider: getEnvVar("DATABASE_PROVIDER", "supabase") as
-      | "supabase"
-      | "sqlite",
-    url: getEnvVar("SUPABASE_URL", "https://your_supabase_url_here"),
-    anonKey: getEnvVar("SUPABASE_ANON_KEY", "your_supabase_anon_key_here"),
-    serviceKey: getEnvVar(
-      "SUPABASE_SERVICE_KEY",
-      "your_supabase_service_key_here",
+    provider: getEnvVar("DATABASE_PROVIDER", "postgresql") as
+      | "postgresql"
+      | "supabase",
+    url: getEnvVar(
+      "DATABASE_URL",
+      "postgresql://api_user:api_password@localhost:5432/api_scaffold",
     ),
+    host: getEnvVar("DATABASE_HOST", "localhost"),
+    port: parseInt(getEnvVar("DATABASE_PORT", "5432"), 10),
+    name: getEnvVar("DATABASE_NAME", "api_scaffold"),
+    username: getEnvVar("DATABASE_USERNAME", "api_user"),
+    password: getEnvVar("DATABASE_PASSWORD", "api_password"),
     poolSize: parseInt(process.env.DB_POOL_SIZE || "20", 10),
     connectionTimeout: parseInt(
       process.env.DB_CONNECTION_TIMEOUT || "30000",
       10,
     ),
-  },
-  sqlite: {
-    path: process.env.SQLITE_PATH || "./data/database.sqlite",
-    enableWal: process.env.SQLITE_ENABLE_WAL === "true",
-    enableForeignKeys: process.env.SQLITE_ENABLE_FOREIGN_KEYS !== "false",
-    timeout: parseInt(process.env.SQLITE_TIMEOUT || "5000", 10),
   },
   auth: {
     jwtSecret: getEnvVar("JWT_SECRET", "your-jwt-secret-key-here"),

@@ -112,13 +112,13 @@ export class MockHelpers {
         token: AuthFactory.createValidJwtToken(),
         supabaseUser: AuthFactory.createSupabaseUser(),
         userProfile: AuthFactory.createTestUser(),
-        session: AuthFactory.createSupabaseSession(),
+        session: AuthFactory.createSession(),
       },
       adminUser: {
         token: AuthFactory.createValidJwtToken(),
         supabaseUser: AuthFactory.createSupabaseUser(),
         userProfile: AuthFactory.createAdminUser(),
-        session: AuthFactory.createSupabaseSession(),
+        session: AuthFactory.createSession(),
       },
       expiredToken: {
         token: AuthFactory.createExpiredJwtToken(),

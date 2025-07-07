@@ -11,13 +11,13 @@ export interface IUserEntity extends IBaseEntity {
   role: UserRole;
   status: UserStatus;
   emailVerified: boolean;
-  phone?: string;
-  avatarUrl?: string;
-  lastLogin?: string;
-  stripeCustomerId?: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string;
+  phone?: string | null;
+  avatarUrl?: string | null;
+  lastLogin?: Date | string | null;
+  stripeCustomerId?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  deletedAt?: Date | string | null;
 
   // Computed properties
   get fullName(): string;
@@ -37,13 +37,13 @@ export class UserEntity implements IUserEntity {
   role: UserRole;
   status: UserStatus;
   emailVerified: boolean;
-  phone?: string;
-  avatarUrl?: string;
-  lastLogin?: string;
-  stripeCustomerId?: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string;
+  phone?: string | null;
+  avatarUrl?: string | null;
+  lastLogin?: Date | string | null;
+  stripeCustomerId?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  deletedAt?: Date | string | null;
 
   constructor(data: IUserEntity) {
     this.id = data.id;

@@ -1,11 +1,11 @@
 import { IBaseEntity } from "../../types/database.types";
 
 export interface IWebhookEventEntity extends IBaseEntity {
-  stripe_event_id: string;
-  event_type: string;
+  stripeEventId: string;
+  eventType: string;
   processed: boolean;
-  processed_at?: string;
+  processedAt?: Date | string | null;
   payload: unknown;
-  processing_error?: string;
-  retry_count: number;
+  processingError?: string | null;
+  retryCount: number;
 }

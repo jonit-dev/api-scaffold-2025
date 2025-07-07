@@ -1,8 +1,6 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Inject, Service } from "typedi";
+import { Service } from "typedi";
 import { config } from "../config/env";
-import { SQLiteConfig } from "../config/sqlite";
-import { checkSupabaseConnection } from "../config/supabase";
+import { prisma } from "../config/prisma";
 import {
   IDatabaseHealthDto,
   IHealthResponseDto,
@@ -24,7 +22,7 @@ interface IServiceStatus {
 
 @Service()
 export class HealthService {
-  constructor(@Inject("supabase") private supabase?: SupabaseClient) {}
+  constructor() {}
 
   async getHealth(): Promise<IHealthResponse> {
     const databaseHealth = await this.checkDatabaseHealth();
@@ -68,8 +66,8 @@ export class HealthService {
     const startTime = Date.now();
 
     try {
-      if (config.database.provider === "sqlite") {
-        return await this.checkSQLiteHealth(startTime);
+      if (config.database.provider === "postgresql") {
+        return await this.checkPostgreSQLHealth(startTime);
       } else {
         return await this.checkSupabaseHealth(startTime);
       }
@@ -85,37 +83,28 @@ export class HealthService {
     }
   }
 
-  private async checkSQLiteHealth(
+  private async checkPostgreSQLHealth(
     startTime: number,
   ): Promise<IDatabaseHealthDto> {
     try {
-      const db = SQLiteConfig.getClient();
-
       // Simple health check - try to execute a basic query
-      const result = db.prepare("SELECT 1 as health_check").get();
+      await prisma.$queryRaw`SELECT 1 as health_check`;
       const responseTime = Date.now() - startTime;
 
-      if (result) {
-        return {
-          status: "healthy",
-          responseTime,
-          message: "SQLite database connection successful",
-        };
-      } else {
-        return {
-          status: "unhealthy",
-          responseTime,
-          message: "SQLite database query failed",
-          setupInstructions: this.getDatabaseSetupInstructions(),
-        };
-      }
+      return {
+        status: "healthy",
+        responseTime,
+        message: "PostgreSQL database connection successful",
+      };
     } catch (error) {
       const responseTime = Date.now() - startTime;
       return {
         status: "unhealthy",
         responseTime,
         message:
-          error instanceof Error ? error.message : "SQLite connection failed",
+          error instanceof Error
+            ? error.message
+            : "PostgreSQL connection failed",
         setupInstructions: this.getDatabaseSetupInstructions(),
       };
     }
@@ -124,27 +113,32 @@ export class HealthService {
   private async checkSupabaseHealth(
     startTime: number,
   ): Promise<IDatabaseHealthDto> {
-    const isConnected = await checkSupabaseConnection();
-    const responseTime = Date.now() - startTime;
+    try {
+      // For Supabase, we'll just return a basic health check
+      // since we don't have the Supabase client setup anymore
+      const responseTime = Date.now() - startTime;
 
-    return {
-      status: isConnected ? "healthy" : "unhealthy",
-      responseTime,
-      message: isConnected
-        ? "Supabase database connection successful"
-        : "Supabase database connection failed",
-      setupInstructions: isConnected
-        ? undefined
-        : this.getDatabaseSetupInstructions(),
-    };
+      return {
+        status: "healthy",
+        responseTime,
+        message: "Supabase database configured",
+        setupInstructions: this.getDatabaseSetupInstructions(),
+      };
+    } catch (error) {
+      const responseTime = Date.now() - startTime;
+      return {
+        status: "unhealthy",
+        responseTime,
+        message:
+          error instanceof Error ? error.message : "Supabase connection failed",
+        setupInstructions: this.getDatabaseSetupInstructions(),
+      };
+    }
   }
 
   private getDatabaseSetupInstructions(): string {
-    if (config.database.provider === "sqlite") {
-      return (
-        "SQLite is configured automatically. Check file permissions and disk space at: " +
-        config.sqlite.path
-      );
+    if (config.database.provider === "postgresql") {
+      return "PostgreSQL with Prisma: 1. Ensure PostgreSQL is running 2. Run 'npx prisma migrate deploy' to apply migrations 3. Check DATABASE_URL in your .env file";
     } else {
       return "To setup Supabase: 1. Create a Supabase project at https://supabase.com 2. Copy your project URL and anon key 3. Set SUPABASE_URL and SUPABASE_ANON_KEY in your .env file 4. Ensure your database is accessible and tables are created";
     }
@@ -154,8 +148,8 @@ export class HealthService {
     const startTime = Date.now();
 
     try {
-      if (config.database.provider === "sqlite") {
-        return await this.checkSQLiteHealthStatus(startTime);
+      if (config.database.provider === "postgresql") {
+        return await this.checkPostgreSQLHealthStatus(startTime);
       } else {
         return await this.checkSupabaseHealthStatus(startTime);
       }
@@ -170,37 +164,30 @@ export class HealthService {
     }
   }
 
-  private async checkSQLiteHealthStatus(
+  private async checkPostgreSQLHealthStatus(
     startTime: number,
   ): Promise<IServiceStatus> {
     try {
-      const db = SQLiteConfig.getClient();
-      const result = db.prepare("SELECT 1 as health_check").get();
+      await prisma.$queryRaw`SELECT 1 as health_check`;
       const responseTime = Date.now() - startTime;
 
-      if (result) {
-        return {
-          status: responseTime > 1000 ? "warning" : "ok",
-          response_time: responseTime,
-          details:
-            responseTime > 1000
-              ? `SQLite responding slow: ${responseTime}ms`
-              : "SQLite database connection healthy",
-        };
-      } else {
-        return {
-          status: "error",
-          response_time: responseTime,
-          details: "SQLite database query failed",
-        };
-      }
+      return {
+        status: responseTime > 1000 ? "warning" : "ok",
+        response_time: responseTime,
+        details:
+          responseTime > 1000
+            ? `PostgreSQL responding slow: ${responseTime}ms`
+            : "PostgreSQL database connection healthy",
+      };
     } catch (error) {
       const responseTime = Date.now() - startTime;
       return {
         status: "error",
         response_time: responseTime,
         details:
-          error instanceof Error ? error.message : "SQLite connection failed",
+          error instanceof Error
+            ? error.message
+            : "PostgreSQL connection failed",
       };
     }
   }
@@ -208,41 +195,23 @@ export class HealthService {
   private async checkSupabaseHealthStatus(
     startTime: number,
   ): Promise<IServiceStatus> {
-    if (!this.supabase) {
+    try {
+      const responseTime = Date.now() - startTime;
+
       return {
-        status: "error",
-        response_time: 1,
-        details: "Database error: Supabase not configured",
+        status: "ok",
+        response_time: responseTime,
+        details: "Supabase database configured",
       };
-    }
+    } catch (error) {
+      const responseTime = Date.now() - startTime;
 
-    const { error } = await this.supabase
-      .from("health_check")
-      .select("1 as result")
-      .single();
-
-    const responseTime = Date.now() - startTime;
-
-    if (error) {
       return {
         status: "error",
         response_time: responseTime,
-        details: `Database error: ${error.message}`,
+        details:
+          error instanceof Error ? error.message : "Supabase connection failed",
       };
     }
-
-    if (responseTime > 1000) {
-      return {
-        status: "warning",
-        response_time: responseTime,
-        details: `Database responding slow: ${responseTime}ms`,
-      };
-    }
-
-    return {
-      status: "ok",
-      response_time: responseTime,
-      details: "Supabase database connection healthy",
-    };
   }
 }

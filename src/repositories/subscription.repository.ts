@@ -2,85 +2,60 @@ import { Service } from "typedi";
 import { ISubscriptionEntity } from "../models/entities/subscription.entity";
 import { BaseRepository } from "./base.repository";
 import { SubscriptionStatus } from "../types/stripe.types";
-import { DatabaseException } from "../exceptions/database.exception";
 
 @Service()
 export class SubscriptionRepository extends BaseRepository<ISubscriptionEntity> {
-  protected tableName = "subscriptions";
-
-  protected initializeTable(): void {
-    // Subscription table initialization would be implemented here for SQLite
-    // For now, empty implementation since we're primarily using Supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected getModel(): any {
+    return this.prisma.subscription;
   }
 
   async findByStripeSubscriptionId(
     stripeSubscriptionId: string,
   ): Promise<ISubscriptionEntity | null> {
-    const { data, error } = await this.supabase
-      .from(this.tableName)
-      .select("*")
-      .eq("stripe_subscription_id", stripeSubscriptionId)
-      .eq("deleted_at", null)
-      .single();
-
-    if (error && error.code !== "PGRST116") {
-      throw new DatabaseException(error.message);
-    }
-
-    return data;
+    return await this.prisma.subscription.findFirst({
+      where: {
+        stripeSubscriptionId,
+        deletedAt: null,
+      },
+    });
   }
 
   async findByUserId(userId: string): Promise<ISubscriptionEntity[]> {
-    const { data, error } = await this.supabase
-      .from(this.tableName)
-      .select("*")
-      .eq("user_id", userId)
-      .eq("deleted_at", null)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      throw new DatabaseException(error.message);
-    }
-
-    return data || [];
+    return await this.prisma.subscription.findMany({
+      where: {
+        userId,
+        deletedAt: null,
+      },
+      orderBy: { createdAt: "desc" },
+    });
   }
 
   async findActiveByUserId(
     userId: string,
   ): Promise<ISubscriptionEntity | null> {
-    const { data, error } = await this.supabase
-      .from(this.tableName)
-      .select("*")
-      .eq("user_id", userId)
-      .eq("status", SubscriptionStatus.Active)
-      .eq("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .single();
-
-    if (error && error.code !== "PGRST116") {
-      throw new DatabaseException(error.message);
-    }
-
-    return data;
+    return await this.prisma.subscription.findFirst({
+      where: {
+        userId,
+        status: SubscriptionStatus.Active,
+        deletedAt: null,
+      },
+      orderBy: { createdAt: "desc" },
+    });
   }
 
   async findByStatus(
     status: SubscriptionStatus,
     limit = 50,
   ): Promise<ISubscriptionEntity[]> {
-    const { data, error } = await this.supabase
-      .from(this.tableName)
-      .select("*")
-      .eq("status", status)
-      .eq("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      throw new DatabaseException(error.message);
-    }
-
-    return data || [];
+    return await this.prisma.subscription.findMany({
+      where: {
+        status,
+        deletedAt: null,
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
   }
 
   async updateStatus(
@@ -88,73 +63,54 @@ export class SubscriptionRepository extends BaseRepository<ISubscriptionEntity> 
     status: SubscriptionStatus,
     canceledAt?: Date,
   ): Promise<ISubscriptionEntity> {
-    const updateData: Partial<ISubscriptionEntity> = {
-      status,
-      updatedAt: new Date().toISOString(),
-    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data: any = { status };
 
     if (canceledAt && status === SubscriptionStatus.Canceled) {
-      updateData.canceled_at = canceledAt.toISOString();
+      data.canceledAt = canceledAt;
     }
 
-    const { data, error } = await this.supabase
-      .from(this.tableName)
-      .update(updateData)
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      throw new DatabaseException(error.message);
-    }
-
-    if (!data) {
-      throw new DatabaseException(
-        `Subscription with ID ${id} not found after update`,
-      );
-    }
-
-    return data;
+    return await this.prisma.subscription.update({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      data,
+    });
   }
 
   async findExpiringTrials(daysFromNow = 3): Promise<ISubscriptionEntity[]> {
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + daysFromNow);
 
-    const { data, error } = await this.supabase
-      .from(this.tableName)
-      .select("*")
-      .eq("status", SubscriptionStatus.Trialing)
-      .lte("trial_end", expiryDate.toISOString())
-      .gt("trial_end", new Date().toISOString())
-      .eq("deleted_at", null)
-      .order("trial_end", { ascending: true });
-
-    if (error) {
-      throw new DatabaseException(error.message);
-    }
-
-    return data || [];
+    return await this.prisma.subscription.findMany({
+      where: {
+        status: SubscriptionStatus.Trialing,
+        trialEnd: {
+          lte: expiryDate,
+          gt: new Date(),
+        },
+        deletedAt: null,
+      },
+      orderBy: { trialEnd: "asc" },
+    });
   }
 
   async findUpcomingRenewals(daysFromNow = 3): Promise<ISubscriptionEntity[]> {
     const renewalDate = new Date();
     renewalDate.setDate(renewalDate.getDate() + daysFromNow);
 
-    const { data, error } = await this.supabase
-      .from(this.tableName)
-      .select("*")
-      .eq("status", SubscriptionStatus.Active)
-      .lte("current_period_end", renewalDate.toISOString())
-      .gt("current_period_end", new Date().toISOString())
-      .eq("cancel_at_period_end", false)
-      .eq("deleted_at", null)
-      .order("current_period_end", { ascending: true });
-
-    if (error) {
-      throw new DatabaseException(error.message);
-    }
-
-    return data || [];
+    return await this.prisma.subscription.findMany({
+      where: {
+        status: SubscriptionStatus.Active,
+        currentPeriodEnd: {
+          lte: renewalDate,
+          gt: new Date(),
+        },
+        cancelAtPeriodEnd: false,
+        deletedAt: null,
+      },
+      orderBy: { currentPeriodEnd: "asc" },
+    });
   }
 }

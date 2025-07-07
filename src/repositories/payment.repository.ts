@@ -13,54 +13,34 @@ export interface IPaymentFilter {
 
 @Service()
 export class PaymentRepository extends BaseRepository<IPaymentEntity> {
-  protected tableName = "payments";
-
-  constructor() {
-    super();
-  }
-
-  protected initializeTable(): void {
-    // Payment table initialization would be implemented here for SQLite
-    // For now, empty implementation since we're primarily using Supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected getModel(): any {
+    return this.prisma.payment;
   }
 
   async findByStripePaymentIntentId(
     stripePaymentIntentId: string,
   ): Promise<IPaymentEntity | null> {
-    const { data, error } = await this.supabase
-      .from(this.tableName)
-      .select("*")
-      .eq("stripe_payment_intent_id", stripePaymentIntentId)
-      .maybeSingle();
-
-    if (error) {
-      throw new Error(`Error finding payment: ${error.message}`);
-    }
-
-    return data;
+    return await this.prisma.payment.findFirst({
+      where: {
+        stripePaymentIntentId,
+        deletedAt: null,
+      },
+    });
   }
 
   async findByUserId(
     userId: string,
     limit?: number,
   ): Promise<IPaymentEntity[]> {
-    let query = this.supabase
-      .from(this.tableName)
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-
-    if (limit) {
-      query = query.limit(limit);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      throw new Error(`Error finding payments by user: ${error.message}`);
-    }
-
-    return data || [];
+    return await this.prisma.payment.findMany({
+      where: {
+        userId,
+        deletedAt: null,
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
   }
 
   async findByFilter(
@@ -68,39 +48,36 @@ export class PaymentRepository extends BaseRepository<IPaymentEntity> {
     limit = 50,
     offset = 0,
   ): Promise<IPaymentEntity[]> {
-    let query = this.supabase
-      .from(this.tableName)
-      .select("*")
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {
+      deletedAt: null,
+    };
 
     if (filter.userId) {
-      query = query.eq("user_id", filter.userId);
+      where.userId = filter.userId;
     }
-
     if (filter.stripeCustomerId) {
-      query = query.eq("stripe_customer_id", filter.stripeCustomerId);
+      where.stripeCustomerId = filter.stripeCustomerId;
     }
-
     if (filter.status) {
-      query = query.eq("status", filter.status);
+      where.status = filter.status;
     }
-
     if (filter.startDate) {
-      query = query.gte("created_at", filter.startDate.toISOString());
+      where.createdAt = { gte: filter.startDate };
     }
-
     if (filter.endDate) {
-      query = query.lte("created_at", filter.endDate.toISOString());
+      where.createdAt = {
+        ...(where.createdAt as object),
+        lte: filter.endDate,
+      };
     }
 
-    const { data, error } = await query;
-
-    if (error) {
-      throw new Error(`Error finding payments with filter: ${error.message}`);
-    }
-
-    return data || [];
+    return await this.prisma.payment.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: offset,
+      take: limit,
+    });
   }
 
   async updateStatus(
@@ -108,44 +85,40 @@ export class PaymentRepository extends BaseRepository<IPaymentEntity> {
     status: PaymentStatus,
     processedAt?: Date,
   ): Promise<IPaymentEntity> {
-    const updateData: Partial<IPaymentEntity> = { status };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data: any = { status };
     if (processedAt) {
-      updateData.processed_at = processedAt.toISOString();
+      data.processedAt = processedAt;
     }
 
-    const { data, error } = await this.supabase
-      .from(this.tableName)
-      .update(updateData)
-      .eq("id", id)
-      .select("*")
-      .single();
-
-    if (error) {
-      throw new Error(`Error updating payment status: ${error.message}`);
-    }
-
-    return data;
+    return await this.prisma.payment.update({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      data,
+    });
   }
 
   async getTotalAmountByUser(
     userId: string,
     status?: PaymentStatus,
   ): Promise<number> {
-    let query = this.supabase
-      .from(this.tableName)
-      .select("amount")
-      .eq("user_id", userId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {
+      userId,
+      deletedAt: null,
+    };
 
     if (status) {
-      query = query.eq("status", status);
+      where.status = status;
     }
 
-    const { data, error } = await query;
+    const payments = await this.prisma.payment.findMany({
+      where,
+      select: { amount: true },
+    });
 
-    if (error) {
-      throw new Error(`Error calculating total amount: ${error.message}`);
-    }
-
-    return (data || []).reduce((total, payment) => total + payment.amount, 0);
+    return payments.reduce((total, payment) => total + payment.amount, 0);
   }
 }

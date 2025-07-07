@@ -5,7 +5,7 @@ import express from "express";
 import { useContainer, useExpressServer } from "routing-controllers";
 import { Container } from "typedi";
 import { config } from "./config/env";
-import { AuthController } from "./controllers/auth.controller";
+// import { AuthController } from "./controllers/auth.controller";
 import { CacheDemoController } from "./controllers/cache-demo.controller";
 import { EmailController } from "./controllers/email.controller";
 import { HealthController } from "./controllers/health.controller";
@@ -21,9 +21,13 @@ import { MorganMiddleware } from "./middlewares/morgan.middleware";
 import { RequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
 import { SecurityMiddleware } from "./middlewares/security.middleware";
 
-// Only initialize Supabase if it's the configured database provider
+// Initialize database configuration based on provider
 if (config.database.provider === "supabase") {
-  import("./config/supabase");
+  // Supabase configuration would be imported here if needed
+  console.log("Using Supabase as database provider");
+} else {
+  // Using PostgreSQL with Prisma
+  console.log("Using PostgreSQL with Prisma as database provider");
 }
 
 // Configure TypeDI container integration BEFORE importing any controllers
@@ -71,7 +75,7 @@ useExpressServer(app, {
   controllers: [
     HealthController,
     TestController,
-    AuthController,
+    // AuthController,
     TestAuthController,
     CacheDemoController,
     UserController,

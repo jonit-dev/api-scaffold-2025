@@ -5,6 +5,7 @@ import { LoginDto } from "@models/dtos/auth/login.dto";
 import { RegisterDto } from "@models/dtos/auth/register.dto";
 import { AuthResponseDto } from "@models/dtos/auth/auth-response.dto";
 import { User, Session } from "@supabase/supabase-js";
+import { ISession } from "../../src/models/dtos/auth/auth-response.dto";
 import { IAuthenticatedUser } from "@common-types/express";
 import { vi } from "vitest";
 
@@ -129,13 +130,13 @@ export class AuthFactory {
     };
   }
 
-  static createSupabaseSession(overrides?: Partial<Session>): Session {
-    const now = Math.floor(Date.now() / 1000);
+  static createSession(overrides?: Partial<ISession>): ISession {
+    const now = Date.now();
     return {
       access_token: "test-access-token-123",
-      token_type: "bearer",
+      token_type: "Bearer",
       expires_in: 3600,
-      expires_at: now + 3600,
+      expires_at: now + 3600000,
       refresh_token: "test-refresh-token-123",
       user: this.createSupabaseUser(),
       ...overrides,
@@ -174,7 +175,7 @@ export class AuthFactory {
         fullName: "Test User",
         passwordHash: "hashed_password_123",
       },
-      session: this.createSupabaseSession(),
+      session: this.createSession(),
       ...overrides,
     };
   }

@@ -5,28 +5,18 @@ import {
   Body,
   HttpCode,
   Req,
-  UseBefore,
-  QueryParam,
 } from "routing-controllers";
 import { Service } from "typedi";
 import { Request } from "express";
 import { HttpStatus } from "../types/http-status";
 import { AuthService } from "../services/auth.service";
-import { LoginDto } from "@models/dtos/auth/login.dto";
-import { RegisterDto } from "@models/dtos/auth/register.dto";
-import { ChangePasswordDto } from "@models/dtos/auth/change-password.dto";
-import { AuthResponseDto } from "@models/dtos/auth/auth-response.dto";
-import { RefreshTokenDto } from "@models/dtos/auth/refresh-token.dto";
-import { VerifyEmailDto } from "@models/dtos/auth/verify-email.dto";
-import { ResendVerificationDto } from "@models/dtos/auth/resend-verification.dto";
-import { ForgotPasswordDto } from "@models/dtos/auth/forgot-password.dto";
-import { ResetPasswordDto } from "@models/dtos/auth/reset-password.dto";
-import { UserResponseDto } from "@models/dtos/user/user-response.dto";
-import { AuthMiddleware } from "../middlewares/auth.middleware";
+import { LoginDto } from "../models/dtos/auth/login.dto";
+import { RegisterDto } from "../models/dtos/auth/register.dto";
+import { AuthResponseDto } from "../models/dtos/auth/auth-response.dto";
+import { Authenticated } from "../decorators/auth.decorator";
+import { IAuthenticatedUser } from "../types/express";
 import { RateLimit } from "../decorators/rate-limit.decorator";
 import { authRateLimits } from "../middlewares/rate-limit.middleware";
-import { IAuthenticatedUser } from "../types/express";
-import { extractBearerTokenOrThrow } from "../utils/auth.utils";
 
 @JsonController("/auth")
 @Service()
@@ -47,121 +37,30 @@ export class AuthController {
     return await this.authService.login(loginDto);
   }
 
-  @Post("/logout")
-  @HttpCode(HttpStatus.NoContent)
-  @UseBefore(AuthMiddleware)
-  async logout(): Promise<void> {
-    await this.authService.logout();
-  }
-
-  @Post("/refresh")
-  @HttpCode(HttpStatus.Ok)
-  @RateLimit(authRateLimits.refresh)
-  async refreshToken(
-    @Body() refreshTokenDto: RefreshTokenDto,
-  ): Promise<object> {
-    return await this.authService.refreshToken(refreshTokenDto);
-  }
-
-  @Post("/forgot-password")
-  @HttpCode(HttpStatus.Ok)
-  @RateLimit(authRateLimits.forgotPassword)
-  async forgotPassword(
-    @Body() forgotPasswordDto: ForgotPasswordDto,
-  ): Promise<{ message: string }> {
-    await this.authService.forgotPassword(forgotPasswordDto.email);
-    return { message: "Password reset email sent successfully" };
-  }
-
-  @Post("/reset-password")
-  @HttpCode(HttpStatus.Ok)
-  @RateLimit(authRateLimits.forgotPassword)
-  async resetPassword(
-    @Body() resetPasswordDto: ResetPasswordDto,
-  ): Promise<{ message: string }> {
-    if (resetPasswordDto.newPassword !== resetPasswordDto.confirmPassword) {
-      throw new Error("Passwords do not match");
-    }
-    await this.authService.resetPassword(
-      resetPasswordDto.token,
-      resetPasswordDto.newPassword,
-    );
-    return { message: "Password reset successfully" };
-  }
-
-  @Post("/change-password")
-  @HttpCode(HttpStatus.Ok)
-  @UseBefore(AuthMiddleware)
-  async changePassword(
-    @Body() changePasswordDto: ChangePasswordDto,
-    @Req() req: Request & { user: IAuthenticatedUser },
-  ): Promise<{ message: string }> {
-    await this.authService.changePassword(req.user.id, changePasswordDto);
-    return { message: "Password changed successfully" };
-  }
-
-  @Post("/verify-email")
-  @HttpCode(HttpStatus.Ok)
-  @RateLimit(authRateLimits.emailVerification)
-  async verifyEmail(
-    @Body() verifyEmailDto: VerifyEmailDto,
-  ): Promise<{ message: string }> {
-    await this.authService.verifyEmail(verifyEmailDto.token);
-    return { message: "Email verified successfully" };
-  }
-
-  @Get("/verify-email")
-  @HttpCode(HttpStatus.Ok)
-  @RateLimit(authRateLimits.emailVerification)
-  async verifyEmailGet(
-    @QueryParam("token") token: string,
-  ): Promise<{ message: string }> {
-    await this.authService.verifyEmail(token);
-    return { message: "Email verified successfully" };
-  }
-
-  @Post("/resend-verification")
-  @HttpCode(HttpStatus.Ok)
-  @RateLimit(authRateLimits.resendVerification)
-  async resendVerification(
-    @Body() resendVerificationDto: ResendVerificationDto,
-  ): Promise<{ message: string }> {
-    await this.authService.resendVerification(resendVerificationDto.email);
-    return { message: "Verification email sent successfully" };
-  }
-
   @Get("/me")
   @HttpCode(HttpStatus.Ok)
-  @UseBefore(AuthMiddleware)
+  @Authenticated()
   async getCurrentUser(
-    @Req() req: Request & { user: IAuthenticatedUser },
-  ): Promise<UserResponseDto> {
-    return await this.authService.getCurrentUser(req.user.id);
+    @Req() req: Request,
+  ): Promise<{ user: IAuthenticatedUser }> {
+    const user = (req as Request & { user: IAuthenticatedUser }).user;
+    return { user };
   }
 
-  @Post("/verify-token")
+  @Post("/logout")
   @HttpCode(HttpStatus.Ok)
-  async verifyToken(
-    @Req() req: Request,
-  ): Promise<{ valid: boolean; user?: UserResponseDto }> {
-    try {
-      const token = extractBearerTokenOrThrow(req);
-      const user = await this.authService.verifyUser(token);
-      const userResponse = await this.authService.getCurrentUser(user.id);
-      return {
-        valid: true,
-        user: userResponse,
-      };
-    } catch {
-      return { valid: false };
-    }
+  @Authenticated()
+  async logout(): Promise<{ message: string }> {
+    // For JWT tokens, logout is typically handled client-side
+    // by removing the token from storage
+    return { message: "Logged out successfully" };
   }
 
   @Get("/health")
   @HttpCode(HttpStatus.Ok)
   async healthCheck(): Promise<{ status: string; timestamp: string }> {
     return {
-      status: "healthy",
+      status: "ok",
       timestamp: new Date().toISOString(),
     };
   }
