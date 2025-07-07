@@ -39,7 +39,7 @@ export class UserService {
       passwordHash: "", // This will be managed by Supabase Auth
       role: createUserDto.role || UserRole.User,
       status: UserStatus.Active,
-      emailVerified: false,
+      emailUnsubscribed: false,
       phone: createUserDto.phone,
     };
 
@@ -136,6 +136,18 @@ export class UserService {
       return null;
     }
     return this.mapToResponseDto(user);
+  }
+
+  async updateEmailUnsubscribed(
+    id: string,
+    unsubscribed: boolean,
+  ): Promise<void> {
+    const user = await this.userRepository.findById(id);
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    await this.userRepository.updateEmailUnsubscribed(id, unsubscribed);
   }
 
   private mapToResponseDto(user: IUserEntity): UserResponseDto {

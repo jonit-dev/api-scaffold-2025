@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { EmailService } from "../email.service";
 import { EmailTemplateService } from "../email-template.service";
 import { LoggerService } from "../logger.service";
+import { UserRepository } from "../../repositories/user.repository";
 import { config } from "../../config/env";
 
 // Mock dependencies
@@ -15,6 +16,7 @@ vi.mock("resend", () => ({
 
 vi.mock("../email-template.service.js");
 vi.mock("../logger.service.js");
+vi.mock("../../repositories/user.repository.js");
 vi.mock("../../config/env.js", () => ({
   config: {
     email: {
@@ -43,6 +45,7 @@ describe("EmailService", () => {
   let mockResendSend: any;
   let mockTemplateService: any;
   let mockLogger: any;
+  let mockUserRepository: any;
 
   beforeEach(() => {
     // Reset mocks
@@ -67,7 +70,16 @@ describe("EmailService", () => {
     };
     vi.mocked(LoggerService).mockImplementation(() => mockLogger);
 
-    emailService = new EmailService(mockLogger, mockTemplateService);
+    mockUserRepository = {
+      findUnsubscribedUsers: vi.fn().mockResolvedValue([]),
+    };
+    vi.mocked(UserRepository).mockImplementation(() => mockUserRepository);
+
+    emailService = new EmailService(
+      mockLogger,
+      mockTemplateService,
+      mockUserRepository,
+    );
 
     // Mock the resend instance on the created service
     (emailService as any).resend = {
@@ -117,6 +129,8 @@ describe("EmailService", () => {
       expect(mockLogger.info).toHaveBeenCalledWith("Email sent successfully", {
         emailId: "email-123",
         to: "recipient@example.com",
+        originalRecipients: "recipient@example.com",
+        unsubscribedCount: 0,
       });
 
       // Cleanup
@@ -129,7 +143,11 @@ describe("EmailService", () => {
       (config.env as any).nodeEnv = "development";
 
       // Create a new service instance with development mode
-      const devEmailService = new EmailService(mockLogger, mockTemplateService);
+      const devEmailService = new EmailService(
+        mockLogger,
+        mockTemplateService,
+        mockUserRepository,
+      );
       (devEmailService as any).resend = {
         emails: { send: mockResendSend },
       };
@@ -157,19 +175,14 @@ describe("EmailService", () => {
       expect(mockResendSend).not.toHaveBeenCalled();
       expect(mockLogger.info).toHaveBeenCalledWith(
         "📧 EMAIL SERVICE (DEV MODE - NOT SENT)",
+      );
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        "📧 Email Metadata:",
         expect.objectContaining({
           from: "Test App <test@example.com>",
-          to: ["recipient1@example.com", "recipient2@example.com"],
+          to: "recipient1@example.com,recipient2@example.com",
           subject: "Test Subject",
-          html: "<p>Test HTML</p>",
           cc: "cc@example.com",
-          attachments: [
-            {
-              filename: "test.pdf",
-              contentType: "application/pdf",
-              contentSize: 12,
-            },
-          ],
         }),
       );
 
@@ -186,6 +199,7 @@ describe("EmailService", () => {
       const prodEmailService = new EmailService(
         mockLogger,
         mockTemplateService,
+        mockUserRepository,
       );
       const prodMockResendSend = vi.fn();
       (prodEmailService as any).resend = {

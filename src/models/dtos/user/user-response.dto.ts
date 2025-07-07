@@ -25,6 +25,9 @@ export class UserResponseDto {
   emailVerified!: boolean;
 
   @Expose()
+  emailUnsubscribed!: boolean;
+
+  @Expose()
   phone?: string;
 
   @Expose()

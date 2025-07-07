@@ -52,11 +52,11 @@ model User {
   passwordHash     String     @map("password_hash")
   role             UserRole   @default(User)
   status           UserStatus @default(PendingVerification)
-  emailVerified    Boolean    @default(false) @map("email_verified")
   phone            String?
   avatarUrl        String?    @map("avatar_url")
   lastLogin        DateTime?  @map("last_login")
   stripeCustomerId String?    @map("stripe_customer_id")
+  emailUnsubscribed Boolean   @default(false) @map("email_unsubscribed")
   createdAt        DateTime   @default(now()) @map("created_at")
   updatedAt        DateTime   @updatedAt @map("updated_at")
   deletedAt        DateTime?  @map("deleted_at")

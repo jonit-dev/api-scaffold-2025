@@ -5,5 +5,4 @@ export interface IUserFilters {
   role?: UserRole;
   status?: UserStatus;
   search?: string;
-  emailVerified?: boolean;
 }

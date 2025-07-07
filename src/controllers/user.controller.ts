@@ -50,14 +50,12 @@ export class UserController {
     @QueryParam("limit") limit: number = 10,
     @QueryParam("role") role?: UserRole,
     @QueryParam("status") status?: UserStatus,
-    @QueryParam("emailVerified") emailVerified?: boolean,
     @QueryParam("search") search?: string,
   ): Promise<IPaginatedResult<UserResponseDto>> {
     const filters: IUserFilters = {};
 
     if (role) filters.role = role;
     if (status) filters.status = status;
-    if (emailVerified !== undefined) filters.emailVerified = emailVerified;
     if (search) filters.search = search;
 
     return await this.userService.findAll(page, limit, filters);
@@ -143,5 +141,31 @@ export class UserController {
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
     return await this.userService.update(req.user.id, updateUserDto);
+  }
+
+  @Post("/unsubscribe")
+  @HttpCode(HttpStatus.Ok)
+  @Authenticated()
+  async unsubscribeFromEmails(
+    @Req() req: Request & { user: IAuthenticatedUser },
+  ): Promise<{ success: boolean; message: string }> {
+    await this.userService.updateEmailUnsubscribed(req.user.id, true);
+    return {
+      success: true,
+      message: "Successfully unsubscribed from emails",
+    };
+  }
+
+  @Post("/resubscribe")
+  @HttpCode(HttpStatus.Ok)
+  @Authenticated()
+  async resubscribeToEmails(
+    @Req() req: Request & { user: IAuthenticatedUser },
+  ): Promise<{ success: boolean; message: string }> {
+    await this.userService.updateEmailUnsubscribed(req.user.id, false);
+    return {
+      success: true,
+      message: "Successfully resubscribed to emails",
+    };
   }
 }

@@ -1,5 +1,6 @@
 **Concise Critical Rules**
 
+- System now is fully dockerized. Use docker commands to debug and manage
 - Use **Yarn**.
 - After every change run `yarn verify`; only proceed when **100 % green**.
 - Debug with extra logs + `git diff`.

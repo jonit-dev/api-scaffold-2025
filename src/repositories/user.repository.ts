@@ -97,9 +97,6 @@ export class UserRepository extends BaseRepository<IUserEntity> {
     if (filters?.status) {
       where.status = filters.status;
     }
-    if (filters?.emailVerified !== undefined) {
-      where.emailVerified = filters.emailVerified;
-    }
     if (filters?.search) {
       where.OR = [
         { firstName: { contains: filters.search, mode: "insensitive" } },
@@ -210,25 +207,13 @@ export class UserRepository extends BaseRepository<IUserEntity> {
     });
   }
 
-  async updateEmailVerification(id: string, verified: boolean): Promise<void> {
-    await this.prisma.user.update({
-      where: {
-        id,
-        deletedAt: null,
-      },
-      data: {
-        emailVerified: verified,
-      },
-    });
-  }
-
   async findUnverifiedUsers(olderThanDays: number = 7): Promise<IUserEntity[]> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
 
     const users = await this.prisma.user.findMany({
       where: {
-        emailVerified: false,
+        status: UserStatus.PendingVerification,
         deletedAt: null,
         createdAt: {
           lt: cutoffDate,
@@ -251,14 +236,42 @@ export class UserRepository extends BaseRepository<IUserEntity> {
     });
   }
 
-  async updateEmailVerified(id: string, emailVerified: boolean): Promise<void> {
+  async updateStatus(id: string, status: UserStatus): Promise<void> {
     await this.prisma.user.update({
       where: {
         id,
         deletedAt: null,
       },
       data: {
-        emailVerified,
+        status,
+      },
+    });
+  }
+
+  async findUnsubscribedUsers(emails: string[]): Promise<IUserEntity[]> {
+    const users = await this.prisma.user.findMany({
+      where: {
+        email: {
+          in: emails,
+        },
+        emailUnsubscribed: true,
+        deletedAt: null,
+      },
+    });
+    return users.map((user) => this.mapToUserEntity(user));
+  }
+
+  async updateEmailUnsubscribed(
+    id: string,
+    unsubscribed: boolean,
+  ): Promise<void> {
+    await this.prisma.user.update({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      data: {
+        emailUnsubscribed: unsubscribed,
       },
     });
   }

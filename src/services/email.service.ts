@@ -3,6 +3,7 @@ import { Service } from "typedi";
 import { config } from "../config/env";
 import { LoggerService } from "./logger.service";
 import { EmailTemplateService } from "./email-template.service";
+import { UserRepository } from "../repositories/user.repository";
 
 interface IEmailAttachment {
   filename: string;
@@ -34,22 +35,62 @@ export class EmailService {
   constructor(
     private logger: LoggerService,
     private templateService: EmailTemplateService,
+    private userRepository: UserRepository,
   ) {
     this.resend = new Resend(config.email.resendApiKey);
     this.isDevMode = config.env.nodeEnv === "development";
+  }
+
+  private async checkUnsubscribedUsers(emails: string[]): Promise<string[]> {
+    const unsubscribedUsers =
+      await this.userRepository.findUnsubscribedUsers(emails);
+    return unsubscribedUsers.map((user) => user.email);
+  }
+
+  private filterUnsubscribedEmails(
+    emails: string[],
+    unsubscribedEmails: string[],
+  ): string[] {
+    return emails.filter((email) => !unsubscribedEmails.includes(email));
   }
 
   async send(
     emailData: IEmailData,
   ): Promise<{ id?: string; success: boolean }> {
     try {
+      const emailList = Array.isArray(emailData.to)
+        ? emailData.to
+        : [emailData.to];
+      const unsubscribedEmails = await this.checkUnsubscribedUsers(emailList);
+
+      if (unsubscribedEmails.length > 0) {
+        this.logger.info("Skipping emails to unsubscribed users", {
+          unsubscribedEmails,
+          totalEmails: emailList.length,
+        });
+      }
+
+      const filteredEmails = this.filterUnsubscribedEmails(
+        emailList,
+        unsubscribedEmails,
+      );
+
+      if (filteredEmails.length === 0) {
+        this.logger.info("All recipients have unsubscribed, skipping email");
+        return { success: true, id: "all-unsubscribed" };
+      }
+
+      const filteredEmailData = {
+        ...emailData,
+        to: filteredEmails.length === 1 ? filteredEmails[0] : filteredEmails,
+      };
       if (this.isDevMode) {
         const emailMetadata = {
           from: `${config.email.fromName} <${config.email.fromAddress}>`,
-          to: Array.isArray(emailData.to)
-            ? emailData.to.join(", ")
-            : emailData.to,
-          subject: emailData.subject,
+          to: Array.isArray(filteredEmailData.to)
+            ? filteredEmailData.to.join(", ")
+            : filteredEmailData.to,
+          subject: filteredEmailData.subject,
           ...(emailData.cc && {
             cc: Array.isArray(emailData.cc)
               ? emailData.cc.join(", ")
@@ -102,10 +143,12 @@ export class EmailService {
 
       const { data, error } = await this.resend.emails.send({
         from: `${config.email.fromName} <${config.email.fromAddress}>`,
-        to: Array.isArray(emailData.to) ? emailData.to : [emailData.to],
-        subject: emailData.subject,
-        html: emailData.html,
-        text: emailData.text,
+        to: Array.isArray(filteredEmailData.to)
+          ? filteredEmailData.to
+          : [filteredEmailData.to],
+        subject: filteredEmailData.subject,
+        html: filteredEmailData.html,
+        text: filteredEmailData.text,
         cc: emailData.cc
           ? Array.isArray(emailData.cc)
             ? emailData.cc
@@ -132,7 +175,9 @@ export class EmailService {
 
       this.logger.info("Email sent successfully", {
         emailId: data?.id,
-        to: emailData.to,
+        to: filteredEmailData.to,
+        originalRecipients: emailData.to,
+        unsubscribedCount: unsubscribedEmails.length,
       });
       return { success: true, id: data?.id };
     } catch (error) {

@@ -10,7 +10,7 @@ export interface IUserEntity extends IBaseEntity {
   passwordHash: string;
   role: UserRole;
   status: UserStatus;
-  emailVerified: boolean;
+  emailUnsubscribed: boolean;
   phone?: string | null;
   avatarUrl?: string | null;
   lastLogin?: Date | string | null;
@@ -36,7 +36,7 @@ export class UserEntity implements IUserEntity {
   passwordHash: string;
   role: UserRole;
   status: UserStatus;
-  emailVerified: boolean;
+  emailUnsubscribed: boolean;
   phone?: string | null;
   avatarUrl?: string | null;
   lastLogin?: Date | string | null;
@@ -53,7 +53,7 @@ export class UserEntity implements IUserEntity {
     this.passwordHash = data.passwordHash;
     this.role = data.role;
     this.status = data.status;
-    this.emailVerified = data.emailVerified;
+    this.emailUnsubscribed = data.emailUnsubscribed;
     this.phone = data.phone;
     this.avatarUrl = data.avatarUrl;
     this.lastLogin = data.lastLogin;
@@ -88,10 +88,14 @@ export class UserEntity implements IUserEntity {
   }
 
   get isEmailVerified(): boolean {
-    return this.emailVerified;
+    return this.status !== UserStatus.PendingVerification;
   }
 
   get isSuspended(): boolean {
     return this.status === UserStatus.Suspended;
+  }
+
+  get isEmailUnsubscribed(): boolean {
+    return this.emailUnsubscribed;
   }
 }

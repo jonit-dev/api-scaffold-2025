@@ -101,7 +101,6 @@ describe("UserController Unit Tests", () => {
         10,
         UserRole.Admin,
         UserStatus.Active,
-        true,
         "john",
       );
 
@@ -109,7 +108,6 @@ describe("UserController Unit Tests", () => {
       expect(mockUserService.findAll).toHaveBeenCalledWith(1, 10, {
         role: UserRole.Admin,
         status: UserStatus.Active,
-        emailVerified: true,
         search: "john",
       });
     });

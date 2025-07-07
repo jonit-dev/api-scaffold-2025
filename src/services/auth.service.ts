@@ -85,7 +85,7 @@ export class AuthService {
       lastName: user.lastName,
       role: user.role,
       status: user.status,
-      emailVerified: user.emailVerified,
+      emailVerified: user.status !== UserStatus.PendingVerification,
       phone: user.phone,
       avatarUrl: user.avatarUrl,
       lastLogin: user.lastLogin,
@@ -106,6 +106,12 @@ export class AuthService {
     // Hash password
     const passwordHash = await this.hashPassword(registerDto.password);
 
+    // Determine user status based on email verification requirement
+    const requireEmailVerification = config.auth.requireEmailVerification;
+    const userStatus = requireEmailVerification
+      ? UserStatus.PendingVerification
+      : UserStatus.Active;
+
     // Create user data for database
     const userData = {
       email: registerDto.email,
@@ -113,35 +119,47 @@ export class AuthService {
       lastName: registerDto.lastName,
       passwordHash,
       role: UserRole.User,
-      status: UserStatus.PendingVerification,
-      emailVerified: false,
+      status: userStatus,
+      emailUnsubscribed: false,
       deletedAt: null,
     };
 
     const user = await this.userRepository.create(userData);
 
-    // Generate verification token
-    const verificationToken = this.generateVerificationToken(user.email);
+    // Only send verification email if email verification is required
+    if (requireEmailVerification) {
+      // Generate verification token
+      const verificationToken = this.generateVerificationToken(user.email);
 
-    // Send welcome email with verification link
-    try {
-      await this.emailService.sendWithTemplate(
-        "welcome",
+      // Send welcome email with verification link
+      try {
+        await this.emailService.sendWithTemplate(
+          "welcome",
+          {
+            firstName: user.firstName,
+            appName: config.email.fromName,
+            verificationUrl: `${config.env.frontendUrl}/auth/verify-email?token=${verificationToken}`,
+            currentYear: new Date().getFullYear(),
+          },
+          {
+            to: user.email,
+            subject: "Welcome! Please verify your account",
+          },
+        );
+      } catch (error) {
+        this.logger.error("Failed to send welcome email:", {
+          error: String(error),
+        });
+      }
+    } else {
+      // Log that user was auto-verified
+      this.logger.info(
+        "User registered and auto-verified (email verification disabled):",
         {
-          firstName: user.firstName,
-          appName: config.email.fromName,
-          verificationUrl: `${config.env.frontendUrl}/auth/verify-email?token=${verificationToken}`,
-          currentYear: new Date().getFullYear(),
-        },
-        {
-          to: user.email,
-          subject: "Welcome! Please verify your account",
+          userId: user.id,
+          email: user.email,
         },
       );
-    } catch (error) {
-      this.logger.error("Failed to send welcome email:", {
-        error: String(error),
-      });
     }
 
     // Generate tokens
@@ -266,7 +284,7 @@ export class AuthService {
         throw new UserNotFoundException();
       }
 
-      await this.userRepository.updateEmailVerified(user.id, true);
+      await this.userRepository.updateStatus(user.id, UserStatus.Active);
 
       return {
         success: true,
@@ -435,7 +453,7 @@ export class AuthService {
       };
     }
 
-    if (user.emailVerified) {
+    if (user.status !== UserStatus.PendingVerification) {
       return { message: "Email is already verified" };
     }
 

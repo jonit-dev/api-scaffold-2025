@@ -38,6 +38,7 @@ export const config = {
   auth: {
     jwtSecret: getEnvVar("JWT_SECRET", "your-jwt-secret-key-here"),
     bcryptRounds: getEnvVar("BCRYPT_ROUNDS", "10"),
+    requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION === "true",
   },
   cache: {
     provider: (process.env.CACHE_PROVIDER || "redis") as "redis" | "local",

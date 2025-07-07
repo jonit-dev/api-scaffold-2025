@@ -21,7 +21,7 @@ export class AuthFactory {
       passwordHash: "hashed_password_123",
       role: UserRole.User,
       status: UserStatus.Active,
-      emailVerified: true,
+      emailUnsubscribed: false,
       phone: "+1234567890",
       avatarUrl: "https://example.com/avatar.jpg",
       lastLogin: now,
@@ -85,7 +85,6 @@ export class AuthFactory {
       id: "unverified-user-id-123",
       email: "unverified@example.com",
       status: UserStatus.PendingVerification,
-      emailVerified: false,
       ...overrides,
     });
   }
@@ -167,6 +166,7 @@ export class AuthFactory {
         role: UserRole.User,
         status: UserStatus.Active,
         emailVerified: true,
+        emailUnsubscribed: false,
         phone: "+1234567890",
         avatarUrl: "https://example.com/avatar.jpg",
         lastLogin: new Date(),
@@ -267,7 +267,8 @@ export class AuthFactory {
     dto.lastName = userData.lastName!;
     dto.role = userData.role!;
     dto.status = userData.status!;
-    dto.emailVerified = userData.emailVerified!;
+    dto.emailVerified = userData.status !== UserStatus.PendingVerification;
+    dto.emailUnsubscribed = userData.emailUnsubscribed!;
     dto.phone = userData.phone || undefined;
     dto.avatarUrl = userData.avatarUrl || undefined;
     dto.lastLogin = userData.lastLogin
