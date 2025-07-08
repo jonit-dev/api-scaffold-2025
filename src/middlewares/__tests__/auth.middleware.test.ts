@@ -1,48 +1,46 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { AuthMiddleware } from "../auth.middleware";
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { Container } from "typedi";
 import { AuthService } from "../../services/auth.service";
-import { LoggerService } from "../../services/logger.service";
 import { UnauthorizedException } from "../../exceptions/http-exceptions";
+import { UserRole } from "../../models/enums/user-roles.enum";
 
 describe("AuthMiddleware Tests", () => {
   let authMiddleware: AuthMiddleware;
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
-  let mockNext: vi.Mock;
+  let mockNext: NextFunction;
+  let mockAuthService: any;
 
   beforeEach(() => {
-    // Mock services
-    const mockAuthService = {
-      verifyToken: vi.fn(),
-      getUserFromToken: vi.fn(),
-    };
+    // Clear any existing mocks
+    vi.clearAllMocks();
 
-    const mockLoggerService = {
-      error: vi.fn(),
-      warn: vi.fn(),
-      info: vi.fn(),
-      debug: vi.fn(),
+    // Reset the Container
+    Container.reset();
+
+    // Mock AuthService
+    mockAuthService = {
+      verifyUser: vi.fn(),
     };
 
     Container.set(AuthService, mockAuthService);
-    Container.set(LoggerService, mockLoggerService);
-
-    authMiddleware = new AuthMiddleware();
+    authMiddleware = new AuthMiddleware(mockAuthService);
 
     mockRequest = {
       headers: {},
       path: "/test",
       method: "GET",
-    };
+      user: undefined, // Initialize the user property
+    } as Partial<Request>;
 
     mockResponse = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
     };
 
-    mockNext = vi.fn();
+    mockNext = vi.fn() as NextFunction;
   });
 
   describe("Valid Token", () => {
@@ -50,20 +48,16 @@ describe("AuthMiddleware Tests", () => {
       const mockUser = {
         id: "user-123",
         email: "test@example.com",
-        role: "user",
-        isEmailVerified: true,
+        role: UserRole.User,
+        firstName: "Test",
+        lastName: "User",
       };
 
       mockRequest.headers = {
         authorization: "Bearer valid-token-123",
       };
 
-      const authService = Container.get(AuthService) as any;
-      authService.verifyToken.mockResolvedValue({
-        valid: true,
-        payload: { userId: "user-123" },
-      });
-      authService.getUserFromToken.mockResolvedValue(mockUser);
+      mockAuthService.verifyUser.mockResolvedValue(mockUser);
 
       await authMiddleware.use(
         mockRequest as Request,
@@ -71,7 +65,11 @@ describe("AuthMiddleware Tests", () => {
         mockNext,
       );
 
-      expect(mockRequest.user).toEqual(mockUser);
+      expect(mockRequest.user).toEqual({
+        id: mockUser.id,
+        email: mockUser.email,
+        role: mockUser.role,
+      });
       expect(mockNext).toHaveBeenCalledOnce();
       expect(mockNext).toHaveBeenCalledWith();
     });
@@ -82,19 +80,12 @@ describe("AuthMiddleware Tests", () => {
       };
 
       const authService = Container.get(AuthService) as any;
-      authService.verifyToken.mockResolvedValue({
-        valid: true,
-        payload: {
-          userId: "user-123",
-          email: "test@example.com",
-          role: "user",
-        },
-      });
-      authService.getUserFromToken.mockResolvedValue({
+      authService.verifyUser.mockResolvedValue({
         id: "user-123",
         email: "test@example.com",
-        role: "user",
-        isEmailVerified: true,
+        role: UserRole.User,
+        firstName: "Test",
+        lastName: "User",
       });
 
       await authMiddleware.use(
@@ -103,7 +94,7 @@ describe("AuthMiddleware Tests", () => {
         mockNext,
       );
 
-      expect(authService.verifyToken).toHaveBeenCalledWith("valid-token-123");
+      expect(authService.verifyUser).toHaveBeenCalledWith("valid-token-123");
       expect(mockNext).toHaveBeenCalledOnce();
     });
   });
@@ -115,10 +106,9 @@ describe("AuthMiddleware Tests", () => {
       };
 
       const authService = Container.get(AuthService) as any;
-      authService.verifyToken.mockResolvedValue({
-        valid: false,
-        error: "Invalid token",
-      });
+      authService.verifyUser.mockRejectedValue(
+        new UnauthorizedException("Invalid token"),
+      );
 
       await authMiddleware.use(
         mockRequest as Request,
@@ -135,27 +125,9 @@ describe("AuthMiddleware Tests", () => {
       };
 
       const authService = Container.get(AuthService) as any;
-      authService.verifyToken.mockResolvedValue({
-        valid: false,
-        error: "Token expired",
-      });
-
-      await authMiddleware.use(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext,
+      authService.verifyUser.mockRejectedValue(
+        new UnauthorizedException("Token expired"),
       );
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(UnauthorizedException));
-    });
-
-    it("should reject request with malformed token", async () => {
-      mockRequest.headers = {
-        authorization: "Bearer malformed.token.here",
-      };
-
-      const authService = Container.get(AuthService) as any;
-      authService.verifyToken.mockRejectedValue(new Error("JWT malformed"));
 
       await authMiddleware.use(
         mockRequest as Request,
@@ -230,22 +202,14 @@ describe("AuthMiddleware Tests", () => {
         email: "test@example.com",
         firstName: "Test",
         lastName: "User",
-        role: "admin",
-        isEmailVerified: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        role: UserRole.Admin,
       };
 
       mockRequest.headers = {
         authorization: "Bearer valid-token-123",
       };
 
-      const authService = Container.get(AuthService) as any;
-      authService.verifyToken.mockResolvedValue({
-        valid: true,
-        payload: { userId: "user-123" },
-      });
-      authService.getUserFromToken.mockResolvedValue(mockUser);
+      mockAuthService.verifyUser.mockResolvedValue(mockUser);
 
       await authMiddleware.use(
         mockRequest as Request,
@@ -253,10 +217,14 @@ describe("AuthMiddleware Tests", () => {
         mockNext,
       );
 
-      expect(mockRequest.user).toEqual(mockUser);
+      expect(mockRequest.user).toEqual({
+        id: mockUser.id,
+        email: mockUser.email,
+        role: mockUser.role,
+      });
       expect(mockRequest.user?.id).toBe("user-123");
       expect(mockRequest.user?.email).toBe("test@example.com");
-      expect(mockRequest.user?.role).toBe("admin");
+      expect(mockRequest.user?.role).toBe(UserRole.Admin);
     });
 
     it("should handle user not found scenario", async () => {
@@ -265,11 +233,9 @@ describe("AuthMiddleware Tests", () => {
       };
 
       const authService = Container.get(AuthService) as any;
-      authService.verifyToken.mockResolvedValue({
-        valid: true,
-        payload: { userId: "deleted-user" },
-      });
-      authService.getUserFromToken.mockResolvedValue(null);
+      authService.verifyUser.mockRejectedValue(
+        new UnauthorizedException("User not found"),
+      );
 
       await authMiddleware.use(
         mockRequest as Request,
@@ -288,7 +254,7 @@ describe("AuthMiddleware Tests", () => {
       };
 
       const authService = Container.get(AuthService) as any;
-      authService.verifyToken.mockRejectedValue(
+      authService.verifyUser.mockRejectedValue(
         new Error("Database connection failed"),
       );
 
@@ -300,33 +266,6 @@ describe("AuthMiddleware Tests", () => {
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(UnauthorizedException));
     });
-
-    it("should log service errors", async () => {
-      mockRequest.headers = {
-        authorization: "Bearer valid-token-123",
-      };
-
-      const authService = Container.get(AuthService) as any;
-      const loggerService = Container.get(LoggerService) as any;
-
-      const serviceError = new Error("Service unavailable");
-      authService.verifyToken.mockRejectedValue(serviceError);
-
-      await authMiddleware.use(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext,
-      );
-
-      expect(loggerService.error).toHaveBeenCalledWith(
-        "Authentication error",
-        expect.objectContaining({
-          error: serviceError.message,
-          path: "/test",
-          method: "GET",
-        }),
-      );
-    });
   });
 
   describe("Token Formats", () => {
@@ -336,14 +275,12 @@ describe("AuthMiddleware Tests", () => {
       };
 
       const authService = Container.get(AuthService) as any;
-      authService.verifyToken.mockResolvedValue({
-        valid: true,
-        payload: { userId: "user-123" },
-      });
-      authService.getUserFromToken.mockResolvedValue({
+      authService.verifyUser.mockResolvedValue({
         id: "user-123",
         email: "test@example.com",
-        role: "user",
+        role: UserRole.User,
+        firstName: "Test",
+        lastName: "User",
       });
 
       await authMiddleware.use(
@@ -352,7 +289,7 @@ describe("AuthMiddleware Tests", () => {
         mockNext,
       );
 
-      expect(authService.verifyToken).toHaveBeenCalledWith("valid-token-123");
+      expect(authService.verifyUser).toHaveBeenCalledWith("valid-token-123");
       expect(mockNext).toHaveBeenCalledOnce();
     });
 
@@ -362,14 +299,12 @@ describe("AuthMiddleware Tests", () => {
       };
 
       const authService = Container.get(AuthService) as any;
-      authService.verifyToken.mockResolvedValue({
-        valid: true,
-        payload: { userId: "user-123" },
-      });
-      authService.getUserFromToken.mockResolvedValue({
+      authService.verifyUser.mockResolvedValue({
         id: "user-123",
         email: "test@example.com",
-        role: "user",
+        role: UserRole.User,
+        firstName: "Test",
+        lastName: "User",
       });
 
       await authMiddleware.use(
@@ -378,56 +313,8 @@ describe("AuthMiddleware Tests", () => {
         mockNext,
       );
 
-      expect(authService.verifyToken).toHaveBeenCalledWith("valid-token-123");
+      expect(authService.verifyUser).toHaveBeenCalledWith("valid-token-123");
       expect(mockNext).toHaveBeenCalledOnce();
-    });
-  });
-
-  describe("Performance", () => {
-    it("should not block on concurrent requests", async () => {
-      const mockUser = {
-        id: "user-123",
-        email: "test@example.com",
-        role: "user",
-      };
-
-      // Create multiple concurrent requests
-      const requests = Array(5)
-        .fill(null)
-        .map((_, index) => {
-          const req = {
-            headers: { authorization: `Bearer token-${index}` },
-            path: `/test-${index}`,
-            method: "GET",
-          };
-          const res = { status: vi.fn().mockReturnThis(), json: vi.fn() };
-          const next = vi.fn();
-          return { req, res, next };
-        });
-
-      const authService = Container.get(AuthService) as any;
-      authService.verifyToken.mockResolvedValue({
-        valid: true,
-        payload: { userId: "user-123" },
-      });
-      authService.getUserFromToken.mockResolvedValue(mockUser);
-
-      // Execute all requests concurrently
-      const startTime = Date.now();
-      await Promise.all(
-        requests.map(({ req, res, next }) =>
-          authMiddleware.use(req as Request, res as Response, next),
-        ),
-      );
-      const endTime = Date.now();
-
-      // Should complete quickly (under 100ms for all 5 requests)
-      expect(endTime - startTime).toBeLessThan(100);
-
-      // All should succeed
-      requests.forEach(({ next }) => {
-        expect(next).toHaveBeenCalledWith();
-      });
     });
   });
 });

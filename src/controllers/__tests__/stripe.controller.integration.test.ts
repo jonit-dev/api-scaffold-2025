@@ -76,14 +76,18 @@ describe("Stripe Controller Integration Tests", () => {
           .set("Authorization", `Bearer ${authToken}`)
           .send(customerData);
 
-        // Accept 200 for success or 500 for Stripe API/service unavailable in test env
+        // Accept 200/201 for success or 500 for Stripe API/service unavailable in test env
         expect([
           HttpStatus.Ok,
+          HttpStatus.Created,
           HttpStatus.InternalServerError,
           HttpStatus.BadRequest,
         ]).toContain(response.status);
 
-        if (response.status === HttpStatus.Ok) {
+        if (
+          response.status === HttpStatus.Ok ||
+          response.status === HttpStatus.Created
+        ) {
           expect(response.body.success).toBe(true);
           expect(response.body.data).toMatchObject({
             email: customerData.email,

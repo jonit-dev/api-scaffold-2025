@@ -10,8 +10,8 @@
   tree -I 'node_modules|.git|dist|build' -L 3 --dirsfirst
   ```
 
-- Do not .skip tests. Fix them instead
-
+- Do not .skip or delete tests. Fix them instead!
+- AVOID DELETING CODE, unless asked or absolutely necessary (warn me and explain why you did it)
 - Prefix _all_ interfaces with **I**; follow existing structure/names.
 - Run tests / lint / type-checks proactively.
 - Check endpoints via `curl`.

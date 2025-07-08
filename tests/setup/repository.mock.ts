@@ -69,17 +69,15 @@ export const createMockSubscriptionRepository = () => ({
 // Register repository mocks
 export const registerRepositoryMocks = () => {
   Container.set(UserRepository, createMockUserRepository());
-  Container.set(PaymentRepository, createMockPaymentRepository());
-  Container.set(SubscriptionRepository, createMockSubscriptionRepository());
+  // Note: PaymentRepository and SubscriptionRepository are registered in stripe.mock.ts
+  // to avoid conflicts with Stripe service mocks
 };
 
 // Reset repository mocks
 export const resetRepositoryMocks = () => {
   const userRepo = Container.get(UserRepository) as any;
-  const paymentRepo = Container.get(PaymentRepository) as any;
-  const subscriptionRepo = Container.get(SubscriptionRepository) as any;
 
-  [userRepo, paymentRepo, subscriptionRepo].forEach((repo) => {
+  [userRepo].forEach((repo) => {
     if (repo) {
       Object.values(repo).forEach((fn: any) => {
         if (fn && typeof fn.mockClear === "function") {
