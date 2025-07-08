@@ -1,4 +1,4 @@
-import { Service } from "typedi";
+import { Service, Container } from "typedi";
 import { PrismaClient } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import {
@@ -14,7 +14,13 @@ export abstract class BaseRepository<T extends IBaseEntity> {
   protected prisma: PrismaClient;
 
   constructor() {
-    this.prisma = prisma;
+    // Try to get the Prisma client from the container first (for tests)
+    // Fall back to the default prisma client if not available
+    try {
+      this.prisma = Container.get("prisma") as PrismaClient;
+    } catch {
+      this.prisma = prisma;
+    }
   }
 
   // Abstract method to get the Prisma model delegate for the specific entity

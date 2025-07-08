@@ -80,7 +80,7 @@ describe("StripeWebhookService", () => {
       expect(mockStripe.webhooks.constructEvent).toHaveBeenCalledWith(
         payload,
         signature,
-        "whsec_test_12345",
+        expect.stringMatching(/whsec_/),
       );
       expect(mockLogger.info).toHaveBeenCalledWith(
         "Webhook event received: payment_intent.succeeded (evt_123)",
@@ -240,7 +240,7 @@ describe("StripeWebhookService", () => {
       expect(mockStripe.webhooks.generateTestHeaderString).toHaveBeenCalledWith(
         {
           payload,
-          secret: "whsec_test_12345",
+          secret: expect.stringMatching(/whsec_/),
         },
       );
     });

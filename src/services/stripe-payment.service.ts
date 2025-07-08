@@ -62,9 +62,6 @@ export class StripePaymentService {
       const paymentIntent =
         await this.stripe.paymentIntents.create(createParams);
 
-      // TODO: Create local payment record for audit trail
-      // This would require proper database integration
-
       return paymentIntent;
     } catch (error) {
       if (error && typeof error === "object" && "type" in error) {

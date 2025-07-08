@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ quiet: true });
 
 function getEnvVar(name: string, defaultValue?: string): string {
   const value = process.env[name] || defaultValue;
@@ -36,7 +36,7 @@ export const config = {
     ),
   },
   auth: {
-    jwtSecret: getEnvVar("JWT_SECRET", "your-jwt-secret-key-here"),
+    jwtSecret: getEnvVar("JWT_SECRET"),
     bcryptRounds: getEnvVar("BCRYPT_ROUNDS", "10"),
     requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION === "true",
   },
@@ -72,9 +72,9 @@ export const config = {
     password: process.env.REDIS_PASSWORD,
   },
   stripe: {
-    publishableKey: getEnvVar("STRIPE_PUBLISHABLE_KEY", "pk_test_default"),
-    secretKey: getEnvVar("STRIPE_SECRET_KEY", "sk_test_default"),
-    webhookSecret: getEnvVar("STRIPE_WEBHOOK_SECRET", "whsec_default"),
+    publishableKey: getEnvVar("STRIPE_PUBLISHABLE_KEY"),
+    secretKey: getEnvVar("STRIPE_SECRET_KEY"),
+    webhookSecret: getEnvVar("STRIPE_WEBHOOK_SECRET"),
     apiVersion: (process.env.STRIPE_API_VERSION ||
       "2025-06-30.basil") as "2025-06-30.basil",
   },
@@ -93,7 +93,7 @@ export const config = {
     maxRetryAttempts: parseInt(process.env.MAX_RETRY_ATTEMPTS || "3", 10),
   },
   webhook: {
-    stripeEndpointSecret: getEnvVar("STRIPE_WEBHOOK_SECRET", "whsec_default"),
+    stripeEndpointSecret: getEnvVar("STRIPE_WEBHOOK_SECRET"),
     maxRetries: parseInt(process.env.WEBHOOK_MAX_RETRIES || "3", 10),
     retryDelay: parseInt(process.env.WEBHOOK_RETRY_DELAY || "1000", 10),
   },
@@ -103,7 +103,7 @@ export const config = {
     enableMorganLogging: process.env.ENABLE_MORGAN_LOGGING !== "false",
   },
   email: {
-    resendApiKey: getEnvVar("RESEND_API", "your_resend_api_key_here"),
+    resendApiKey: getEnvVar("RESEND_API"),
     fromAddress: getEnvVar(
       "RESEND_EMAIL_FROM_ADDRESS",
       "onboarding@resend.dev",
@@ -111,15 +111,9 @@ export const config = {
     fromName: getEnvVar("RESEND_EMAIL_FROM_NAME", "Your App"),
   },
   env: {
-    supabaseUrl: getEnvVar("SUPABASE_URL", "https://your_supabase_url_here"),
-    supabaseAnonKey: getEnvVar(
-      "SUPABASE_ANON_KEY",
-      "your_supabase_anon_key_here",
-    ),
-    supabaseServiceKey: getEnvVar(
-      "SUPABASE_SERVICE_KEY",
-      "your_supabase_service_key_here",
-    ),
+    supabaseUrl: getEnvVar("SUPABASE_URL"),
+    supabaseAnonKey: getEnvVar("SUPABASE_ANON_KEY"),
+    supabaseServiceKey: getEnvVar("SUPABASE_SERVICE_KEY"),
     frontendUrl: getEnvVar("FRONTEND_URL", "http://localhost:3000"),
     nodeEnv:
       (process.env.NODE_ENV as "development" | "production" | "test") ||
@@ -128,12 +122,22 @@ export const config = {
 };
 
 // Environment validation
-const requiredEnvVars = ["NODE_ENV"];
+const requiredEnvVars = [
+  "NODE_ENV",
+  "JWT_SECRET",
+  "STRIPE_PUBLISHABLE_KEY",
+  "STRIPE_SECRET_KEY",
+  "STRIPE_WEBHOOK_SECRET",
+  "RESEND_API",
+  "SUPABASE_URL",
+  "SUPABASE_ANON_KEY",
+  "SUPABASE_SERVICE_KEY",
+];
 const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
   // Use console.warn here since logger service depends on this config
   console.warn(
-    `⚠️  Missing optional environment variables: ${missingEnvVars.join(", ")}`,
+    `⚠️  Missing required environment variables: ${missingEnvVars.join(", ")}`,
   );
 }

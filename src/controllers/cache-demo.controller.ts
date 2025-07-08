@@ -90,7 +90,6 @@ export class CacheDemoController {
       `expensive-op-${category}`,
       async () => {
         // Simulate expensive computation
-        console.log(`Computing expensive operation for category: ${category}`);
         await new Promise((resolve) => globalThis.setTimeout(resolve, 500));
 
         return {

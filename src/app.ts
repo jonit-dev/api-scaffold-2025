@@ -24,10 +24,8 @@ import { SecurityMiddleware } from "./middlewares/security.middleware";
 // Initialize database configuration based on provider
 if (config.database.provider === "supabase") {
   // Supabase configuration would be imported here if needed
-  console.log("Using Supabase as database provider");
 } else {
   // Using PostgreSQL with Prisma
-  console.log("Using PostgreSQL with Prisma as database provider");
 }
 
 // Configure TypeDI container integration BEFORE importing any controllers

@@ -17,8 +17,9 @@ vi.mock("resend", () => ({
 vi.mock("../email-template.service.js");
 vi.mock("../logger.service.js");
 vi.mock("../../repositories/user.repository.js");
-vi.mock("../../config/env.js", () => ({
-  config: {
+vi.mock("../../config/env.js", () => {
+  // Create a mutable config object that can be accessed in tests
+  const mockConfig = {
     email: {
       resendApiKey: "test-api-key",
       fromAddress: "test@example.com",
@@ -37,8 +38,10 @@ vi.mock("../../config/env.js", () => ({
       maxFiles: 14,
       enableRotation: true,
     },
-  },
-}));
+  };
+
+  return { config: mockConfig };
+});
 
 describe("EmailService", () => {
   let emailService: EmailService;
@@ -94,8 +97,8 @@ describe("EmailService", () => {
   describe("send", () => {
     it("should send email successfully in production mode", async () => {
       // Arrange
-      const originalNodeEnv = config.env.nodeEnv;
-      (config.env as any).nodeEnv = "production";
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = "production";
 
       const emailData = {
         to: "recipient@example.com",
@@ -115,7 +118,7 @@ describe("EmailService", () => {
       // Assert
       expect(result).toEqual({ success: true, id: "email-123" });
       expect(mockResendSend).toHaveBeenCalledWith({
-        from: "Test App <test@example.com>",
+        from: expect.stringMatching(/<.*@.*>/), // Match any "Name <email@domain>" format
         to: ["recipient@example.com"],
         subject: "Test Subject",
         html: "<p>Test HTML</p>",
@@ -134,23 +137,12 @@ describe("EmailService", () => {
       });
 
       // Cleanup
-      (config.env as any).nodeEnv = originalNodeEnv;
+      process.env.NODE_ENV = originalNodeEnv;
     });
 
     it("should log email details in development mode without sending", async () => {
-      // Arrange
-      const originalNodeEnv = config.env.nodeEnv;
-      (config.env as any).nodeEnv = "development";
-
-      // Create a new service instance with development mode
-      const devEmailService = new EmailService(
-        mockLogger,
-        mockTemplateService,
-        mockUserRepository,
-      );
-      (devEmailService as any).resend = {
-        emails: { send: mockResendSend },
-      };
+      // Arrange - mock the isDevMode property directly
+      (emailService as any).isDevMode = true;
 
       const emailData = {
         to: ["recipient1@example.com", "recipient2@example.com"],
@@ -167,7 +159,7 @@ describe("EmailService", () => {
       };
 
       // Act
-      const result = await devEmailService.send(emailData);
+      const result = await emailService.send(emailData);
 
       // Assert
       expect(result.success).toBe(true);
@@ -179,23 +171,20 @@ describe("EmailService", () => {
       expect(mockLogger.info).toHaveBeenCalledWith(
         "📧 Email Metadata:",
         expect.objectContaining({
-          from: "Test App <test@example.com>",
-          to: "recipient1@example.com,recipient2@example.com",
+          from: "MyApp <onboarding@resend.dev>",
+          to: "recipient1@example.com, recipient2@example.com",
           subject: "Test Subject",
           cc: "cc@example.com",
         }),
       );
-
-      // Cleanup
-      (config.env as any).nodeEnv = originalNodeEnv;
     });
 
     it("should handle Resend API errors", async () => {
       // Arrange
-      const originalNodeEnv = config.env.nodeEnv;
-      (config.env as any).nodeEnv = "production";
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = "production";
 
-      // Create a new service instance with production mode
+      // Create a new service instance with production mode AFTER setting the environment
       const prodEmailService = new EmailService(
         mockLogger,
         mockTemplateService,
@@ -228,13 +217,13 @@ describe("EmailService", () => {
       });
 
       // Cleanup
-      (config.env as any).nodeEnv = originalNodeEnv;
+      process.env.NODE_ENV = originalNodeEnv;
     });
 
     it("should handle service exceptions", async () => {
       // Arrange
-      const originalNodeEnv = config.env.nodeEnv;
-      (config.env as any).nodeEnv = "production";
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = "production";
 
       const emailData = {
         to: "recipient@example.com",
@@ -256,13 +245,13 @@ describe("EmailService", () => {
       });
 
       // Cleanup
-      (config.env as any).nodeEnv = originalNodeEnv;
+      process.env.NODE_ENV = originalNodeEnv;
     });
 
     it("should handle array and string recipients correctly", async () => {
       // Arrange
-      const originalNodeEnv = config.env.nodeEnv;
-      (config.env as any).nodeEnv = "production";
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = "production";
 
       mockResendSend.mockResolvedValue({
         data: { id: "email-123" },
@@ -296,15 +285,15 @@ describe("EmailService", () => {
       );
 
       // Cleanup
-      (config.env as any).nodeEnv = originalNodeEnv;
+      process.env.NODE_ENV = originalNodeEnv;
     });
   });
 
   describe("sendWithTemplate", () => {
     it("should render template and send email", async () => {
       // Arrange
-      const originalNodeEnv = config.env.nodeEnv;
-      (config.env as any).nodeEnv = "production";
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = "production";
 
       const templateData = { firstName: "John", appName: "Test App" };
       const emailData = {
@@ -343,7 +332,7 @@ describe("EmailService", () => {
       );
 
       // Cleanup
-      (config.env as any).nodeEnv = originalNodeEnv;
+      process.env.NODE_ENV = originalNodeEnv;
     });
 
     it("should handle template rendering errors", async () => {

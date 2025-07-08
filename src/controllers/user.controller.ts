@@ -11,7 +11,6 @@ import {
   Req,
 } from "routing-controllers";
 import { Service } from "typedi";
-import { Request } from "express";
 import { HttpStatus } from "../types/http-status";
 import { UserService } from "../services/user.service";
 import { CreateUserDto } from "../models/dtos/user/create-user.dto";
@@ -21,7 +20,7 @@ import { UserRole } from "../models/enums/user-roles.enum";
 import { UserStatus } from "../models/enums/user-status.enum";
 import { IUserFilters } from "../models/interfaces/user.interface";
 import { IPaginatedResult } from "../types/database.types";
-import { IAuthenticatedUser } from "../types/express";
+import { IAuthenticatedRequest } from "../types/express";
 import { Authenticated } from "../decorators/auth.decorator";
 import { RateLimit } from "../decorators/rate-limit.decorator";
 import { authRateLimits } from "../middlewares/rate-limit.middleware";
@@ -128,7 +127,7 @@ export class UserController {
   @HttpCode(HttpStatus.Ok)
   @Authenticated()
   async getCurrentUser(
-    @Req() req: Request & { user: IAuthenticatedUser },
+    @Req() req: IAuthenticatedRequest,
   ): Promise<UserResponseDto> {
     return await this.userService.findById(req.user.id);
   }
@@ -137,7 +136,7 @@ export class UserController {
   @HttpCode(HttpStatus.Ok)
   @Authenticated()
   async updateCurrentUser(
-    @Req() req: Request & { user: IAuthenticatedUser },
+    @Req() req: IAuthenticatedRequest,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
     return await this.userService.update(req.user.id, updateUserDto);
@@ -147,7 +146,7 @@ export class UserController {
   @HttpCode(HttpStatus.Ok)
   @Authenticated()
   async unsubscribeFromEmails(
-    @Req() req: Request & { user: IAuthenticatedUser },
+    @Req() req: IAuthenticatedRequest,
   ): Promise<{ success: boolean; message: string }> {
     await this.userService.updateEmailUnsubscribed(req.user.id, true);
     return {
@@ -160,7 +159,7 @@ export class UserController {
   @HttpCode(HttpStatus.Ok)
   @Authenticated()
   async resubscribeToEmails(
-    @Req() req: Request & { user: IAuthenticatedUser },
+    @Req() req: IAuthenticatedRequest,
   ): Promise<{ success: boolean; message: string }> {
     await this.userService.updateEmailUnsubscribed(req.user.id, false);
     return {

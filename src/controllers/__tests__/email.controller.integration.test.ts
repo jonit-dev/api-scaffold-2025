@@ -8,6 +8,7 @@ import { HttpStatus } from "@/types/http-status";
 import { UserRole } from "@/models/enums/user-roles.enum";
 import { Container } from "typedi";
 import { AuthMiddleware } from "@/middlewares/auth.middleware";
+import { registerEmailMocks } from "@tests/setup/email.mock";
 
 describe("Email Controller Integration Tests", () => {
   const adminToken = "valid-admin-token-123";
@@ -47,6 +48,9 @@ describe("Email Controller Integration Tests", () => {
 
     // Register mock in container
     Container.set(AuthMiddleware, mockAuthMiddleware);
+
+    // Register email service mocks for this test
+    registerEmailMocks();
 
     // Setup test environment
     TestHelpers.setupMockSupabaseClient();

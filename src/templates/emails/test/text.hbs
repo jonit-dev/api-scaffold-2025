@@ -1,0 +1,1 @@
+{{#if testDate}}{{{formatDate testDate 'MM/DD/YYYY'}}}{{/if}}{{#if amount}}{{{formatCurrency amount currency}}}{{/if}}{{#if count}}{{#if (gt count 3)}}Greater than 3{{/if}} {{#if (eq status 'active')}}Active{{/if}}{{/if}}{{#if itemCount}}{{itemCount}} {{pluralize itemCount 'item'}} and {{orderCount}} {{pluralize orderCount 'order' 'orders'}}{{/if}}

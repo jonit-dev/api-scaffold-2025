@@ -46,7 +46,7 @@ export class EmailController {
         tags: tags as Array<{ name: string; value: string }> | undefined,
       });
 
-      if (!result.success) {
+      if (!result || !result.success) {
         throw new InternalServerError("Failed to send email");
       }
 
@@ -56,7 +56,10 @@ export class EmailController {
         emailId: result.id,
       };
     } catch (error) {
-      this.logger.error("Email controller error", { error, body });
+      this.logger?.error("Email controller error", {
+        error: error instanceof Error ? error.message : String(error),
+        body,
+      });
 
       if (error instanceof BadRequest || error instanceof InternalServerError) {
         throw error;
@@ -114,7 +117,7 @@ export class EmailController {
         },
       );
 
-      if (!result.success) {
+      if (!result || !result.success) {
         throw new InternalServerError("Failed to send template email");
       }
 
@@ -125,7 +128,10 @@ export class EmailController {
         templateName,
       };
     } catch (error) {
-      this.logger.error("Template email controller error", { error, body });
+      this.logger?.error("Template email controller error", {
+        error: error instanceof Error ? error.message : String(error),
+        body,
+      });
 
       if (error instanceof BadRequest || error instanceof InternalServerError) {
         throw error;
@@ -146,7 +152,9 @@ export class EmailController {
         templates,
       };
     } catch (error) {
-      this.logger.error("Get templates controller error", { error });
+      this.logger?.error("Get templates controller error", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw new InternalServerError("Failed to get available templates");
     }
   }
@@ -184,7 +192,7 @@ export class EmailController {
         },
       );
 
-      if (!result.success) {
+      if (!result || !result.success) {
         throw new InternalServerError("Failed to send welcome email");
       }
 
@@ -194,7 +202,10 @@ export class EmailController {
         emailId: result.id,
       };
     } catch (error) {
-      this.logger.error("Welcome email controller error", { error, body });
+      this.logger?.error("Welcome email controller error", {
+        error: error instanceof Error ? error.message : String(error),
+        body,
+      });
 
       if (error instanceof BadRequest || error instanceof InternalServerError) {
         throw error;
@@ -239,7 +250,7 @@ export class EmailController {
         },
       );
 
-      if (!result.success) {
+      if (!result || !result.success) {
         throw new InternalServerError("Failed to send password reset email");
       }
 
@@ -249,8 +260,8 @@ export class EmailController {
         emailId: result.id,
       };
     } catch (error) {
-      this.logger.error("Password reset email controller error", {
-        error,
+      this.logger?.error("Password reset email controller error", {
+        error: error instanceof Error ? error.message : String(error),
         body,
       });
 
@@ -307,7 +318,7 @@ export class EmailController {
         },
       );
 
-      if (!result.success) {
+      if (!result || !result.success) {
         throw new InternalServerError("Failed to send invoice email");
       }
 
@@ -318,7 +329,10 @@ export class EmailController {
         invoiceNumber,
       };
     } catch (error) {
-      this.logger.error("Invoice email controller error", { error, body });
+      this.logger?.error("Invoice email controller error", {
+        error: error instanceof Error ? error.message : String(error),
+        body,
+      });
 
       if (error instanceof BadRequest || error instanceof InternalServerError) {
         throw error;

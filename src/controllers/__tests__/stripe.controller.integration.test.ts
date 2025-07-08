@@ -6,9 +6,11 @@ import { TestHelpers } from "@tests/utils/test.helpers";
 import { AuthFactory } from "@tests/factories/auth.factory";
 import { HttpStatus } from "@/types/http-status";
 import { Container } from "typedi";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../../../node_modules/.prisma/test-client";
 import { AuthService } from "@/services/auth.service";
 import { AuthMiddleware } from "@/middlewares/auth.middleware";
+import { registerStripeMocks } from "@tests/setup/stripe.mock";
+import { registerRepositoryMocks } from "@tests/setup/repository.mock";
 
 describe("Stripe Controller Integration Tests", () => {
   let authToken: string;
@@ -48,6 +50,12 @@ describe("Stripe Controller Integration Tests", () => {
 
     // Register mock in container
     Container.set(AuthMiddleware, mockAuthMiddleware);
+
+    // Register Stripe service mocks for this test
+    registerStripeMocks();
+
+    // Register repository mocks for this test
+    registerRepositoryMocks();
 
     // Create JWT tokens (the actual content doesn't matter since we're mocking the verification)
     authToken = "test-user-token-123";

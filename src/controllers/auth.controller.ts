@@ -8,7 +8,6 @@ import {
   QueryParam,
 } from "routing-controllers";
 import { Service } from "typedi";
-import { Request } from "express";
 import { HttpStatus } from "../types/http-status";
 import { AuthService } from "../services/auth.service";
 import { LoginDto } from "../models/dtos/auth/login.dto";
@@ -21,7 +20,7 @@ import { VerifyEmailDto } from "../models/dtos/auth/verify-email.dto";
 import { AuthResponseDto } from "../models/dtos/auth/auth-response.dto";
 import { UserResponseDto } from "../models/dtos/user/user-response.dto";
 import { Authenticated } from "../decorators/auth.decorator";
-import { IAuthenticatedUser } from "../types/express";
+import { IAuthenticatedUser, IAuthenticatedRequest } from "../types/express";
 import { RateLimit } from "../decorators/rate-limit.decorator";
 import { authRateLimits } from "../middlewares/rate-limit.middleware";
 
@@ -48,10 +47,9 @@ export class AuthController {
   @HttpCode(HttpStatus.Ok)
   @Authenticated()
   async getCurrentUser(
-    @Req() req: Request,
+    @Req() req: IAuthenticatedRequest,
   ): Promise<{ user: IAuthenticatedUser }> {
-    const user = (req as Request & { user: IAuthenticatedUser }).user;
-    return { user };
+    return { user: req.user };
   }
 
   @Post("/logout")
@@ -94,11 +92,13 @@ export class AuthController {
   @HttpCode(HttpStatus.Ok)
   @Authenticated()
   async changePassword(
-    @Req() req: Request,
+    @Req() req: IAuthenticatedRequest,
     @Body() changePasswordDto: ChangePasswordDto,
   ): Promise<{ message: string }> {
-    const user = (req as Request & { user: IAuthenticatedUser }).user;
-    return await this.authService.changePassword(user.id, changePasswordDto);
+    return await this.authService.changePassword(
+      req.user.id,
+      changePasswordDto,
+    );
   }
 
   @Post("/verify-email")

@@ -13,10 +13,6 @@ import { UserStatus } from "../models/enums/user-status.enum";
 import { IUserFilters } from "../models/interfaces/user.interface";
 import { UserRepository } from "../repositories/user.repository";
 import { IPaginatedResult } from "../types/database.types";
-// import {
-//   camelToSnakeKeys,
-//   snakeToCamelKeys,
-// } from "../utils/case-conversion.utils";
 
 @Service()
 export class UserService {
